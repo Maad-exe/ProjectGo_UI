@@ -1,0 +1,148 @@
+<div class="dashboard-container">
+  <aside class="sidebar">
+    <nav class="sidebar-nav">
+      <a class="nav-item" [class.active]="currentView === 'dashboard'" (click)="setView('dashboard')">
+        <i class="fas fa-home"></i>
+        <span>Dashboard</span>
+      </a>
+      <a class="nav-item" [class.active]="currentView === 'teachers'" (click)="setView('teachers')">
+        <i class="fas fa-chalkboard-teacher"></i>
+        <span>Browse Supervisors</span>
+      </a>
+      <a class="nav-item" [class.active]="currentView === 'projects'" (click)="setView('projects')">
+        <i class="fas fa-tasks"></i>
+        <span>Project Management</span>
+      </a>
+      <a class="nav-item" [class.active]="currentView === 'proposals'" (click)="setView('proposals')">
+        <i class="fas fa-file-alt"></i>
+        <span>Submit Proposal</span>
+      </a>
+      <a class="nav-item" [class.active]="currentView === 'messages'" (click)="setView('messages')">
+        <i class="fas fa-comments"></i>
+        <span>Messages</span>
+        <span class="badge" *ngIf="unreadMessages > 0">{{unreadMessages}}</span>
+      </a>
+      <a class="nav-item" [class.active]="currentView === 'announcements'" (click)="setView('announcements')">
+        <i class="fas fa-bullhorn"></i>
+        <span>Announcements</span>
+        <span class="badge new" *ngIf="hasNewAnnouncements">New</span>
+      </a>
+      <a class="nav-item" [class.active]="currentView === 'schedule'" (click)="setView('schedule')">
+        <i class="fas fa-calendar-alt"></i>
+        <span>Schedule</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Add Top Bar -->
+  <div class="main-wrapper">
+    <header class="topbar">
+      <div class="search-bar">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Search...">
+      </div>
+      
+      <div class="user-info">
+        <div class="user-details">
+          <h3>{{studentInfo.fullName}}</h3>
+          <div class="user-meta">
+            <span class="enrollment" title="Enrollment Number">
+              <i class="fas fa-id-card"></i>
+              {{studentInfo.enrollmentNumber}}
+            </span>
+            <span class="department" title="Department">
+              <i class="fas fa-building-columns"></i>
+              {{studentInfo.department}}
+            </span>
+            <span class="email" title="Email">
+              <i class="fas fa-envelope"></i>
+              {{studentInfo.email}}
+            </span>
+          </div>
+        </div>
+        <button class="logout-btn" (click)="logout()" title="Sign out">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>Sign out</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <!-- Dashboard View -->
+      <div class="dashboard-welcome" *ngIf="currentView === 'dashboard'">
+        <div class="welcome-card">
+          <h1>Welcome to Student Dashboard</h1>
+          <p class="subtitle">Access all your academic resources in one place</p>
+          <div class="quick-actions">
+            <button class="action-btn" (click)="setView('teachers')">
+              <i class="fas fa-users"></i>
+              View Faculty
+            </button>
+            <button class="action-btn">
+              <i class="fas fa-book"></i>
+              My Courses
+            </button>
+            <button class="action-btn">
+              <i class="fas fa-calendar"></i>
+              Schedule
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Teachers List View -->
+      <div class="teacher-section" *ngIf="currentView === 'teachers'">
+        <div class="section-header">
+          <h2 class="section-title">Our Distinguished Faculty</h2>
+          <p class="section-subtitle">Meet our experienced team of educators</p>
+        </div>
+
+        <!-- Loading State -->
+        <div class="loading-state" *ngIf="isLoading">
+          <i class="fas fa-spinner fa-spin"></i> Loading faculty details...
+        </div>
+
+        <!-- Error State -->
+        <div class="error-state" *ngIf="error">
+          {{ error }}
+          <button class="retry-btn" (click)="loadTeachers()">Retry</button>
+        </div>
+
+        <!-- Teachers Grid -->
+        <div class="teacher-grid" *ngIf="!isLoading && !error && teachers.length > 0">
+          <div class="teacher-card" *ngFor="let teacher of teachers">
+            <div class="card-header">
+              <div class="teacher-avatar">
+                <i class="fas fa-user-tie"></i>
+              </div>
+              <div class="teacher-primary-info">
+                <h3>{{teacher.fullName}}</h3>
+                <span class="department">Computer Science Department</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="info-section">
+                <h4>Specialization</h4>
+                <p>{{teacher.areaOfSpecialization}}</p>
+              </div>
+              <div class="info-section">
+                <h4>Qualification</h4>
+                <p>{{teacher.qualification}}</p>
+              </div>
+              <div class="contact-details">
+                <a href="mailto:{{teacher.email}}" class="contact-item">
+                  <i class="fas fa-envelope"></i>
+                  <span>{{teacher.email}}</span>
+                </a>
+                <div class="contact-item">
+                  <i class="fas fa-location-dot"></i>
+                  <span>{{teacher.officeLocation}}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>

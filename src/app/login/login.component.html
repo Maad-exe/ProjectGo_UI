@@ -1,0 +1,63 @@
+<div class="login-wrapper">
+    <div class="login-container">
+      
+      <div class="login-card">
+        <div class="brand-section">
+          <div class="logo">
+            <span class="logo-text">ProjectGo</span>
+            <div class="logo-dot"></div>
+          </div>
+          <p class="welcome-text">Welcome back! Please login to your account.</p>
+         
+        </div>
+  
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+          <div class="form-group">
+            <div class="input-wrapper">
+              <i class="far fa-envelope input-icon"></i>
+              <input type="email" formControlName="email" placeholder="Email address">
+            </div>
+            <div *ngIf="loginForm.get('email')?.hasError('email')" class="error">
+              <i class="fas fa-exclamation-circle"></i> Please enter a valid email
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <div class="input-wrapper">
+                <i class="fas fa-lock input-icon"></i>
+                <input [type]="showPassword ? 'text' : 'password'" 
+                       formControlName="password" 
+                       placeholder="Password">
+                <i class="far" 
+                   [class.fa-eye]="showPassword" 
+                   [class.fa-eye-slash]="!showPassword" 
+                   (click)="togglePassword()"
+                   class="toggle-password"></i>
+              </div>
+          </div>
+  
+          <div class="form-options">
+            <label class="remember-me">
+              <input type="checkbox">
+              <span class="checkmark"></span>
+              Remember me
+            </label>
+            <a href="#" class="forgot-password">Forgot password?</a>
+          </div>
+  
+          <div *ngIf="errorMessage" class="error-message">
+            <i class="fas fa-exclamation-triangle"></i>
+            {{ errorMessage }}
+          </div>
+  
+          <button type="submit" 
+          [disabled]="!loginForm.valid || isLoading" 
+          class="login-btn"
+          [class.loading]="isLoading">
+    <span>Sign In</span>
+    <i class="fas fa-arrow-right" *ngIf="!isLoading"></i>
+  </button>
+        </form>
+      </div>
+    </div>
+  </div>

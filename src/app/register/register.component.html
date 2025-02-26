@@ -1,0 +1,49 @@
+<div class="register-container">
+  <form (ngSubmit)="onSubmit()">
+    <div>
+      <label for="fullName">Full Name:</label>
+      <input type="text" id="fullName" [(ngModel)]="fullName" name="fullName" required>
+    </div>
+    <div>
+      <label for="email">Email:</label>
+      <input type="email" id="email" [(ngModel)]="email" name="email" required>
+    </div>
+    <div>
+      <label for="password">Password:</label>
+      <input type="password" id="password" [(ngModel)]="password" name="password" required>
+    </div>
+    <div>
+      <label for="role">Role:</label>
+      <select id="role" [(ngModel)]="role" name="role" required (change)="onRoleChange($event)">
+        <option value="Admin">Admin</option>
+        <option value="Teacher">Teacher</option>
+        <option value="Student">Student</option>
+      </select>
+    </div>
+    <div *ngIf="role === 'Teacher'">
+      <div>
+        <label for="qualification">Qualification:</label>
+        <input type="text" id="qualification" [(ngModel)]="qualification" name="qualification" required>
+      </div>
+      <div>
+        <label for="areaOfSpecialization">Area of Specialization:</label>
+        <input type="text" id="areaOfSpecialization" [(ngModel)]="areaOfSpecialization" name="areaOfSpecialization" required>
+      </div>
+      <div>
+        <label for="officeLocation">Office Location:</label>
+        <input type="text" id="officeLocation" [(ngModel)]="officeLocation" name="officeLocation" required>
+      </div>
+    </div>
+    <div *ngIf="role === 'Student'">
+      <div>
+        <label for="enrollmentNumber">Enrollment Number:</label>
+        <input type="text" id="enrollmentNumber" [(ngModel)]="enrollmentNumber" name="enrollmentNumber" required>
+      </div>
+      <div>
+        <label for="department">Department:</label>
+        <input type="text" id="department" [(ngModel)]="department" name="department" required>
+      </div>
+    </div>
+    <button type="submit">Register</button>
+  </form>
+</div>
