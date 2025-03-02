@@ -63,35 +63,32 @@ export class LoginComponent {
   onSubmit() {
     if (this.loginForm.valid) {
       this.isLoading = true;
-      this.errorMessage = '';
-      
-      const { email, password } = this.loginForm.value;
-      
-      this.authService.login(email, password).subscribe({
-        next: async (response: any) => {
-          console.log('Login successful:', response);
-          if (response.token) {
-            localStorage.setItem('token', response.token);
-            const userRole = this.authService.getUserRole();
-            console.log('Extracted user role:', userRole);
-            
-            if (!userRole) {
-              this.errorMessage = 'Authorization error: No role found';
-              return;
+      this.authService.login(this.loginForm.value.email, this.loginForm.value.password)
+        .subscribe({
+          next: (response) => {
+            if (response.token) {
+              localStorage.setItem('token', response.token);
+              console.log('Login - Token stored:', response.token); // Add this line
+              const decodedToken = this.authService.decodeToken(response.token);
+              console.log('Login successful - Role:', decodedToken?.role);
+              
+              // Navigate based on role
+              const role = decodedToken?.role?.toLowerCase();
+              const targetRoute = role === 'admin' ? '/admin-dashboard' :
+                                role === 'student' ? '/student-dashboard' :
+                                role === 'teacher' ? '/teacher-dashboard' :
+                                '/login';
+              
+              this.router.navigate([targetRoute]);
             }
-            
-            await this.navigateToDashboard(userRole);
-          } else {
-            this.errorMessage = 'Invalid response from server';
+            this.isLoading = false;
+          },
+          error: (error) => {
+            console.error('Login failed:', error);
+            this.errorMessage = error.error?.message || 'Login failed';
+            this.isLoading = false;
           }
-          this.isLoading = false;
-        },
-        error: (err: any) => {
-          console.error('Login error:', err);
-          this.isLoading = false;
-          this.errorMessage = err.error?.message || 'Login failed';
-        }
-      });
+        });
     }
   }
 }

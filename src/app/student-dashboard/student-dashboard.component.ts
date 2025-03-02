@@ -59,6 +59,11 @@ export class StudentDashboardComponent implements OnInit {
       return;
     }
     
+    const token = localStorage.getItem('token');
+    if (token) {
+      console.log('Full token payload:', this.authService.decodeToken(token));
+    }
+    
     this.loadStudentInfo();
     this.setView('dashboard');
   }
@@ -95,6 +100,9 @@ export class StudentDashboardComponent implements OnInit {
     if (!this.teachers.length) {
       this.isLoading = true;
       this.error = null;
+      
+      const currentRole = this.authService.getUserRole();
+      console.log('Loading teachers - Current user role:', currentRole);
 
       this.teacherService.getAllTeachers().subscribe({
         next: (data) => {
@@ -104,6 +112,7 @@ export class StudentDashboardComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error loading teachers:', error);
+          console.log('Error occurred with role:', currentRole);
           this.error = 'Failed to load teachers';
           this.isLoading = false;
         }

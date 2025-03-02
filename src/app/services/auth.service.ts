@@ -10,6 +10,18 @@ interface LoginResponse {
   message?: string;
 }
 
+interface RegisterRequest {
+  fullName: string;
+  email: string;
+  password: string;
+  role: string;  // Add this line
+  qualification?: string;
+  areaOfSpecialization?: string;
+  officeLocation?: string;
+  enrollmentNumber?: string;
+  department?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private apiUrl = environment.authApiUrl;
@@ -20,13 +32,23 @@ export class AuthService {
   ) { }
 
   login(email: string, password: string): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.apiUrl}/login`, { email, password }).pipe(
-      tap((response: LoginResponse) => {
-        if (response.token) {
-          localStorage.setItem('token', response.token);
-        }
-      })
-    );
+    return this.http.post<LoginResponse>(`${this.apiUrl}/login`, { email, password })
+      .pipe(
+        tap((response: LoginResponse) => {
+          if (response.token) {
+            localStorage.setItem('token', response.token);
+            const decodedToken = this.decodeToken(response.token);
+            console.log('Token stored, role:', decodedToken?.role);
+            // Navigate after successful token storage
+            const role = decodedToken?.role?.toLowerCase();
+            const targetRoute = role === 'admin' ? '/admin-dashboard' :
+                              role === 'student' ? '/student-dashboard' :
+                              role === 'teacher' ? '/teacher-dashboard' :
+                              '/login';
+            this.router.navigate([targetRoute]);
+          }
+        })
+      );
   }
   
   private async navigateBasedOnRole(role: string): Promise<boolean> {
@@ -93,45 +115,10 @@ export class AuthService {
     }
   }
 
-  register(userData: any): Observable<any> {
-    console.log('Registration data:', userData);
-    
-    // Determine the endpoint based on role
-    const endpoint = userData.role === 'Admin' 
-      ? '/register/admin'
-      : userData.role === 'Teacher' 
-        ? '/register/teacher' 
-        : '/register/student';
-
-    // Prepare request data based on role
-    let requestData: any = {
-      fullName: userData.fullName,
-      email: userData.email,
-      password: userData.password
-    };
-
-    // Add role-specific fields
-    if (userData.role === 'Teacher') {
-      requestData = {
-        ...requestData,
-        qualification: userData.qualification || '',
-        areaOfSpecialization: userData.areaOfSpecialization || '',
-        officeLocation: userData.officeLocation || ''
-      };
-    }else if (userData.role === 'Student') {
-        requestData = {
-          ...requestData,
-          enrollmentNumber: userData.enrollmentNumber || '',
-          department: userData.department || ''
-        };
-      }
-  
-      console.log('Sending registration request to:', `${this.apiUrl}${endpoint}`);
-      console.log('Request data:', requestData);
-    
-      return this.http.post(`${this.apiUrl}${endpoint}`, requestData)
+  register(userData: RegisterRequest): Observable<any> {
+    const endpoint = `/register/${userData.role?.toLowerCase()}`;
+    return this.http.post(`${this.apiUrl}${endpoint}`, userData)
       .pipe(
-        tap(response => console.log('Registration response:', response)),
         catchError(error => {
           console.error('Registration error:', error);
           throw error;
