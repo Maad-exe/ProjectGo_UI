@@ -19,11 +19,16 @@ export class TeacherService {
   constructor(private http: HttpClient, private authService: AuthService) {}
 
   getAllTeachers(): Observable<TeacherDetails[]> {
-    console.log('Token when fetching teachers:', localStorage.getItem('token'));
+    console.log('Requesting teachers with token:', localStorage.getItem('token')?.substring(0, 20) + '...');
     return this.http.get<TeacherDetails[]>(`${environment.authApiUrl}/teachers`)
       .pipe(
         catchError(error => {
-          console.error('Teacher service error:', error);
+          if (error.status === 403) {
+            console.error('Access forbidden: User does not have Student role');
+            
+          } else {
+            console.error('Error fetching teachers:', error);
+          }
           throw error;
         })
       );

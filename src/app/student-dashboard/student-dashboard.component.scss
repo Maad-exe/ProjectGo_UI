@@ -2,13 +2,51 @@
   display: flex;
   min-height: 100vh;
   background: #f8fafc;
+  position: relative;
 }
 
 .sidebar {
-  width: 280px;
+  top: 10px;
+  margin-top: 50px;
+  width: 260px;
   background: white;
   box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-  padding: 2rem 1rem;
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  padding-top: calc(64px + 1rem); // Account for topbar height
+  z-index: 100;
+
+  .brand-section {
+    padding: 0 1.5rem 2rem 1.5rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      text-decoration: none;
+      margin-bottom: 0.5rem;
+
+      .logo-text {
+        font-size: 240px;
+        font-weight: 600;
+        color: #2d4aca;
+        letter-spacing: -0.5px;
+      }
+
+      .logo-dot {
+        width: 8px;
+        height: 8px;
+        background: #6366f1;
+        border-radius: 50%;
+        margin-left: 4px;
+        animation: pulse 2s infinite;
+      }
+    }
+  }
 
   .nav-item {
     display: flex;
@@ -19,6 +57,8 @@
     border-radius: 12px;
     transition: all 0.3s ease;
     cursor: pointer;
+    margin-top: 0.5rem ;
+    margin-right:3.5rem ;
     margin-bottom: 0.5rem;
     position: relative; // Added for badges
 
@@ -63,23 +103,36 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  margin-left: 260px; // Match sidebar width
+  margin-top: 64px; // Match topbar height
+  min-height: calc(100vh - 64px);
+  background: #f8fafc;
 }
 
 .topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
   background: white;
-  padding: 1rem 2rem;
-  display: flex;
-  justify-content: space-between;
+  padding: 0.75rem 2rem;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 2rem;
   align-items: center;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  z-index: 1000;
+  height: 64px; // Fixed height for topbar
 
   .search-bar {
+    justify-self: center;
+    width: 300px;
     display: flex;
     align-items: center;
     background: #f1f5f9;
     padding: 0.5rem 1rem;
+    margin-right: 190px;
     border-radius: 8px;
-    width: 300px;
 
     i {
       color: #64748b;
@@ -100,6 +153,7 @@
   }
 
   .user-info {
+    justify-self: end;
     display: flex;
     align-items: center;
     gap: 2rem;
@@ -258,7 +312,7 @@
     padding: 1rem;
 
     .teacher-card {
-      background: white;
+      background: rgb(255, 255, 255);
       border-radius: 20px;
       overflow: hidden;
       box-shadow: 0 4px 20px rgba(0,0,0,0.1);
@@ -382,7 +436,132 @@
   margin-bottom: 2rem;
 }
 
+// Add styles for group management
+.group-section {
+  padding: 2rem;
+
+  .create-group-btn {
+    background: #4CAF50;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+
+    &:hover {
+      background: #388E3C;
+    }
+  }
+
+  .create-group-form {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    .form-group {
+      margin-bottom: 1rem;
+
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #333;
+      }
+
+      input[type="text"],
+      input[type="email"],
+      select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 1rem;
+        outline: none;
+      }
+    }
+
+    .submit-btn {
+      background: #3b82f6;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+
+      &:hover {
+        background: #2563eb;
+      }
+    }
+
+    .error-message {
+      color: #e44d26;
+      margin-top: 0.5rem;
+    }
+  }
+
+  .group-list {
+    margin-top: 2rem;
+
+    .group-card {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      margin-bottom: 1rem;
+
+      h3 {
+        color: #333;
+        margin-bottom: 0.5rem;
+      }
+
+      p {
+        color: #777;
+        margin-bottom: 0.75rem;
+      }
+
+      ul {
+        list-style: none;
+        padding: 0;
+
+        li {
+          margin-bottom: 0.5rem;
+          color: #555;
+        }
+      }
+    }
+  }
+}
+
+// Your existing animations
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 // Responsive adjustments
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 240px;
+  }
+
+  .main-wrapper {
+    margin-left: 240px;
+  }
+}
+
 @media (max-width: 768px) {
   .teacher-grid {
     padding: 1rem;
@@ -401,5 +580,29 @@
         font-size: 0.8rem;
       }
     }
+  }
+
+  .topbar {
+    padding: 0.75rem 1rem;
+    
+    .brand-section .logo-text {
+      font-size: 20px;
+    }
+
+    .search-bar {
+      width: 200px;
+    }
+  }
+
+  .sidebar {
+    width: 70px;
+    
+    .nav-item span {
+      display: none;
+    }
+  }
+
+  .main-wrapper {
+    margin-left: 70px;
   }
 }

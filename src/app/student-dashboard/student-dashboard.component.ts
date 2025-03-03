@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { TeacherService, TeacherDetails } from '../services/teacher.service';
 import { AuthService } from '../services/auth.service';
+import { GroupService, StudentDetails, GroupDetails, CreateGroupRequest } from '../services/group.service';
+import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, FormControl, NonNullableFormBuilder } from '@angular/forms';
 
 interface StudentInfo {
   fullName: string;
@@ -14,7 +16,7 @@ interface StudentInfo {
 @Component({
   selector: 'app-student-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule],
   templateUrl: './student-dashboard.component.html',
   styleUrls: ['./student-dashboard.component.scss']
 })
@@ -47,11 +49,30 @@ export class StudentDashboardComponent implements OnInit {
     nextMilestone: 'Initial Design Review'
   };
 
+  // New properties for group management
+  createGroupForm: FormGroup;
+  showGroupForm = false;
+  groups: GroupDetails[] = [];
+  memberCount = 2;
+  isSearchingStudent = false;
+  studentSearchResults: { [email: string]: StudentDetails | null } = {};
+  isCreatingGroup = false;
+  groupCreationError: string | null = null;
+  searchErrors: { [email: string]: string } = {};
+
   constructor(
     private teacherService: TeacherService,
     private authService: AuthService,
+    private groupService: GroupService,
+    private fb: NonNullableFormBuilder, 
     private router: Router
-  ) {}
+  ) {
+    this.createGroupForm = this.fb.group({
+      groupName: ['', Validators.required],
+      memberCount: [2, [Validators.required, Validators.min(2), Validators.max(4)]],
+      memberEmails: this.fb.array<string>([])
+    });
+  }
 
   ngOnInit() {
     if (!this.authService.isLoggedIn()) {
@@ -66,6 +87,10 @@ export class StudentDashboardComponent implements OnInit {
     
     this.loadStudentInfo();
     this.setView('dashboard');
+  }
+
+  get memberEmails(): FormArray<FormControl<string>> {
+    return this.createGroupForm.get('memberEmails') as FormArray<FormControl<string>>;
   }
 
   loadStudentInfo() {
@@ -93,6 +118,8 @@ export class StudentDashboardComponent implements OnInit {
     this.currentView = view;
     if (view === 'teachers') {
       this.loadTeachers();
+    } else if (view === 'groups') {
+      this.loadStudentGroups();
     }
   }
 
@@ -103,7 +130,14 @@ export class StudentDashboardComponent implements OnInit {
       
       const currentRole = this.authService.getUserRole();
       console.log('Loading teachers - Current user role:', currentRole);
-
+  
+      // Check if user has the required role before making the request
+      if (currentRole.toLowerCase() !== 'student') {
+        this.error = 'Access denied: Only students can view teacher list';
+        this.isLoading = false;
+        return;
+      }
+  
       this.teacherService.getAllTeachers().subscribe({
         next: (data) => {
           console.log('Teachers loaded:', data);
@@ -112,9 +146,89 @@ export class StudentDashboardComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error loading teachers:', error);
-          console.log('Error occurred with role:', currentRole);
-          this.error = 'Failed to load teachers';
+          this.error = error.status === 403 
+            ? 'You do not have permission to view the teacher list' 
+            : 'Failed to load teachers';
           this.isLoading = false;
+        }
+      });
+    }
+  }
+
+  // Group Management Functions
+  showCreateGroupForm() {
+    this.showGroupForm = true;
+    this.createGroupForm.reset();
+    this.memberEmails.clear();
+    for (let i = 0; i < this.memberCount; i++) {
+      this.memberEmails.push(this.fb.control('', [Validators.required, Validators.email]));
+    }
+  }
+
+  onMemberCountChange() {
+    this.memberCount = this.createGroupForm.get('memberCount')?.value || 2;
+    this.memberEmails.clear();
+    for (let i = 0; i < this.memberCount; i++) {
+      this.memberEmails.push(this.fb.control('', [Validators.required, Validators.email]));
+    }
+  }
+
+  async searchStudent(email: string, index: number) {
+    this.isSearchingStudent = true;
+    this.searchErrors[email] = '';
+    try {
+      const student = await this.groupService.searchStudentByEmail(email).toPromise();
+      this.studentSearchResults[email] = student || null; // Handle undefined case
+    } catch (error: any) {
+      this.studentSearchResults[email] = null;
+      this.searchErrors[email] = error.error?.message || 'Student not found';
+    } finally {
+      this.isSearchingStudent = false;
+    }
+  }
+
+  async createGroup() {
+    if (this.createGroupForm.valid) {
+      this.isCreatingGroup = true;
+      this.groupCreationError = null;
+
+      const memberEmails = this.memberEmails.value.filter((email): email is string => email !== null);
+      const createGroupRequest: CreateGroupRequest = {
+        groupName: this.createGroupForm.value.groupName || '',
+        memberEmails: memberEmails
+      };
+
+      try {
+        const createdGroup = await this.groupService.createGroup(createGroupRequest).toPromise();
+        console.log('Group created successfully:', createdGroup);
+        if (createdGroup) { // Add this check
+          this.groups.push(createdGroup);
+        }
+        this.showGroupForm = false;
+        this.createGroupForm.reset();
+        this.memberEmails.clear();
+        this.loadStudentGroups();
+      } catch (error: any) {
+        console.error('Group creation failed:', error);
+        this.groupCreationError = error.error?.message || 'Failed to create group';
+      } finally {
+        this.isCreatingGroup = false;
+      }
+    }
+  }
+
+  loadStudentGroups() {
+    const token = localStorage.getItem('token');
+    if (token) {
+      const payload = this.authService.decodeToken(token);
+      const studentId = payload.UserId;
+
+      this.groupService.getStudentGroups(studentId).subscribe({
+        next: (groups) => {
+          this.groups = groups;
+        },
+        error: (error) => {
+          console.error('Failed to load student groups:', error);
         }
       });
     }

@@ -28,7 +28,7 @@ export class AuthService {
 
   constructor(
     private http: HttpClient,
-    private router: Router  // Add Router to constructor
+    private router: Router  
   ) { }
 
   login(email: string, password: string): Observable<LoginResponse> {
@@ -51,30 +51,14 @@ export class AuthService {
       );
   }
   
-  private async navigateBasedOnRole(role: string): Promise<boolean> {
-    console.log('Navigating based on role:', role);
-    const targetRoute = role.toLowerCase() === 'admin' ? '/admin-dashboard' 
-                     : role.toLowerCase() === 'student' ? '/student-dashboard'
-                     : role.toLowerCase() === 'teacher' ? '/teacher-dashboard'
-                     : '/login';
-    
-    console.log('Target route:', targetRoute);
-    try {
-      const success = await this.router.navigate([targetRoute]);
-      console.log('Navigation result:', success);
-      return success;
-    } catch (error: unknown) {
-      console.error('Navigation error:', error);
-      return false;
-    }
-  }
+  
 
   isTokenValid(): boolean {
     const token = localStorage.getItem('token');
     if (!token) return false;
   
     try {
-      const payload = this.decodeTokenPayload(token);
+      const payload = this.decodeToken(token);
       const expiry = payload.exp * 1000; // Convert to milliseconds
       const now = Date.now();
       return now < expiry;
@@ -107,7 +91,7 @@ export class AuthService {
     if (!token) return false;
     
     try {
-      const payload = this.decodeTokenPayload(token);
+      const payload = this.decodeToken(token);
       const expiry = payload.exp * 1000; // Convert to milliseconds
       return Date.now() < expiry;
     } catch {
@@ -125,15 +109,7 @@ export class AuthService {
         })
       );
   }
-  private transformRole(roleString: string): number {
-    // Map string roles to numbers based on your API expectations
-    switch (roleString) {
-      case 'Admin': return 0;
-      case 'Teacher': return 1;
-      case 'Student': return 2;
-      default: return 2; // Default to Student
-    }
-  }
+ 
   
   public decodeToken(token: string): any {
     try {
@@ -152,21 +128,21 @@ export class AuthService {
     }
   }
   
-  private decodeTokenPayload(token: string): any {
-    try {
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(
-        atob(base64)
-          .split('')
-          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-          .join('')
-      );
-      return JSON.parse(jsonPayload);
-    } catch (error) {
-      console.error('Error decoding token:', error);
-      return null;
-    }
+  hasRole(role: string): boolean {
+    const userRole = this.getUserRole();
+    return userRole.toLowerCase() === role.toLowerCase();
+  }
+  
+  isStudent(): boolean {
+    return this.hasRole('student');
+  }
+  
+  isTeacher(): boolean {
+    return this.hasRole('teacher');
+  }
+  
+  isAdmin(): boolean {
+    return this.hasRole('admin');
   }
   
 }

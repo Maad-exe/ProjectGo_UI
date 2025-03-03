@@ -7,11 +7,12 @@ import { StudentDashboardComponent } from './student-dashboard/student-dashboard
 import { TeacherDashboardComponent } from './teacher-dashboard/teacher-dashboard.component';
 import { authGuard } from './core/guards/auth.guard';
 import { AuthService } from './services/auth.service';
+import { studentGuard } from './core/guards/student.guard';
 
 export const routes: Routes = [
   { 
     path: '', 
-    redirectTo: '/login', // Changed this to redirect to login by default
+    redirectTo: '/login', 
     pathMatch: 'full'
   },
   { 
@@ -36,7 +37,7 @@ export const routes: Routes = [
   { 
     path: 'student-dashboard', 
     component: StudentDashboardComponent, 
-    canActivate: [authGuard]
+    canActivate: [authGuard,studentGuard]
   },
   { 
     path: 'teacher-dashboard', 

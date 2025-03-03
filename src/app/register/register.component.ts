@@ -9,7 +9,7 @@ import { FormsModule } from '@angular/forms'; // Add this import
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule  // Add FormsModule to imports array
+    FormsModule 
   ],
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.scss']
