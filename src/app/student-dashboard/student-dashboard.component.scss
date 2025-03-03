@@ -8,6 +8,7 @@
 .sidebar {
   top: 10px;
   margin-top: 50px;
+  
   width: 260px;
   background: white;
   box-shadow: 2px 0 10px rgba(0,0,0,0.1);
@@ -16,37 +17,12 @@
   top: 0;
   bottom: 0;
   padding-top: calc(64px + 1rem); // Account for topbar height
+  
   z-index: 100;
 
-  .brand-section {
-    padding: 0 1.5rem 2rem 1.5rem;
-    margin-bottom: 1rem;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      text-decoration: none;
-      margin-bottom: 0.5rem;
-
-      .logo-text {
-        font-size: 240px;
-        font-weight: 600;
-        color: #2d4aca;
-        letter-spacing: -0.5px;
-      }
-
-      .logo-dot {
-        width: 8px;
-        height: 8px;
-        background: #6366f1;
-        border-radius: 50%;
-        margin-left: 4px;
-        animation: pulse 2s infinite;
-      }
-    }
-  }
+  
+    
+  
 
   .nav-item {
     display: flex;
@@ -58,8 +34,9 @@
     transition: all 0.3s ease;
     cursor: pointer;
     margin-top: 0.5rem ;
-    margin-right:3.5rem ;
+    margin-right:2.5rem ;
     margin-bottom: 0.5rem;
+    left: 15px;
     position: relative; // Added for badges
 
     .badge {
@@ -103,11 +80,13 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  margin-left: 260px; // Match sidebar width
-  margin-top: 64px; // Match topbar height
+  margin-left: 260px;
+  margin-top: 64px; /* Match standard topbar height */
   min-height: calc(100vh - 64px);
   background: #f8fafc;
 }
+
+
 
 .topbar {
   position: fixed;
@@ -115,14 +94,16 @@
   left: 0;
   right: 0;
   background: white;
-  padding: 0.75rem 2rem;
+  padding: 0.5rem 2rem;
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: 320px 1fr auto;
   gap: 2rem;
   align-items: center;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   z-index: 1000;
-  height: 64px; // Fixed height for topbar
+  height: 64px;
+
+  
 
   .search-bar {
     justify-self: center;
@@ -131,6 +112,8 @@
     align-items: center;
     background: #f1f5f9;
     padding: 0.5rem 1rem;
+    
+
     margin-right: 190px;
     border-radius: 8px;
 
@@ -228,6 +211,30 @@
   }
 }
 
+
+.brand-section {
+  display: flex;
+  align-items: center;
+  max-width: 320px;
+  height: 100%;
+  padding: 0.25rem 0;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  position: relative; /* Position relative for absolute positioning of logo */
+}
+
+.logo-image {
+  height: 150px; /* Reasonable increase */
+  width: auto;
+  object-fit: contain;
+  position: absolute; /* Take it out of the normal flow */
+  top: -42px; /* Adjust to make it appear larger by extending outside the topbar */
+  left: -25px;
+}
 // Welcome Dashboard Styles
 .dashboard-welcome {
   padding: 2rem;
