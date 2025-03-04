@@ -1,4 +1,4 @@
-// src/app/services/group.service.ts
+
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -10,6 +10,7 @@ export interface StudentDetails {
   email: string;
   enrollmentNumber: string;
   department: string;
+  isCreator: boolean;
 }
 
 export interface GroupDetails {

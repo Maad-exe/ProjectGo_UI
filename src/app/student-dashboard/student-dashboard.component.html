@@ -158,7 +158,7 @@
         <div class="create-group-form" *ngIf="showGroupForm">
           <form [formGroup]="createGroupForm" (ngSubmit)="createGroup()">
             <div class="form-group">
-              <label for="groupName">Group Name:</label>
+              <label for="groupName">FYP Project Name:</label>
               <input type="text" id="groupName" formControlName="groupName" placeholder="Enter group name">
             </div>
 
@@ -183,7 +183,10 @@
                 {{searchErrors[control.value]}}
               </div>
               <div *ngIf="studentSearchResults[control.value]" class="student-info">
-                {{studentSearchResults[control.value]?.fullName}} ({{studentSearchResults[control.value]?.email}})
+                {{studentSearchResults[control.value]?.fullName}} 
+                {{studentSearchResults[control.value]?.enrollmentNumber}}
+                {{studentSearchResults[control.value]?.department}}
+                ({{studentSearchResults[control.value]?.email}})
               </div>
             </div>
 
@@ -199,12 +202,13 @@
         <!-- Display Groups -->
         <div class="group-list" *ngIf="groups.length > 0">
           <div class="group-card" *ngFor="let group of groups">
-            <h3>{{group.name}}</h3>
+            <h3>FYP Group: {{group.name}}</h3>
             <p>Created at: {{group.createdAt | date}}</p>
             <h4>Members:</h4>
             <ul>
               <li *ngFor="let member of group.members">
                 {{member.fullName}} ({{member.email}})
+                <span *ngIf="member.isCreator" class="creator-badge">Creator</span>
               </li>
             </ul>
           </div>
