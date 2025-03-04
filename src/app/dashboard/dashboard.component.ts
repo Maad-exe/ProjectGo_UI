@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { NotificationService } from '../services/notifications.service';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -20,6 +21,7 @@ export class DashboardComponent implements OnInit {
   addUserForm: FormGroup;
   isLoading = false;
   currentTime = new Date();
+
 
   
   userData = {
@@ -50,7 +52,8 @@ export class DashboardComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private fb: FormBuilder,
-    private router: Router
+    private router: Router,
+    private notificationService: NotificationService
   ) {
     this.addUserForm = this.fb.group({
       fullName: ['', Validators.required],
@@ -63,6 +66,7 @@ export class DashboardComponent implements OnInit {
     officeLocation: [null],
     enrollmentNumber: [null],
     department: [null]
+
     });
       // Update validations when role changes
   this.addUserForm.get('role')?.valueChanges.subscribe(role => {
@@ -90,6 +94,8 @@ export class DashboardComponent implements OnInit {
         control?.updateValueAndValidity();
       });
     }
+    
+   
   });
     }
 
@@ -134,16 +140,17 @@ export class DashboardComponent implements OnInit {
           console.log('Registration successful:', response);
           this.isLoading = false;
           this.closeAddUserModal();
-          alert('User registered successfully');
+          this.notificationService.showSuccess(`User registered successfully`);
         },
         error: (error) => {
           console.error('Registration error:', error);
           this.isLoading = false;
-          alert(error.error?.message || 'Failed to register user');
+          this.notificationService.showError('Failed to register user');
         }
       });
     } else {
       console.error('Form validation errors:', this.addUserForm.errors);
+      this.notificationService.showWarning('Failed to register user');
     }
   }
       

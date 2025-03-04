@@ -5,12 +5,13 @@ import { TeacherService, TeacherDetails } from '../services/teacher.service';
 import { AuthService } from '../services/auth.service';
 import { GroupService, StudentDetails, GroupDetails, CreateGroupRequest } from '../services/group.service';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule, FormControl, NonNullableFormBuilder } from '@angular/forms';
-
+import { NotificationService } from '../services/notifications.service';
 interface StudentInfo {
   fullName: string;
   enrollmentNumber: string;
   department: string;
   email: string;
+ 
 }
 
 @Component({
@@ -31,7 +32,8 @@ export class StudentDashboardComponent implements OnInit {
     fullName: '',
     enrollmentNumber: '',
     department: '',
-    email: ''
+    email: '',
+ 
   };
 
   // Dummy data for different views
@@ -65,7 +67,8 @@ export class StudentDashboardComponent implements OnInit {
     private authService: AuthService,
     private groupService: GroupService,
     private fb: NonNullableFormBuilder, 
-    private router: Router
+    private router: Router,
+    private notificationService: NotificationService
   ) {
     this.createGroupForm = this.fb.group({
       groupName: ['', Validators.required],
@@ -82,10 +85,12 @@ export class StudentDashboardComponent implements OnInit {
     
     const token = localStorage.getItem('token');
     if (token) {
+      
       console.log('Full token payload:', this.authService.decodeToken(token));
     }
-    
+   
     this.loadStudentInfo();
+    this.notificationService.showSuccess(`Welcome ${this.studentInfo.fullName}`);
     this.setView('dashboard');
   }
 
@@ -103,7 +108,8 @@ export class StudentDashboardComponent implements OnInit {
         fullName: payload.name || 'Student Name',
         email: payload.email || payload.sub || '', // Try email first, fallback to sub
         department: payload.department || 'Not Available',
-        enrollmentNumber: payload.enrollmentNumber || 'Not Available'
+        enrollmentNumber: payload.enrollmentNumber || 'Not Available',
+        
       };
     }
   }

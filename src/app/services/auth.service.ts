@@ -4,7 +4,8 @@ import { Router } from '@angular/router';
 import { environment } from '../../env/env';
 import { catchError, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
-
+import { NotificationService } from './notifications.service';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 interface LoginResponse {
   token: string;
   message?: string;
@@ -28,7 +29,8 @@ export class AuthService {
 
   constructor(
     private http: HttpClient,
-    private router: Router  
+    private router: Router,
+    private notificationService: NotificationService
   ) { }
 
   login(email: string, password: string): Observable<LoginResponse> {
@@ -46,6 +48,9 @@ export class AuthService {
                               role === 'teacher' ? '/teacher-dashboard' :
                               '/login';
             this.router.navigate([targetRoute]);
+            this.notificationService.showSuccess (`Welcome ${decodedToken?.name}`);
+         
+            
           }
         })
       );
@@ -82,8 +87,10 @@ export class AuthService {
   }
 
   logout(): void {
+    this.notificationService.showInfo('User logged out');
     localStorage.removeItem('token');
     void this.router.navigate(['/login']);
+    
   }
 
   isLoggedIn(): boolean {

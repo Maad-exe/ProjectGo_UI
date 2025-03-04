@@ -5,11 +5,12 @@ import { AppComponent } from './app/app.component';
 import { routes } from './app/app.routes';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { authInterceptor } from './app/core/interceptors/intercept';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
 bootstrapApplication(AppComponent, {
   providers: [
     provideRouter(routes),
     provideHttpClient(withInterceptors([authInterceptor])),
-    provideAnimations()
+    provideAnimations(), provideAnimationsAsync()
   ]
 }).catch(err => console.error(err));

@@ -3,11 +3,12 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { AuthService } from '../services/auth.service';
 import { RouterLink, Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
-
+import { NotificationService } from '../services/notifications.service';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [ReactiveFormsModule, CommonModule, RouterModule],
+  imports: [ReactiveFormsModule, CommonModule, RouterModule, MatSnackBarModule],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss']
 })
@@ -19,13 +20,14 @@ export class LoginComponent {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
-  ) {
-    this.loginForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', Validators.required]
-    });
-  }
+    private router: Router,
+  private notificationService: NotificationService
+) {
+  this.loginForm = this.fb.group({
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required, Validators.minLength(6)]]
+  });
+}
 
   showPassword = false;
 
@@ -61,6 +63,11 @@ export class LoginComponent {
   }
 
   onSubmit() {
+    
+    if (this.loginForm.invalid) {
+      this.notificationService.showError('Please fill in all required fields correctly');
+      return;
+    } 
     if (this.loginForm.valid) {
       this.isLoading = true;
       this.authService.login(this.loginForm.value.email, this.loginForm.value.password)
@@ -71,7 +78,7 @@ export class LoginComponent {
               console.log('Login - Token stored:', response.token); // Add this line
               const decodedToken = this.authService.decodeToken(response.token);
               console.log('Login successful - Role:', decodedToken?.role);
-              
+             // this.notificationService.showSuccess('Login successful');
               // Navigate based on role
               const role = decodedToken?.role?.toLowerCase();
               const targetRoute = role === 'admin' ? '/admin-dashboard' :
@@ -80,11 +87,13 @@ export class LoginComponent {
                                 '/login';
               
               this.router.navigate([targetRoute]);
+            //  this.notificationService.showInfo(`Navigating to ${targetRoute}`);
             }
             this.isLoading = false;
           },
           error: (error) => {
             console.error('Login failed:', error);
+            this.notificationService.showError('An error occurred during login');
             this.errorMessage = error.error?.message || 'Login failed';
             this.isLoading = false;
           }
