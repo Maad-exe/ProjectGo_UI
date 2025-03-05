@@ -8,6 +8,7 @@ import { TeacherDashboardComponent } from './teacher-dashboard/teacher-dashboard
 import { authGuard } from './core/guards/auth.guard';
 import { AuthService } from './services/auth.service';
 import { studentGuard } from './core/guards/student.guard';
+import { UserManagementComponent } from './dashboard/user-management/user-management.component';
 
 export const routes: Routes = [
   { 
@@ -32,7 +33,13 @@ export const routes: Routes = [
   { 
     path: 'admin-dashboard', 
     component: DashboardComponent, 
-    canActivate: [authGuard]
+    canActivate: [authGuard],
+    children: [
+      {
+        path: 'users',
+        component: UserManagementComponent
+      }
+    ]
   },
   { 
     path: 'student-dashboard', 
@@ -44,5 +51,5 @@ export const routes: Routes = [
     component: TeacherDashboardComponent, 
     canActivate: [authGuard]
   },
-  { path: '**', redirectTo: '/login' } // Added forward slash
+  { path: '**', redirectTo: '/login' } 
 ];

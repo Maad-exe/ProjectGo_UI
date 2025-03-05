@@ -9,10 +9,28 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
     font-weight: 500;
     padding: 16px 24px;
     border-radius: 8px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
+    box-shadow: 0px 4px 10px rgba(202, 103, 103, 0.15);
     display: flex;
     align-items: center;
     justify-content: space-between;
+}
+
+// Add these variables to your global styles
+:root {
+  // Primary Color Scheme
+  --primary-base: #4A90E2;
+  --primary-light: #89CFF3;
+  --primary-dark: #2C7BE5;
+  
+  // Neutral Colors
+  --neutral-50: #F9FAFB;
+  --neutral-100: #F3F4F6;
+  --neutral-200: #E5E7EB;
+  --neutral-700: #374151;
+  
+  // Other variables
+  --shadow-color: rgba(0, 0, 0, 0.08);
+  --sidebar-width: 260px;
 }
 
 /* Success Snackbar */
@@ -21,6 +39,8 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
     color: #E8F5E9 !important; /* Soft Green Text */
     border-left: 6px solid #66BB6A !important; /* Light Green Accent */
 }
+
+
 
 /* Error Snackbar */
 .mat-snack-bar-error {

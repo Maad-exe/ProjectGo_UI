@@ -10,6 +10,8 @@ export interface TeacherDetails {
   qualification: string;
   areaOfSpecialization: string;
   officeLocation: string;
+  assignedGroups: number;
+ 
 }
 
 @Injectable({

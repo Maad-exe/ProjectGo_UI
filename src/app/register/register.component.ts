@@ -82,7 +82,7 @@ export class RegisterComponent {
      : this.role === 'Teacher' ? 'register/teacher' 
      : 'register/student';
 
-    this.http.post(`http://localhost:5114/api/auth/${endpoint}`, registerData).subscribe(
+    this.http.post(`http://localhost:5000/api/auth/${endpoint}`, registerData).subscribe(
       (response: any) => {
         console.log('User registered successfully');
         this.router.navigate(['/admin-dashboard']);

@@ -1,19 +1,28 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, OnDestroy } from '@angular/core';
 import { AuthService } from '../services/auth.service';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { NotificationService } from '../services/notifications.service';
+import { Subscription } from 'rxjs';
+// Update this import path
+import { UserManagementComponent } from './user-management/user-management.component';
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule],
+  imports: [
+    CommonModule, 
+    RouterModule, 
+    ReactiveFormsModule
+  ],
   templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.scss']
+  styleUrls: ['./dashboard.component.scss'],
+  encapsulation: ViewEncapsulation.None
+
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   //private fb = inject(FormBuilder);
   isSidebarCollapsed = false;
   isAddUserModalOpen = false;
@@ -21,13 +30,15 @@ export class DashboardComponent implements OnInit {
   addUserForm: FormGroup;
   isLoading = false;
   currentTime = new Date();
+  private subscription: Subscription = new Subscription();
 
+  get isMainDashboard(): boolean {
+    return this.router.url === '/admin-dashboard';
+  }
 
-  
   userData = {
     name: 'Hammad Abbas',
     role: 'Admin',
-    avatar: 'assets/avatar.png',
     department: 'Computer Science'
   };
   
@@ -102,6 +113,21 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit() {
     this.updateTime();
+     // Subscribe to notification service actions with proper subscription management
+    this.subscription.add(
+      this.notificationService.action$.subscribe(action => {
+        if (action === 'openAddUserModal') {
+          this.showAddUserModal();
+        }
+      })
+    );
+  }
+
+  ngOnDestroy() {
+    // Clean up subscriptions when component is destroyed
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
   }
 
   updateTime() {
