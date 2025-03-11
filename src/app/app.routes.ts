@@ -2,6 +2,7 @@
 import { Routes, Router } from '@angular/router';
 import { inject } from '@angular/core';
 import { LoginComponent } from './login/login.component';
+import { RegisterComponent } from './register/register.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { StudentDashboardComponent } from './student-dashboard/student-dashboard.component';
 import { TeacherDashboardComponent } from './teacher-dashboard/teacher-dashboard.component';
@@ -29,6 +30,10 @@ export const routes: Routes = [
       }
       return true;
     }]
+  },
+  { 
+    path: 'register', 
+    component: RegisterComponent
   },
   { 
     path: 'admin-dashboard', 

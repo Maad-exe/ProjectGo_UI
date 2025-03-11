@@ -57,6 +57,7 @@ export class UserManagementComponent implements OnInit {
 
   ngOnInit() {
     this.loadUsers();
+    
   }
 
   loadUsers() {
@@ -69,7 +70,7 @@ export class UserManagementComponent implements OnInit {
         this.dataSource.paginator = this.paginator;
         this.dataSource.sort = this.sort;
         this.isLoading = false;
-     
+        this.applySorting(this.sortOption= 'date');
       },
       error: (error) => {
         this.notificationService.showError('Failed to load users');
@@ -156,7 +157,7 @@ export class UserManagementComponent implements OnInit {
     // Reset to original data
     this.dataSource.data = [...this.originalData];
     // Apply default sort
-  
+    this.applySorting(this.sortOption= 'date');
     
     // Reset paginator
     if (this.paginator) {
@@ -173,10 +174,10 @@ export class UserManagementComponent implements OnInit {
       
       // If we can't access the component directly through the router, use a shared service approach
       if (dashboardComponent) {
-        // Direct access if possible (less likely in practice)
+       
         (dashboardComponent as any).showAddUserModal();
       } else {
-        // Use a service to communicate between components (more reliable)
+       
         this.notificationService.triggerAction('openAddUserModal');
       }
     });

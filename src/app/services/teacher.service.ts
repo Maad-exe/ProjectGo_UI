@@ -4,7 +4,9 @@ import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../env/env';
 import { AuthService } from './auth.service';
+import { map } from 'rxjs/operators';
 export interface TeacherDetails {
+  id: number;
   fullName: string;
   email: string;
   qualification: string;
@@ -31,6 +33,34 @@ export class TeacherService {
           } else {
             console.error('Error fetching teachers:', error);
           }
+          throw error;
+        })
+      );
+  }
+
+  getTeacherById(teacherId: number): Observable<TeacherDetails> {
+    // Make sure the URL matches exactly what's working in Swagger
+    const url = `${environment.apiBaseUrl}/api/teachers/${teacherId}`;
+    console.log('Fetching teacher details from:', url);
+    return this.http.get<TeacherDetails>(url)
+      .pipe(
+        // Map the response to handle potential property name differences
+        map((response: any) => {
+          // Create a normalized teacher object that matches our interface
+          const teacher: TeacherDetails = {
+            id: response.id,
+            fullName: response.fullName || response.FullName, 
+            email: response.email || response.Email,
+            qualification: response.qualification || response.Qualification,
+            areaOfSpecialization: response.areaOfSpecialization || response.AreaOfSpecialization,
+            officeLocation: response.officeLocation || response.OfficeLocation,
+            assignedGroups: response.assignedGroups || response.AssignedGroups
+          };
+          console.log('Normalized teacher object:', teacher);
+          return teacher;
+        }),
+        catchError(error => {
+          console.error(`Error fetching teacher with ID ${teacherId}:`, error);
           throw error;
         })
       );

@@ -1,1 +1,158 @@
-<p>teacher-dashboard works!</p>
+<div class="dashboard-container">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">
+      <img src="assets/Logo.png" alt="ProjectGo Logo">
+      <h1>ProjectGo</h1>
+    </div>
+    
+    <div class="user-info">
+      <img src="assets/mypic.jpg" alt="User" class="avatar">
+      <div class="user-details">
+        <h3>{{ teacherInfo.fullName }}</h3>
+        <p>Teacher</p>
+      </div>
+    </div>
+    
+    <nav class="nav-menu">
+      <ul>
+        <li [class.active]="currentView === 'dashboard'" (click)="setView('dashboard')">
+          <i class="fas fa-home"></i> Dashboard
+        </li>
+        <li [class.active]="currentView === 'requests'" (click)="setView('requests')">
+          <i class="fas fa-bell"></i> Supervision Requests
+          <span *ngIf="supervisionRequests.length > 0" class="badge">{{ supervisionRequests.length }}</span>
+        </li>
+        <li [class.active]="currentView === 'groups'" (click)="setView('groups')">
+          <i class="fas fa-users"></i> My Groups
+        </li>
+        <li [class.active]="currentView === 'profile'" (click)="setView('profile')">
+          <i class="fas fa-user"></i> Profile
+        </li>
+        <li (click)="logout()">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </li>
+      </ul>
+    </nav>
+  </aside>
+  
+  <!-- Main Content -->
+  <div class="main-content">
+    <header class="header">
+      <h2>Teacher Dashboard</h2>
+      <div class="header-right">
+        <div class="date-time">{{ currentView | titlecase }}</div>
+      </div>
+    </header>
+    
+    <main class="content">
+      <!-- Dashboard View -->
+      <div *ngIf="currentView === 'dashboard'">
+        <h2>Welcome, {{ teacherInfo.fullName }}!</h2>
+        <p>This is your teacher dashboard where you can manage your supervision requests and groups.</p>
+      </div>
+      
+      <!-- Supervision Requests View -->
+      <div *ngIf="currentView === 'requests'">
+        <h2>Supervision Requests</h2>
+        
+        <div class="loading-spinner" *ngIf="isLoading">
+          <i class="fas fa-spinner fa-spin"></i> Loading requests...
+        </div>
+        
+        <div class="no-data" *ngIf="!isLoading && supervisionRequests.length === 0">
+          <i class="fas fa-inbox"></i>
+          <p>You have no pending supervision requests.</p>
+        </div>
+        
+        <div class="request-cards" *ngIf="!isLoading && supervisionRequests.length > 0">
+          <div class="request-card" *ngFor="let request of supervisionRequests">
+            <div class="request-header">
+              <h3>Group: {{ request.groupName }}</h3>
+              <span class="date">{{ request.requestedAt | date }}</span>
+            </div>
+            
+            <div class="request-message">
+              <p><strong>Message:</strong> {{ request.message }}</p>
+            </div>
+            
+            <div class="members-section">
+              <h4>Group Members:</h4>
+              <ul class="member-list">
+                <li *ngFor="let member of request.groupMembers">
+                  <div class="member-info">
+                    <span class="name">{{ member.fullName }}</span>
+                    <span class="email">{{ member.email }}</span>
+                    <span class="enrollment">{{ member.enrollmentNumber }}</span>
+                    <span class="department">{{ member.department }}</span>
+                    <span class="badge creator" *ngIf="member.isCreator">Creator</span>
+                  </div>
+                </li>
+              </ul>
+            </div>
+            
+            <div class="request-actions">
+              <button 
+                class="btn approve" 
+                [disabled]="processingRequestIds.has(request.id)"
+                (click)="respondToRequest(request.id, request.groupId, true)">
+                <i class="fas fa-check"></i> Approve
+              </button>
+              <button 
+                class="btn reject" 
+                [disabled]="processingRequestIds.has(request.id)"
+                (click)="respondToRequest(request.id, request.groupId, false)">
+                <i class="fas fa-times"></i> Reject
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- My Groups View -->
+      <div *ngIf="currentView === 'groups'">
+        <h2>My Groups</h2>
+        
+        <div class="loading-spinner" *ngIf="isLoading">
+          <i class="fas fa-spinner fa-spin"></i> Loading groups...
+        </div>
+        
+        <div class="no-data" *ngIf="!isLoading && teacherGroups.length === 0">
+          <i class="fas fa-users-slash"></i>
+          <p>You don't have any assigned groups yet.</p>
+        </div>
+        
+        <div class="group-cards" *ngIf="!isLoading && teacherGroups.length > 0">
+          <div class="group-card" *ngFor="let group of teacherGroups">
+            <div class="card-header">
+              <h3>{{group.name}}</h3>
+              <span class="date">Created: {{group.createdAt | date}}</span>
+            </div>
+            
+            <div class="card-body">
+              <h4>Members:</h4>
+              <ul class="member-list">
+                <li *ngFor="let member of group.members">
+                  <div class="member-info">
+                    <span class="name">{{member.fullName}}</span>
+                    <span class="email">{{member.email}}</span>
+                    <span class="enrollment">{{member.enrollmentNumber}}</span>
+                    <span class="badge creator" *ngIf="member.isCreator">Creator</span>
+                  </div>
+                </li>
+              </ul>
+            </div>
+            
+            <div class="card-footer">
+              <div class="status-badge approved">
+                <i class="fas fa-check-circle"></i> Supervising
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Other views will be added as needed -->
+    </main>
+  </div>
+</div>

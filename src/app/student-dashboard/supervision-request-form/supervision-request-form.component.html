@@ -1,0 +1,52 @@
+
+<div class="supervision-request-dialog">
+  <div class="dialog-content">
+    <div class="dialog-header">
+      <h2>Request Supervision</h2>
+      <button class="close-btn" (click)="cancel()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="dialog-body">
+      <div class="request-details">
+        <div class="request-info">
+          <h3>Group Information</h3>
+          <div class="group-info">
+            <p><strong>Group Name:</strong> {{ group.name }}</p>
+            <p><strong>Members:</strong> {{ group.members.length }}</p>
+          </div>
+        </div>
+        
+        <div class="request-info">
+          <h3>Teacher Information</h3>
+          <div class="teacher-info">
+            <p><strong>Name:</strong> {{ teacher.fullName }}</p>
+            <p><strong>Specialization:</strong> {{ teacher.areaOfSpecialization }}</p>
+            <p><strong>Email:</strong> {{ teacher.email }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="message-section">
+        <label for="requestMessage">Message to Teacher</label>
+        <textarea 
+          id="requestMessage" 
+          [(ngModel)]="requestMessage" 
+          placeholder="Write a message explaining your project and why you would like this teacher to supervise your group..."
+          rows="5">
+        </textarea>
+        <div class="error-message" *ngIf="error">{{ error }}</div>
+      </div>
+    </div>
+    
+    <div class="dialog-footer">
+      <button class="cancel-btn" (click)="cancel()" [disabled]="isSubmitting">Cancel</button>
+      <button class="submit-btn" (click)="submitRequest()" [disabled]="isSubmitting">
+        <i class="fas fa-paper-plane" *ngIf="!isSubmitting"></i>
+        <i class="fas fa-spinner fa-spin" *ngIf="isSubmitting"></i>
+        {{ isSubmitting ? 'Sending...' : 'Send Request' }}
+      </button>
+    </div>
+  </div>
+</div>

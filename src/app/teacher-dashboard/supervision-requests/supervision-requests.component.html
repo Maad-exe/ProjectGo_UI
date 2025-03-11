@@ -1,0 +1,101 @@
+<!-- src/app/teacher-dashboard/supervision-requests/supervision-requests.component.html -->
+<div class="supervision-requests-container">
+  <div class="section-header">
+    <div class="header-with-back">
+      <button class="back-button" (click)="navigateBack()">
+        <i class="fas fa-arrow-left"></i> Back
+      </button>
+      <h2 class="section-title">Supervision Requests</h2>
+    </div>
+    <p class="section-subtitle">Review and respond to student group supervision requests</p>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <h3>Loading supervision requests...</h3>
+    <p>Please wait while we retrieve your pending requests.</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-state" *ngIf="error">
+    <i class="fas fa-exclamation-triangle"></i>
+    <h3>Error Loading Requests</h3>
+    <p>{{error}}</p>
+    <button (click)="loadRequests()">
+      <i class="fas fa-redo"></i> Retry
+    </button>
+  </div>
+
+  <!-- No Requests State -->
+  <div class="empty-state" *ngIf="!isLoading && !error && requests.length === 0">
+    <i class="fas fa-inbox"></i>
+    <h3>No Pending Requests</h3>
+    <p>You don't have any pending supervision requests at this time.</p>
+  </div>
+
+  <!-- Request Cards -->
+  <div class="request-list" *ngIf="!isLoading && !error && requests.length > 0">
+    <div class="request-card" *ngFor="let request of requests">
+      <div class="request-header">
+        <div class="request-badge">New Request</div>
+        <h3>Group: {{request.groupName}}</h3>
+        <p class="timestamp">Requested on {{formatDate(request.requestedAt)}}</p>
+      </div>
+      
+      <div class="request-body">
+        <div class="message-section" *ngIf="request.message">
+          <h4>Message from students:</h4>
+          <div class="message-content">
+            <i class="fas fa-quote-left"></i>
+            <p>{{request.message}}</p>
+          </div>
+        </div>
+        
+        <div class="group-members">
+          <h4>Group Members:</h4>
+          <ul>
+            <li *ngFor="let member of request.groupMembers">
+              <div class="member-info">
+                <i class="fas fa-user"></i>
+                <div class="member-details">
+                  <span class="name">{{member.fullName}}</span>
+                  <span class="detail">{{member.enrollmentNumber}} - {{member.department}}</span>
+                  <span class="email">{{member.email}}</span>
+                  <span class="creator-badge" *ngIf="member.isCreator">Group Creator</span>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+        
+        <div class="response-section">
+          <div class="response-message">
+            <label for="responseMessage">Response message (optional):</label>
+            <textarea id="responseMessage" [(ngModel)]="responseMessage" 
+                      placeholder="Add a message to your response..."></textarea>
+          </div>
+          
+          <div class="response-actions">
+            <button class="decline-btn" 
+                   [disabled]="respondingToRequestId === request.id"
+                   (click)="respondToRequest(request.id, request.groupId, false)">
+              <i class="fas" [class.fa-times-circle]="respondingToRequestId !== request.id" 
+                 [class.fa-spinner]="respondingToRequestId === request.id" 
+                 [class.fa-spin]="respondingToRequestId === request.id"></i>
+              Decline
+            </button>
+            <button class="approve-btn" 
+                   [disabled]="respondingToRequestId === request.id"
+                   (click)="respondToRequest(request.id, request.groupId, true)">
+              <i class="fas" [class.fa-check-circle]="respondingToRequestId !== request.id" 
+                 [class.fa-spinner]="respondingToRequestId === request.id" 
+                 [class.fa-spin]="respondingToRequestId === request.id"></i>
+              Approve
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

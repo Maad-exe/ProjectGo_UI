@@ -91,9 +91,21 @@
 
       <!-- Teachers List View -->
       <div class="teacher-section" *ngIf="currentView === 'teachers'">
-        <div class="section-header">
+        <div class="section-header" *ngIf="!showTeachersList">
           <h2 class="section-title">Our Distinguished Faculty</h2>
           <p class="section-subtitle">Meet our experienced team of educators</p>
+        </div>
+
+        <div class="section-header" *ngIf="showTeachersList">
+          <h2 class="section-title">Select a Supervisor</h2>
+          <p class="section-subtitle">Choose a faculty member to supervise your project</p>
+          
+          <div class="form-group message-input">
+            <label>Request Message:</label>
+            <textarea [(ngModel)]="supervisionMessage" 
+                      placeholder="Enter a brief message explaining why you'd like this teacher to supervise your project"
+                      rows="3"></textarea>
+          </div>
         </div>
 
         <!-- Loading State -->
@@ -139,6 +151,15 @@
                   <i class="fas fa-location-dot"></i>
                   <span>{{teacher.officeLocation}}</span>
                 </div>
+                
+                <!-- Fix the property name from teacher.Id to teacher.id (lowercase) -->
+                <button *ngIf="showTeachersList" 
+                        class="request-btn" 
+                        [disabled]="isRequestingSupervision"
+                        (click)="requestSupervision(teacher.id)">
+                  <i class="fas fa-paper-plane"></i>
+                  {{ isRequestingSupervision ? 'Sending...' : 'Request Supervision' }}
+                </button>
               </div>
             </div>
           </div>
@@ -148,13 +169,59 @@
       <!-- Group Management View -->
       <div class="group-section" *ngIf="currentView === 'groups'">
         <div class="section-header">
-          <h2 class="section-title">My Groups</h2>
-          <p class="section-subtitle">Manage your project groups</p>
+          <h2>Your Groups</h2>
+          <div class="group-stats">
+            <p><strong>Has Approved Group:</strong> {{ hasApprovedGroup ? 'Yes' : 'No' }}</p>
+            <p><strong>Approved Group Name:</strong> {{ approvedGroup ? approvedGroup.name : 'None' }}</p>
+            <p><strong>Total Groups:</strong> {{ groups.length }}</p>
+          </div>
+          <button class="create-group-btn" 
+                  *ngIf="!hasApprovedGroup && !showGroupForm" 
+                  (click)="showCreateGroupForm()">
+            <i class="fas fa-plus-circle"></i> Create New Group
+          </button>
         </div>
-
-        <button class="create-group-btn" (click)="showCreateGroupForm()" *ngIf="!showGroupForm">
-          <i class="fas fa-plus-circle"></i> Create New Group
-        </button>
+        
+        <!-- Approved Group Display (Priority) -->
+        <div class="approved-group" *ngIf="hasApprovedGroup && approvedGroup">
+          <div class="approved-badge">
+            <i class="fas fa-check-circle"></i> Supervised Group
+          </div>
+          
+          <div class="approved-group-details">
+            <h3>{{approvedGroup.name}}</h3>
+            <p class="created-date">Created: {{approvedGroup.createdAt | date}}</p>
+            
+            <div class="supervisor-info" *ngIf="groupSupervisor">
+              <h4>Supervisor</h4>
+              <div class="supervisor-details">
+                <div class="supervisor-name">
+                  <i class="fas fa-user-tie"></i> {{groupSupervisor.fullName}}
+                </div>
+                <div class="supervisor-email">
+                  <i class="fas fa-envelope"></i> {{groupSupervisor.email}}
+                </div>
+                <div class="supervisor-specialization" *ngIf="groupSupervisor.areaOfSpecialization">
+                  <i class="fas fa-microscope"></i> {{groupSupervisor.areaOfSpecialization}}
+                </div>
+                <div class="supervisor-location" *ngIf="groupSupervisor.officeLocation">
+                  <i class="fas fa-location-dot"></i> {{groupSupervisor.officeLocation}}
+                </div>
+              </div>
+            </div>
+            
+            <h4>Group Members</h4>
+            <ul class="member-list">
+              <li *ngFor="let member of approvedGroup.members">
+                <div class="member-details">
+                  <span class="member-name">{{member.fullName}}</span>
+                  <span class="member-email">{{member.email}}</span>
+                  <span class="badge creator" *ngIf="member.isCreator">Creator</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
 
         <!-- Create Group Form -->
         <div class="create-group-form" *ngIf="showGroupForm">
@@ -201,22 +268,75 @@
           </form>
         </div>
 
-        <!-- Display Groups -->
-        <div class="group-list" *ngIf="groups.length > 0">
-          <div class="group-card" *ngFor="let group of groups">
-            <h3>FYP Group: {{group.name}}</h3>
-            <p>Created at: {{group.createdAt | date}}</p>
-            <h4>Members:</h4>
-            <ul>
-              <li *ngFor="let member of group.members">
-                {{member.fullName}} ({{member.email}})
-                <span *ngIf="member.isCreator" class="creator-badge">Creator</span>
-              </li>
-            </ul>
-          </div>
+        <!-- Groups List -->
+        <div class="groups-list" *ngIf="groups.length > 0">
+          <h4 *ngIf="hasApprovedGroup">Other Groups</h4>
+          
+          <ng-container *ngFor="let group of groups">
+            <div class="group-card" 
+                 [class.approved]="group.supervisionStatus === 'Approved'"
+                 [class.requested]="group.supervisionStatus === 'Requested'"
+                 [class.rejected]="group.supervisionStatus === 'Rejected'"
+                 *ngIf="!hasApprovedGroup || (approvedGroup && approvedGroup.id !== group.id)">
+              
+              <h3>{{ group.name }}</h3>
+              <p class="created-date">Created: {{group.createdAt | date}}</p>
+              
+              <div class="group-status">
+                <strong>Status:</strong> 
+                <span class="status-text" [ngClass]="group.supervisionStatus?.toLowerCase() || 'pending'">
+                  {{ group.supervisionStatus || 'Pending' }}
+                </span>
+              </div>
+              
+              <div *ngIf="group.teacherName" class="supervisor-name">
+                <i class="fas fa-user-tie"></i> <strong>Supervisor:</strong> {{ group.teacherName }}
+              </div>
+              
+              <h4>Members:</h4>
+              <ul class="member-list">
+                <li *ngFor="let member of group.members">
+                  <div class="member-info">
+                    <span class="name">{{ member.fullName }}</span>
+                    <span class="email">{{ member.email }}</span>
+                    <span class="badge creator" *ngIf="member.isCreator">Creator</span>
+                  </div>
+                </li>
+              </ul>
+              
+              <!-- Group Actions -->
+              <div class="group-actions">
+                <!-- Show request supervision button only if conditions met -->
+                <button 
+                  class="action-btn request-supervision" 
+                  *ngIf="isGroupCreator(group) && 
+                        (!group.supervisionStatus || group.supervisionStatus === 'None' || 
+                         group.supervisionStatus === 'Pending' || group.supervisionStatus === 'Rejected') && 
+                        !hasApprovedGroup"
+                  (click)="showRequestSupervisionForm(group.id)">
+                  <i class="fas fa-user-tie"></i> Request Supervision
+                </button>
+                
+                <!-- Status indicators -->
+                <div class="status-badge" *ngIf="group.supervisionStatus === 'Requested'">
+                  <i class="fas fa-clock"></i> Supervision Requested
+                </div>
+                
+                <div class="status-badge approved" *ngIf="group.supervisionStatus === 'Approved'">
+                  <i class="fas fa-check-circle"></i> Supervision Approved
+                </div>
+                
+                <div class="status-badge rejected" *ngIf="group.supervisionStatus === 'Rejected'">
+                  <i class="fas fa-times-circle"></i> Supervision Rejected
+                </div>
+              </div>
+            </div>
+          </ng-container>
         </div>
-        <div class="no-data" *ngIf="groups.length === 0 && !showGroupForm">
-          No groups created yet.
+        
+        <!-- No groups message -->
+        <div class="no-groups" *ngIf="!isLoading && groups.length === 0">
+          <p>You are not a member of any project groups yet.</p>
         </div>
       </div>
     </main>

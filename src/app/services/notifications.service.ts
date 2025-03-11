@@ -15,7 +15,9 @@ export class NotificationService {
   showSuccess(message: string) {
     this.snackBar.open(message, 'Dismiss', {
       duration: 3000, 
-      panelClass: ['mat-snack-bar-success']
+      panelClass: ['mat-snack-bar-success'],
+      //  horizontalPosition: 'left',
+      //   verticalPosition: 'top'
     });
   }
 
@@ -36,7 +38,8 @@ export class NotificationService {
   showInfo(message: string) {
     this.snackBar.open(message, 'Dismiss', {
       duration: 3000, 
-      panelClass: ['mat-snack-bar-info']
+      panelClass: ['mat-snack-bar-info'],
+      
     });
   }
 

@@ -1,4 +1,3 @@
-
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -18,11 +17,23 @@ export interface GroupDetails {
   name: string;
   createdAt: string;
   members: StudentDetails[];
+  teacherId?: number | null;
+  teacherName?: string; 
+  supervisionStatus?: string;
 }
 
 export interface CreateGroupRequest {
   groupName: string;
   memberEmails: string[];
+}
+
+export interface GroupSupervisionStatus {
+  status: string;
+  teacherId: number | null;
+}
+
+export interface GroupStatusMap {
+  [groupId: string]: GroupSupervisionStatus;
 }
 
 @Injectable({
@@ -47,5 +58,12 @@ export class GroupService {
 
   searchStudentByEmail(email: string): Observable<StudentDetails> {
     return this.http.get<StudentDetails>(`${this.apiUrl}/student/search?email=${email}`);
+  }
+
+  // Properly implemented checkGroupsSupervisionStatus method
+  checkGroupsSupervisionStatus(groupIds: number[]): Observable<GroupStatusMap> {
+    // Create a comma-separated list of IDs for the query parameter
+    const idsParam = groupIds.join(',');
+    return this.http.get<GroupStatusMap>(`${this.apiUrl}/supervision-status?ids=${idsParam}`);
   }
 }
