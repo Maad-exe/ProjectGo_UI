@@ -30,7 +30,11 @@
     <div class="chat-messages" #chatMessages>
       <div *ngFor="let message of messages" 
            class="message" 
-           [ngClass]="{'own-message': message.senderId === userId, 'other-message': message.senderId !== userId}">
+           [ngClass]="{
+             'own-message': message.senderId === userId, 
+             'other-message': message.senderId !== userId,
+             'teacher-message': message.senderRole === 'Teacher'
+           }">
         <div class="message-header">
           <span class="sender-name">{{ message.senderName }}</span>
           <span class="sender-role">{{ message.senderRole }}</span>

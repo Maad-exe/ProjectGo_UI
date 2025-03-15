@@ -397,11 +397,17 @@
 
       <!-- Add this after the other view sections -->
       <!-- Group Chat View -->
-      <div class="chat-view-container" *ngIf="currentView === 'chat' && showGroupChat && approvedGroup">
-        <div class="view-header">
-          <h2>{{ approvedGroup.name }} - Group Chat</h2>
-          <p>Communicate with your team and supervisor in real-time</p>
+      <div   class="chat-view-container" *ngIf="currentView === 'chat' && showGroupChat && approvedGroup">
+        <div  class="view-header">
+          <!-- <h2 >{{ approvedGroup.name }} - Group Chat</h2> -->
+          <!-- <p >Communicate with your team and supervisor in real-time</p> -->
         </div>
+
+        <!-- <div  style="margin-bottom: -15px; margin-top: -22px;" class="chat-view-container" *ngIf="currentView === 'chat' && showGroupChat && approvedGroup">
+          <div  class="view-header">
+            <h2 style="padding-left:4px; font-size: larger; ">{{ approvedGroup.name }} - Group Chat</h2>
+            <p style="margin-top: -15px; margin-bottom: 5px; padding-left:6px; font-weight: 100;">Communicate with your team and supervisor in real-time</p>
+          </div> -->
         
         <div class="chat-wrapper">
           <app-group-chat 
