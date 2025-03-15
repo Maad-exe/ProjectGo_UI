@@ -10,6 +10,10 @@ import { SupervisionService, SupervisionRequestDto } from '../services/supervisi
 import { FormsModule } from '@angular/forms'; // Add this import
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { MatDialog } from '@angular/material/dialog';
+import { GroupCleanupInfoDialogComponent } from '../shared/group-cleanup-info-dialog/group-cleanup-info-dialog.component';
+import { GroupChatComponent } from '../group-chat/group-chat.component';
+
 interface StudentInfo {
   fullName: string;
   enrollmentNumber: string;
@@ -21,7 +25,7 @@ interface StudentInfo {
 @Component({
   selector: 'app-student-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, FormsModule, GroupChatComponent],
   templateUrl: './student-dashboard.component.html',
   styleUrls: ['./student-dashboard.component.scss']
 })
@@ -73,6 +77,7 @@ export class StudentDashboardComponent implements OnInit {
   hasApprovedGroup: boolean = false;
   approvedGroup: GroupDetails | null = null;
   groupSupervisor: TeacherDetails | null = null;
+  showGroupChat: boolean = false;
 
   constructor(
     private teacherService: TeacherService,
@@ -81,7 +86,8 @@ export class StudentDashboardComponent implements OnInit {
     private fb: NonNullableFormBuilder, 
     private router: Router,
     private notificationService: NotificationService,
-    private supervisionService: SupervisionService
+    private supervisionService: SupervisionService,
+    private dialog: MatDialog
   ) {
     this.createGroupForm = this.fb.group({
       groupName: ['', Validators.required],
@@ -135,10 +141,25 @@ export class StudentDashboardComponent implements OnInit {
   setView(view: string) {
     console.log('Setting view to:', view);
     this.currentView = view;
+    
+    // Reset specific view states if we're not switching to that view
+    if (view !== 'chat') {
+      this.showGroupChat = false;
+    }
+    
     if (view === 'teachers') {
       this.loadTeachers();
     } else if (view === 'groups') {
       this.loadStudentGroups();
+      this.showGroupForm = false;
+      this.showTeachersList = false;
+    } else if (view === 'chat') {
+      if (this.hasApprovedGroup && this.approvedGroup) {
+        this.showGroupChat = true;
+      } else {
+        this.notificationService.showInfo('You need to be in an approved group to access the group chat');
+        this.setView('groups');
+      }
     }
   }
 
@@ -200,11 +221,28 @@ export class StudentDashboardComponent implements OnInit {
   }
 
   async searchStudent(email: string, index: number) {
+    if (!email || !email.trim()) {
+      this.searchErrors[email] = 'Please enter an email address';
+      return;
+    }
+  
     this.isSearchingStudent = true;
     this.searchErrors[email] = '';
     try {
       const student = await this.groupService.searchStudentByEmail(email).toPromise();
-      this.studentSearchResults[email] = student || null; // Handle undefined case
+      
+      // If student is found, check if they're already in a supervised group
+      if (student) {
+        const isInSupervisedGroup = await this.checkIfStudentInSupervisedGroup(student.id);
+        
+        if (isInSupervisedGroup) {
+          this.studentSearchResults[email] = null;
+          this.searchErrors[email] = `${student.fullName} is already part of an approved group and cannot join another group`;
+          return;
+        }
+      }
+      
+      this.studentSearchResults[email] = student || null;
     } catch (error: any) {
       this.studentSearchResults[email] = null;
       this.searchErrors[email] = error.error?.message || 'Student not found';
@@ -215,25 +253,48 @@ export class StudentDashboardComponent implements OnInit {
 
   async createGroup() {
     if (this.createGroupForm.valid) {
+      // First check if all student searches were successful and none are in supervised groups
+      const memberEmails = this.memberEmails.value.filter((email): email is string => email !== null);
+      
+       // Check specifically which members have errors
+    const membersWithErrors = memberEmails.filter(email => 
+      !this.studentSearchResults[email] || this.searchErrors[email]
+    );
+    
+    if (membersWithErrors.length > 0) {
+      // Create a more informative error message listing problematic members
+      const errorMessages = membersWithErrors.map(email => {
+        const error = this.searchErrors[email];
+        if (error && error.includes('already part of an approved group')) {
+          return `${email} is already part of an approved group and cannot join another group.`;
+        }
+        return `${email}: ${this.searchErrors[email] || 'Unknown error'}`;
+      });
+      
+      this.groupCreationError = `Please resolve the following issues:\n${errorMessages.join('\n')}`;
+      return;
+    }
+    
+      
       this.isCreatingGroup = true;
       this.groupCreationError = null;
-
-      const memberEmails = this.memberEmails.value.filter((email): email is string => email !== null);
+  
       const createGroupRequest: CreateGroupRequest = {
         groupName: this.createGroupForm.value.groupName || '',
         memberEmails: memberEmails
       };
-
+  
       try {
         const createdGroup = await this.groupService.createGroup(createGroupRequest).toPromise();
         console.log('Group created successfully:', createdGroup);
-        if (createdGroup) { // Add this check
+        if (createdGroup) {
           this.groups.push(createdGroup);
         }
         this.showGroupForm = false;
         this.createGroupForm.reset();
         this.memberEmails.clear();
         this.loadStudentGroups();
+        this.notificationService.showSuccess('Group created successfully');
       } catch (error: any) {
         console.error('Group creation failed:', error);
         this.groupCreationError = error.error?.message || 'Failed to create group';
@@ -243,8 +304,8 @@ export class StudentDashboardComponent implements OnInit {
     }
   }
 
- // Update the loadStudentGroups method to handle everything without the separate checkGroupSupervisionStatus call
-// src/app/student-dashboard/student-dashboard.component.ts
+ 
+
 loadStudentGroups() {
   const token = localStorage.getItem('token');
   if (token) {
@@ -255,11 +316,42 @@ loadStudentGroups() {
       next: (groups) => {
         console.log('Student groups loaded:', groups);
         
+        // If we have an approved group, we should only have one group
+        const approvedGroup = groups.find(g => 
+          g.supervisionStatus === 'Approved' && 
+          g.teacherId !== null && g.teacherId !== undefined
+        );
+        
+        if (approvedGroup) {
+          // If there's an approved group but somehow other groups still exist,
+          // we could trigger a cleanup
+          if (groups.length > 1) {
+            console.warn('Found multiple groups when there should only be one approved group');
+            this.groupService.cleanupOtherGroups(approvedGroup.id).subscribe({
+              next: () => {
+                console.log('Cleanup successful');
+                // Refresh groups after cleanup
+                this.loadStudentGroups();
+              },
+              error: (err) => console.error('Failed to clean up other groups:', err)
+            });
+            return;
+          }
+        }
+        
         // Ensure we have all teacher names for groups with teacherIds
         const teacherIdsToFetch = new Set<number>();
+        
         groups.forEach(group => {
+          // Add teacherId for approved groups
           if (group.teacherId && !group.teacherName) {
             teacherIdsToFetch.add(group.teacherId);
+          }
+          
+          // Also add requestedTeacherId for requested/rejected groups
+          if ((group.supervisionStatus === 'Requested' || group.supervisionStatus === 'Rejected') && 
+              group.requestedTeacherId && !group.requestedTeacherName) {
+            teacherIdsToFetch.add(group.requestedTeacherId);
           }
         });
         
@@ -302,10 +394,18 @@ fetchMissingTeacherNames(teacherIds: number[], groups: GroupDetails[]) {
       }
     });
     
-    // Update group teacher names
+    // Update group teacher names for different statuses
     groups.forEach(group => {
+      // For approved groups
       if (group.teacherId && !group.teacherName && teacherMap.has(group.teacherId)) {
         group.teacherName = teacherMap.get(group.teacherId)!;
+      }
+      
+      // For requested/rejected groups
+      if ((group.supervisionStatus === 'Requested' || group.supervisionStatus === 'Rejected') && 
+          group.requestedTeacherId && !group.requestedTeacherName && 
+          teacherMap.has(group.requestedTeacherId)) {
+        group.requestedTeacherName = teacherMap.get(group.requestedTeacherId)!;
       }
     });
     
@@ -316,6 +416,10 @@ fetchMissingTeacherNames(teacherIds: number[], groups: GroupDetails[]) {
 
 // Add this helper method to process groups after loading
 processLoadedGroups(groups: GroupDetails[]) {
+  // Check if we had no approved group before but now we do
+  const hadApprovedGroupBefore = this.hasApprovedGroup;
+  
+  // Rest of your existing code for this method
   this.groups = groups;
   
   // Look for any group that has approved supervision status
@@ -326,14 +430,54 @@ processLoadedGroups(groups: GroupDetails[]) {
   
   console.log('Approved group found:', approvedGroup);
   
+  // Set your existing properties
   this.hasApprovedGroup = !!approvedGroup;
   this.approvedGroup = approvedGroup || null;
+  
+  // If we now have an approved group but didn't before, show the dialog
+  if (this.hasApprovedGroup && !hadApprovedGroupBefore) {
+    this.showGroupCleanupInfo();
+  }
   
   // If there's an approved group, load the supervisor details
   if (this.approvedGroup && this.approvedGroup.teacherId) {
     console.log(`Loading supervisor details for teacher ID: ${this.approvedGroup.teacherId}`);
     this.loadSupervisorDetails(this.approvedGroup.teacherId);
   }
+}
+
+// Add this new method to show the dialog
+showGroupCleanupInfo(): void {
+  // Get the current user ID from the token
+  const token = localStorage.getItem('token');
+  if (!token) return;
+  
+  const payload = this.authService.decodeToken(token);
+  const userId = payload.UserId || payload.sub;
+  
+  if (!userId) return;
+  
+  // Use a user-specific key in localStorage
+  const dontShowAgainKey = `dontShowGroupCleanupInfo_${userId}`;
+  
+  // Check if the current user has chosen not to show this dialog again
+  const dontShowAgain = localStorage.getItem(dontShowAgainKey) === 'true';
+  
+  if (dontShowAgain) {
+    return; // Don't show the dialog for this specific user
+  }
+  
+  const dialogRef = this.dialog.open(GroupCleanupInfoDialogComponent, {
+    width: '500px',
+    disableClose: true
+  });
+  
+  dialogRef.afterClosed().subscribe(result => {
+    // If user checked "don't show again" box, save this preference for this specific user
+    if (result === true) {
+      localStorage.setItem(dontShowAgainKey, 'true');
+    }
+  });
 }
 
   showRequestSupervisionForm(groupId: number) {
@@ -350,6 +494,7 @@ processLoadedGroups(groups: GroupDetails[]) {
     }
     
     this.selectedGroupId = groupId;
+    this.supervisionMessage = ''; // Reset the message
     this.showTeachersList = true;
     this.setView('teachers'); // Switch to teachers view to select a supervisor
   }
@@ -456,4 +601,14 @@ processLoadedGroups(groups: GroupDetails[]) {
       }
     });
   }
+
+  async checkIfStudentInSupervisedGroup(studentId: number): Promise<boolean> {
+    try {
+        const response = await this.groupService.checkStudentSupervisionStatus(studentId).toPromise();
+        return response?.isInSupervisedGroup ?? false; // Use nullish coalescing
+    } catch (error) {
+        console.error('Error checking if student is in supervised group:', error);
+        return false; // Assume not in a supervised group if there's an error
+    }
+}
 }

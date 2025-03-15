@@ -1135,4 +1135,68 @@
       }
     }
   }
+
+  .search-input-group {
+    input.error-input {
+      border-color: #f86c6b;
+      background-color: #fff2f2;
+    }
+  }
+  
+  .supervised-error {
+    background-color: #fff0f0;
+    border-left: 3px solid #f86c6b;
+    padding: 8px 12px;
+    margin: 8px 0;
+    color: #d63031;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    
+    i {
+      margin-right: 8px;
+      color: #f86c6b;
+    }
+  }
+
+  // Add these styles for the chat view
+.chat-view-container {
+  padding: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  
+  .view-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    
+    h2 {
+      margin: 0;
+      font-size: 1.5rem;
+      color: #1f2937;
+      margin-bottom: 0.5rem;
+    }
+    
+    p {
+      margin: 0;
+      color: #6b7280;
+      font-size: 0.95rem;
+    }
+  }
+  
+  .chat-wrapper {
+    flex: 1;
+    height: calc(100% - 100px);
+    overflow: hidden;
+    padding: 0 1rem 1rem;
+    
+    app-group-chat {
+      display: block;
+      height: 100%;
+    }
+  }
+}
 }

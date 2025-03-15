@@ -29,6 +29,9 @@
         <li [class.active]="currentView === 'profile'" (click)="setView('profile')">
           <i class="fas fa-user"></i> Profile
         </li>
+        <li [class.active]="currentView === 'chat'" *ngIf="showGroupChat">
+          <i class="fas fa-comments"></i> Group Chat
+        </li>
         <li (click)="logout()">
           <i class="fas fa-sign-out-alt"></i> Logout
         </li>
@@ -147,8 +150,28 @@
               <div class="status-badge approved">
                 <i class="fas fa-check-circle"></i> Supervising
               </div>
+              <button class="chat-btn" (click)="openGroupChat(group)">
+                <i class="fas fa-comments"></i> Open Chat
+              </button>
             </div>
           </div>
+        </div>
+      </div>
+      
+      <!-- Group Chat View -->
+      <div *ngIf="currentView === 'chat' && showGroupChat && selectedGroupForChat">
+        <div class="chat-header">
+          <h2>{{ selectedGroupForChat.name }} - Group Chat</h2>
+          <button class="back-btn" (click)="setView('groups')">
+            <i class="fas fa-arrow-left"></i> Back to Groups
+          </button>
+        </div>
+        
+        <div class="chat-wrapper">
+          <app-group-chat 
+            [groupId]="selectedGroupForChat.id" 
+            [groupName]="selectedGroupForChat.name">
+          </app-group-chat>
         </div>
       </div>
       

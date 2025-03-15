@@ -10,7 +10,7 @@ import { authGuard } from './core/guards/auth.guard';
 import { AuthService } from './services/auth.service';
 import { studentGuard } from './core/guards/student.guard';
 import { UserManagementComponent } from './dashboard/user-management/user-management.component';
-
+import { GroupChatComponent } from './group-chat/group-chat.component';
 export const routes: Routes = [
   { 
     path: '', 
@@ -56,5 +56,7 @@ export const routes: Routes = [
     component: TeacherDashboardComponent, 
     canActivate: [authGuard]
   },
+
+  { path: 'group-chat/:groupId', component: GroupChatComponent },
   { path: '**', redirectTo: '/login' } 
 ];

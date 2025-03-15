@@ -61,6 +61,22 @@
         <i class="fas fa-users"></i>
         <span>My Groups</span>
       </a>
+      <!-- Add this to the sidebar navigation -->
+      <li [class.active]="currentView === 'chat'" 
+          (click)="setView('chat')" 
+          *ngIf="hasApprovedGroup">
+        <i class="fas fa-comments"></i> Group Chat
+        <!-- Optional: Add a badge for unread messages -->
+        <span class="badge" *ngIf="unreadMessages > 0">{{ unreadMessages }}</span>
+      </li>
+      <a class="nav-item" [class.active]="currentView === 'chat'" 
+         (click)="setView('chat')" 
+         *ngIf="hasApprovedGroup">
+        <i class="fas fa-comments"></i>
+        <span>Group Chat</span>
+        <!-- Optional: Add a badge for unread messages -->
+        <span class="badge" *ngIf="unreadMessages > 0">{{ unreadMessages }}</span>
+      </a>
     </nav>
   </aside>
 
@@ -110,7 +126,22 @@
 
         <!-- Loading State -->
         <div class="loading-state" *ngIf="isLoading">
-          <i class="fas fa-spinner fa-spin"></i> Loading faculty details...
+          <i class="fas fa-spinner fa-spin"></i> Loading teachers...
+        </div>
+
+        <!-- Teachers List -->
+        <div class="teacher-cards">
+          <div class="teacher-card" *ngFor="let teacher of teachers">
+            <!-- Teacher information here -->
+            <!-- Make sure the request supervision button is shown when showTeachersList is true -->
+            <button *ngIf="showTeachersList" 
+                    class="request-btn" 
+                    [disabled]="isRequestingSupervision"
+                    (click)="requestSupervision(teacher.id)">
+              <i class="fas fa-paper-plane"></i>
+              {{ isRequestingSupervision ? 'Sending...' : 'Request Supervision' }}
+            </button>
+          </div>
         </div>
 
         <!-- Error State -->
@@ -168,9 +199,10 @@
 
       <!-- Group Management View -->
       <div class="group-section" *ngIf="currentView === 'groups'">
-        <div class="section-header">
-          <h2>Your Groups</h2>
-          <div class="group-stats">
+        <div class="section-header" >
+          
+          <div class="group-stats" *ngIf="!hasApprovedGroup" >
+            <h2>Your Groups</h2>
             <p><strong>Has Approved Group:</strong> {{ hasApprovedGroup ? 'Yes' : 'No' }}</p>
             <p><strong>Approved Group Name:</strong> {{ approvedGroup ? approvedGroup.name : 'None' }}</p>
             <p><strong>Total Groups:</strong> {{ groups.length }}</p>
@@ -240,15 +272,29 @@
               </select>
             </div>
 
+            <!-- Update the part where you display member emails in the create group form -->
             <div class="form-group" *ngFor="let control of memberEmails.controls; let i = index">
               <label for="memberEmail{{i}}">Member {{i + 1}} Email:</label>
               <div class="search-input-group">
-                <input type="email" id="memberEmail{{i}}" [formControl]="control" #emailControl="ngForm" placeholder="Enter member email">
-                <button type="button" (click)="searchStudent(control.value, i)" [disabled]="isSearchingStudent">
-                  <i class="fas fa-search"></i>
+                <input 
+                  type="email" 
+                  id="memberEmail{{i}}" 
+                  [formControl]="control" 
+                  #emailControl="ngForm" 
+                  placeholder="Enter member email"
+                  [class.error-input]="searchErrors[control.value]">
+                <button 
+                  type="button" 
+                  (click)="searchStudent(control.value, i)" 
+                  [disabled]="isSearchingStudent || !control.value">
+                  <i class="fas" 
+                     [class.fa-search]="!isSearchingStudent" 
+                     [class.fa-spinner]="isSearchingStudent && control.value" 
+                     [class.fa-spin]="isSearchingStudent && control.value"></i>
                 </button>
               </div>
-              <div *ngIf="searchErrors[control.value]" class="error-message">
+              <div *ngIf="searchErrors[control.value]" class="error-message supervised-error">
+                <i class="fas fa-exclamation-triangle"></i>
                 {{searchErrors[control.value]}}
               </div>
               <div *ngIf="studentSearchResults[control.value]" class="student-info">
@@ -270,7 +316,7 @@
 
         <!-- Groups List -->
         <div class="groups-list" *ngIf="groups.length > 0">
-          <h4 *ngIf="hasApprovedGroup">Other Groups</h4>
+          
           
           <ng-container *ngFor="let group of groups">
             <div class="group-card" 
@@ -321,13 +367,22 @@
                 <div class="status-badge" *ngIf="group.supervisionStatus === 'Requested'">
                   <i class="fas fa-clock"></i> Supervision Requested
                 </div>
-                
+                <div class="supervisor-name" *ngIf="group.supervisionStatus === 'Requested' && group.requestedTeacherName">
+                  <i class="fas fa-user-tie"></i> <strong>Requested to:</strong> {{ group.requestedTeacherName }}
+                </div>
+
+                <div class="status-badge rejected" *ngIf="group.supervisionStatus === 'Rejected'">
+                  <i class="fas fa-times-circle"></i> Supervision Rejected
+                </div>
+                <div class="supervisor-name" *ngIf="group.supervisionStatus === 'Rejected' && group.requestedTeacherName">
+                  <i class="fas fa-user-tie"></i> <strong>Rejected by:</strong> {{ group.requestedTeacherName }}
+                </div>
+
                 <div class="status-badge approved" *ngIf="group.supervisionStatus === 'Approved'">
                   <i class="fas fa-check-circle"></i> Supervision Approved
                 </div>
-                
-                <div class="status-badge rejected" *ngIf="group.supervisionStatus === 'Rejected'">
-                  <i class="fas fa-times-circle"></i> Supervision Rejected
+                <div class="supervisor-name" *ngIf="group.supervisionStatus === 'Approved' && group.teacherName">
+                  <i class="fas fa-user-tie"></i> <strong>Supervisor:</strong> {{ group.teacherName }}
                 </div>
               </div>
             </div>
@@ -337,6 +392,22 @@
         <!-- No groups message -->
         <div class="no-groups" *ngIf="!isLoading && groups.length === 0">
           <p>You are not a member of any project groups yet.</p>
+        </div>
+      </div>
+
+      <!-- Add this after the other view sections -->
+      <!-- Group Chat View -->
+      <div class="chat-view-container" *ngIf="currentView === 'chat' && showGroupChat && approvedGroup">
+        <div class="view-header">
+          <h2>{{ approvedGroup.name }} - Group Chat</h2>
+          <p>Communicate with your team and supervisor in real-time</p>
+        </div>
+        
+        <div class="chat-wrapper">
+          <app-group-chat 
+            [groupId]="approvedGroup.id" 
+            [groupName]="approvedGroup.name">
+          </app-group-chat>
         </div>
       </div>
     </main>

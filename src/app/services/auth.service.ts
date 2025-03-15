@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { environment } from '../../env/env';
 import { catchError, tap } from 'rxjs/operators';
-import { Observable } from 'rxjs';
+import { Observable, BehaviorSubject } from 'rxjs';
 import { NotificationService } from './notifications.service';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 interface LoginResponse {
@@ -26,6 +26,8 @@ interface RegisterRequest {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private apiUrl = environment.authApiUrl;
+  private authStatusSubject = new BehaviorSubject<boolean>(this.isLoggedIn());
+  authStatusChange = this.authStatusSubject.asObservable();
 
   constructor(
     private http: HttpClient,
@@ -49,8 +51,7 @@ export class AuthService {
                               '/login';
             this.router.navigate([targetRoute]);
             this.notificationService.showSuccess (`Welcome ${decodedToken?.name}`);
-         
-            
+            this.authStatusSubject.next(true);  // <-- Add this line
           }
         })
       );
@@ -89,6 +90,7 @@ export class AuthService {
   logout(): void {
     this.notificationService.showInfo('User logged out');
     localStorage.removeItem('token');
+    this.authStatusSubject.next(false);  // <-- Add this line
     void this.router.navigate(['/login']);
     
   }
@@ -150,6 +152,19 @@ export class AuthService {
   
   isAdmin(): boolean {
     return this.hasRole('admin');
+  }
+  
+  getUserId(): number | null {
+    const token = localStorage.getItem('token');
+    if (!token) return null;
+    
+    const payload = this.decodeToken(token);
+    // Return UserId as number if available, null otherwise
+    return payload?.UserId ? Number(payload.UserId) : null;
+  }
+
+  getToken(): string | null {
+    return localStorage.getItem('token');
   }
   
 }

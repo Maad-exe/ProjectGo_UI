@@ -1,0 +1,69 @@
+<div class="chat-container">
+  <div class="chat-header">
+    <h2>{{ groupName || 'Group Chat' }}</h2>
+    <span class="connection-status" [ngClass]="{'connected': isConnected}">
+      {{ isConnected ? 'Connected' : 'Connecting...' }}
+    </span>
+  </div>
+  
+  <div class="chat-messages-container">
+    <!-- Loading indicator -->
+    <div *ngIf="isLoading" class="loading-spinner">
+      <i class="fas fa-spinner fa-spin"></i> Loading messages...
+    </div>
+    
+    <!-- Error message -->
+    <div *ngIf="error" class="error-message">
+      <i class="fas fa-exclamation-circle"></i> {{ error }}
+      <button (click)="loadMessages()">Try Again</button>
+    </div>
+    
+    <!-- Load earlier messages button -->
+    <div *ngIf="!isLoading && !loadingEarlierMessages && !noMoreMessages && messages.length > 0" class="load-earlier">
+      <button [disabled]="loadingEarlierMessages" (click)="loadMessages(true)">
+        <i class="fas fa-chevron-up"></i> 
+        {{ loadingEarlierMessages ? 'Loading...' : 'Load Earlier Messages' }}
+      </button>
+    </div>
+    
+    <!-- Chat messages -->
+    <div class="chat-messages" #chatMessages>
+      <div *ngFor="let message of messages" 
+           class="message" 
+           [ngClass]="{'own-message': message.senderId === userId, 'other-message': message.senderId !== userId}">
+        <div class="message-header">
+          <span class="sender-name">{{ message.senderName }}</span>
+          <span class="sender-role">{{ message.senderRole }}</span>
+          <span class="timestamp">{{ message.timestamp | date:'short' }}</span>
+        </div>
+        <div class="message-content">{{ message.content }}</div>
+        <div class="message-status" *ngIf="message.senderId === userId">
+          <span class="read-status">{{ message.isRead ? 'Read' : 'Sent' }}</span>
+        </div>
+      </div>
+      
+      <!-- Typing indicator -->
+      <div *ngIf="showTypingIndicator" class="typing-indicator">
+        <span>{{ typingText }}</span>
+        <div class="typing-dots">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="chat-input-container">
+    <textarea 
+      #messageInput
+      class="message-input" 
+      placeholder="Type your message here..." 
+      [(ngModel)]="newMessage"
+      (keyup)="notifyUserTyping(newMessage)"
+      (keyup.enter)="$event.preventDefault(); sendMessage()"></textarea>
+    <button class="send-button" [disabled]="!newMessage.trim()" (click)="sendMessage()">
+      <i class="fas fa-paper-plane"></i>
+    </button>
+  </div>
+</div>

@@ -1,9 +1,10 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TeacherDetails, TeacherService, SupervisionRequest } from '../../services/teacher.service';
+import { TeacherDetails, TeacherService } from '../../services/teacher.service';
 import { GroupDetails } from '../../services/group.service';
 import { NotificationService } from '../../services/notifications.service';
+import { SupervisionRequestDto } from '../../services/supervision.service';
 
 @Component({
   selector: 'app-supervision-request-form',
@@ -34,7 +35,7 @@ export class SupervisionRequestFormComponent {
     }
 
     this.isSubmitting = true;
-    const request: SupervisionRequest = {
+    const request: SupervisionRequestDto = {
       groupId: this.group.id,
       teacherId: this.teacher.id,
       message: this.requestMessage
@@ -45,7 +46,7 @@ export class SupervisionRequestFormComponent {
         this.isSubmitting = false;
         this.requestSubmitted.emit();
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error submitting request:', error);
         this.error = error.error?.message || 'Failed to submit request';
         this.isSubmitting = false;

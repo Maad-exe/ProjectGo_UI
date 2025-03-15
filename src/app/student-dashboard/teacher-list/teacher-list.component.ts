@@ -6,6 +6,7 @@ import { TeacherService, TeacherDetails } from '../../services/teacher.service';
 import { GroupService, GroupDetails } from '../../services/group.service';
 import { NotificationService } from '../../services/notifications.service';
 import { AuthService } from '../../services/auth.service';
+import { SupervisionRequestDto } from '../../services/supervision.service';
 
 @Component({
   selector: 'app-teacher-list',
@@ -117,21 +118,33 @@ export class TeacherListComponent implements OnInit {
     }
     
     this.isRequestingSupervision = true;
-    const request = {
+    const request: SupervisionRequestDto = {
       groupId: this.selectedGroupId,
       teacherId: teacherId,
       message: this.requestMessage || 'Please supervise our group project'
     };
+    
+    // Find the teacher object to get the name
+    const teacher = this.teachers.find(t => t.id === teacherId);
+    const teacherName = teacher ? teacher.fullName : 'Unknown Teacher';
     
     this.teacherService.requestSupervision(request).subscribe({
       next: () => {
         this.notificationService.showSuccess('Supervision request sent successfully');
         this.isRequestingSupervision = false;
         
+        // Update the selected group with the requested teacher info
+        const selectedGroup = this.groups.find(g => g.id === this.selectedGroupId);
+        if (selectedGroup) {
+          selectedGroup.requestedTeacherId = teacherId;
+          selectedGroup.requestedTeacherName = teacherName;
+          selectedGroup.supervisionStatus = 'Requested';
+        }
+        
         // Reload groups to update status
         this.loadStudentGroups();
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error requesting supervision:', error);
         this.notificationService.showError('Failed to send supervision request');
         this.isRequestingSupervision = false;

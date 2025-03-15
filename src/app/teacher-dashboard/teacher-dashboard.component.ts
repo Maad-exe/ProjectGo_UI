@@ -6,6 +6,7 @@ import { AuthService } from '../services/auth.service';
 import { NotificationService } from '../services/notifications.service';
 import { SupervisionService, SupervisionRequest, SupervisionResponseDto } from '../services/supervision.service';
 import { GroupDetails } from '../services/group.service';
+import { GroupChatComponent } from '../group-chat/group-chat.component';
 
 interface TeacherInfo {
   fullName: string;
@@ -18,7 +19,7 @@ interface TeacherInfo {
 @Component({
   selector: 'app-teacher-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, GroupChatComponent],
   templateUrl: './teacher-dashboard.component.html',
   styleUrls: ['./teacher-dashboard.component.scss']
 })
@@ -36,6 +37,8 @@ export class TeacherDashboardComponent implements OnInit {
   supervisionRequests: SupervisionRequest[] = [];
   processingRequestIds: Set<number> = new Set();
   teacherGroups: GroupDetails[] = [];
+  selectedGroupForChat: GroupDetails | null = null;
+  showGroupChat: boolean = false;
   
   constructor(
     private authService: AuthService,
@@ -76,6 +79,8 @@ export class TeacherDashboardComponent implements OnInit {
   
   setView(view: string) {
     this.currentView = view;
+    this.showGroupChat = false;
+    
     if (view === 'requests') {
       this.loadSupervisionRequests();
     } else if (view === 'groups') {
@@ -139,6 +144,9 @@ export class TeacherDashboardComponent implements OnInit {
         // If approved, update the teacher's groups
         if (isApproved) {
           this.loadTeacherGroups();
+          
+          // Show a special notification about group cleanup
+          this.notificationService.showInfo('All other groups for these students have been automatically cleaned up');
         }
 
         // Optional: Reload the requests to ensure UI is in sync
@@ -150,6 +158,12 @@ export class TeacherDashboardComponent implements OnInit {
         this.processingRequestIds.delete(requestId);
       }
     });
+  }
+  
+  openGroupChat(group: GroupDetails) {
+    this.selectedGroupForChat = group;
+    this.showGroupChat = true;
+    this.currentView = 'chat';
   }
   
   logout() {

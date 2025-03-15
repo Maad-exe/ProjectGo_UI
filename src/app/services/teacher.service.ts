@@ -5,6 +5,8 @@ import { catchError } from 'rxjs/operators';
 import { environment } from '../../env/env';
 import { AuthService } from './auth.service';
 import { map } from 'rxjs/operators';
+import { SupervisionRequestDto } from './supervision.service';
+
 export interface TeacherDetails {
   id: number;
   fullName: string;
@@ -39,8 +41,8 @@ export class TeacherService {
   }
 
   getTeacherById(teacherId: number): Observable<TeacherDetails> {
-    // Make sure the URL matches exactly what's working in Swagger
-    const url = `${environment.apiBaseUrl}/api/teachers/${teacherId}`;
+
+    const url = `${environment.apiBaseUrl}/teachers/${teacherId}`;
     console.log('Fetching teacher details from:', url);
     return this.http.get<TeacherDetails>(url)
       .pipe(
@@ -64,6 +66,22 @@ export class TeacherService {
           throw error;
         })
       );
+  }
+
+  requestSupervision(request: SupervisionRequestDto): Observable<any> {
+    // Store the requestedTeacherId in local storage to retrieve it later if needed
+    localStorage.setItem(`group_${request.groupId}_requestedTeacher`, request.teacherId.toString());
+    
+    return this.http.post(`${environment.apiBaseUrl}/teachers/request-supervision`, request).pipe(
+      map(response => {
+        console.log('Supervision request sent successfully:', response);
+        return response;
+      }),
+      catchError(error => {
+        console.error('Error sending supervision request:', error);
+        throw error;
+      })
+    );
   }
 
 }
