@@ -61,17 +61,8 @@
         <i class="fas fa-users"></i>
         <span>My Groups</span>
       </a>
-      <!-- Add this to the sidebar navigation -->
-      <li [class.active]="currentView === 'chat'" 
-          (click)="setView('chat')" 
-          *ngIf="hasApprovedGroup">
-        <i class="fas fa-comments"></i> Group Chat
-        <!-- Optional: Add a badge for unread messages -->
-        <span class="badge" *ngIf="unreadMessages > 0">{{ unreadMessages }}</span>
-      </li>
-      <a class="nav-item" [class.active]="currentView === 'chat'" 
-         (click)="setView('chat')" 
-         *ngIf="hasApprovedGroup">
+    
+      <a class="nav-item" [class.active]="currentView === 'chat'" (click)="setView('chat')">
         <i class="fas fa-comments"></i>
         <span>Group Chat</span>
         <!-- Optional: Add a badge for unread messages -->

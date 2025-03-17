@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { TeacherService, TeacherDetails } from '../services/teacher.service';
@@ -13,6 +13,8 @@ import { catchError } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
 import { GroupCleanupInfoDialogComponent } from '../shared/group-cleanup-info-dialog/group-cleanup-info-dialog.component';
 import { GroupChatComponent } from '../group-chat/group-chat.component';
+import { ChatService } from '../services/chat.service';
+import { Subscription } from 'rxjs';
 
 interface StudentInfo {
   fullName: string;
@@ -34,7 +36,7 @@ export class StudentDashboardComponent implements OnInit {
   isLoading = false;
   error: string | null = null;
   currentView = 'dashboard';
-  unreadMessages = 3; // Dummy data
+  unreadMessages: number = 0;
   hasNewAnnouncements = true; // Dummy data
   studentInfo: StudentInfo = {
     fullName: '',
@@ -78,7 +80,8 @@ export class StudentDashboardComponent implements OnInit {
   approvedGroup: GroupDetails | null = null;
   groupSupervisor: TeacherDetails | null = null;
   showGroupChat: boolean = false;
-
+  private subscriptions: Subscription[] = [];
+  
   constructor(
     private teacherService: TeacherService,
     private authService: AuthService,
@@ -87,7 +90,8 @@ export class StudentDashboardComponent implements OnInit {
     private router: Router,
     private notificationService: NotificationService,
     private supervisionService: SupervisionService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private chatService: ChatService 
   ) {
     this.createGroupForm = this.fb.group({
       groupName: ['', Validators.required],
@@ -109,7 +113,13 @@ export class StudentDashboardComponent implements OnInit {
     }
    
     this.loadStudentInfo();
+    this.loadStudentGroups();
     this.notificationService.showSuccess(`Welcome ${this.studentInfo.fullName}`);
+    this.subscriptions.push(
+      this.chatService.unreadMessages$.subscribe(count => {
+        this.unreadMessages = count;
+      })
+    );
     this.setView('dashboard');
   }
 
@@ -143,8 +153,13 @@ export class StudentDashboardComponent implements OnInit {
     this.currentView = view;
     
     // Reset specific view states if we're not switching to that view
-    if (view !== 'chat') {
-      this.showGroupChat = false;
+    if (view === 'chat') {
+      if (this.hasApprovedGroup && this.approvedGroup) {
+        this.showGroupChat = true;
+      } else {
+        this.notificationService.showInfo('You need to have an approved group to access the chat feature.');
+        this.currentView = 'dashboard'; // Redirect to dashboard if no approved group
+      }
     }
     
     if (view === 'teachers') {
@@ -611,4 +626,10 @@ showGroupCleanupInfo(): void {
         return false; // Assume not in a supervised group if there's an error
     }
 }
+
+ngOnDestroy(): void {
+  // Clean up subscriptions
+  this.subscriptions.forEach(sub => sub.unsubscribe());
+}
+
 }

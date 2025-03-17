@@ -248,9 +248,11 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   
   markMessagesAsRead(): void {
     if (!this.groupId) return;
-    
     this.chatService.markMessagesAsRead(this.groupId).subscribe({
-      next: () => console.log('Messages marked as read'),
+      next: () => {
+        console.log('Messages marked as read');
+        // After marking as read, the unreadMessages count should be updated by the ChatService
+      },
       error: err => console.error('Error marking messages as read:', err)
     });
   }
