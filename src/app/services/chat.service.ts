@@ -174,8 +174,8 @@ private initConnection(forceReinit: boolean = false): void {
   
   // Prevent multiple simultaneous connection attempts
   if (this._isConnecting) {
-      console.log('Connection attempt already in progress, skipping');
-      return;
+    console.log('Connection attempt already in progress, skipping');
+    return;
   }
 
   const currentUserId = this.getCurrentUserId();
@@ -183,53 +183,56 @@ private initConnection(forceReinit: boolean = false): void {
   
   // Exit early if no auth info
   if (!token || !currentUserId) {
-      console.warn('Missing authentication data, skipping connection');
-      return;
+    console.warn('Missing authentication data, skipping connection');
+    return;
   }
 
   // Check if user changed or force reinit
-  if (forceReinit || currentUserId !== this.lastLoggedInUserId || !this.hubConnection) {
-      console.log(`User changed or force reinit: ${this.lastLoggedInUserId} -> ${currentUserId}`);
-      
-      // Close existing connection if any
-      if (this.hubConnection) {
-          this.closeConnection();
-      }
-      
-      // Update stored user ID
-      this.lastLoggedInUserId = currentUserId;
-      
-      // Mark that we're connecting
-      this._isConnecting = true;
-      
-      // Create a new connection
-      console.log('Creating new SignalR connection for user:', currentUserId);
-      this.hubConnection = new signalR.HubConnectionBuilder()
-          .withUrl(`${environment.apiBaseUrl}/chatHub`, {
-              accessTokenFactory: () => localStorage.getItem('token') || '',
-              // Allow all transport types for better fallback options
-              transport: signalR.HttpTransportType.WebSockets | 
-                        signalR.HttpTransportType.ServerSentEvents | 
-                        signalR.HttpTransportType.LongPolling,
-              skipNegotiation: false // Allow negotiation for transport fallback
-          })
-          .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
-          .configureLogging(signalR.LogLevel.Information)
-          .build();
-          
-      // Set up event handlers
-      this.setupSignalRCallbacks();
-      
-      // Start the connection
-      this.connectionPromise = this.startConnection();
-      return;
+  const needsNewConnection = forceReinit || 
+                           currentUserId !== this.lastLoggedInUserId || 
+                           !this.hubConnection;
+
+  if (needsNewConnection) {
+    console.log(`User changed or force reinit: ${this.lastLoggedInUserId} -> ${currentUserId}`);
+    
+    // Close existing connection if any
+    if (this.hubConnection) {
+      this.closeConnection();
+    }
+    
+    // Update stored user ID
+    this.lastLoggedInUserId = currentUserId;
+    
+    // Mark that we're connecting
+    this._isConnecting = true;
+    
+    // Create a new connection
+    console.log('Creating new SignalR connection for user:', currentUserId);
+    this.hubConnection = new signalR.HubConnectionBuilder()
+      .withUrl(`${environment.apiBaseUrl}/chatHub`, {
+        accessTokenFactory: () => localStorage.getItem('token') || '',
+        transport: signalR.HttpTransportType.WebSockets | 
+                  signalR.HttpTransportType.ServerSentEvents | 
+                  signalR.HttpTransportType.LongPolling,
+        skipNegotiation: false
+      })
+      .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+      .configureLogging(signalR.LogLevel.Information)
+      .build();
+        
+    // Set up event handlers
+    this.setupSignalRCallbacks();
+    
+    // Start the connection
+    this.connectionPromise = this.startConnection();
+    return;
   }
   
   // If we already have a connection but it's disconnected, try to start it
   if (this.hubConnection && this.hubConnection.state === signalR.HubConnectionState.Disconnected) {
-      console.log('Connection exists but disconnected, restarting');
-      this._isConnecting = true;
-      this.connectionPromise = this.startConnection();
+    console.log('Connection exists but disconnected, restarting');
+    this._isConnecting = true;
+    this.connectionPromise = this.startConnection();
   }
 }
   
@@ -612,7 +615,7 @@ private async startConnection(): Promise<void> {
       return of(true);
     }
     
-    // Local update first for responsive UI
+    // Local update first for responsive UI - only mark messages as read for current user
     messages.forEach(msg => {
       if (msg.senderId !== this.getCurrentUserId()) {
         msg.isRead = true;
@@ -660,7 +663,19 @@ private async startConnection(): Promise<void> {
         return of({count});
       })
     ).subscribe(result => {
-      this.unreadMessagesSubject.next(result.count);
+      this.unreadMessagesSubject.next(result.count || 0);
+    });
+    
+    // Also update unread counts by group - handle errors gracefully
+    this.getUnreadMessagesByGroup().subscribe({
+      next: groupCounts => {
+        console.log('Unread messages by group:', groupCounts);
+        // You can store this information for use when displaying group-specific counts
+      },
+      error: err => {
+        console.error('Error getting unread messages by group:', err);
+        // Don't cause UI issues if this fails
+      }
     });
   }
   
@@ -673,7 +688,11 @@ private async startConnection(): Promise<void> {
   }
   
   stopTypingNotification(groupId: number): void {
-    // Placeholder if needed in the future
+    if (!this.hubConnection || this.hubConnection.state !== signalR.HubConnectionState.Connected) return;
+  
+    // Call the SignalR hub method to stop typing notification
+    this.hubConnection.invoke('StopTyping', groupId)
+      .catch(err => console.error('Error stopping typing notification:', err));
   }
   
   // Group management
@@ -802,5 +821,28 @@ private async startConnection(): Promise<void> {
     this._activeGroups = [];
     this.lastLoggedInUserId = null;
     this.unreadMessagesSubject.next(0);
+  }
+
+  // Add this method to get unread messages by group
+  getUnreadMessagesByGroup(): Observable<{[groupId: string]: number}> {
+    if (!this.authService.isLoggedIn()) return of({});
+    
+    return this.http.get<{[groupId: string]: number}>(`${this.apiUrl}/unread-by-group`).pipe(
+      catchError(error => {
+        console.error('Error fetching unread messages by group:', error);
+        
+        // Create a fallback object with counts from cache
+        const fallbackCounts: {[groupId: string]: number} = {};
+        
+        // For each group in the cache, count unread messages
+        this.messageCache.forEach((messages, groupId) => {
+          fallbackCounts[groupId.toString()] = messages.filter(m => 
+            m.senderId !== this.getCurrentUserId() && !m.isRead
+          ).length;
+        });
+        
+        return of(fallbackCounts);
+      })
+    );
   }
 }

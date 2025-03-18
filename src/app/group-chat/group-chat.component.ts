@@ -38,6 +38,7 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   private subscriptions: Subscription[] = [];
   private typingSubject = new BehaviorSubject<string>('');
   private scrollToBottomPending = false;
+  private typingTimeout: any;
   
   constructor(
     private chatService: ChatService,
@@ -142,6 +143,9 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     
     // Load initial messages
     this.loadMessages();
+    
+    // Mark messages as read when opening chat
+    this.markMessagesAsRead();
   }
   
   loadMessages(loadEarlier: boolean = false): void {
@@ -246,12 +250,33 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.scrollToBottomPending = true;
   }
   
+  // Add this method to format read status display
+  getReadStatus(message: ChatMessage): string {
+    if (message.senderId !== this.userId) {
+      return ''; // Don't show read status for messages from others
+    }
+    
+    if (message.isRead) {
+      return 'Read';
+    } else {
+      return 'Sent';
+    }
+  }
+  
+  // Enhance the markMessagesAsRead method to update UI
   markMessagesAsRead(): void {
     if (!this.groupId) return;
+    
     this.chatService.markMessagesAsRead(this.groupId).subscribe({
       next: () => {
         console.log('Messages marked as read');
-        // After marking as read, the unreadMessages count should be updated by the ChatService
+        
+        // Update local UI to show messages as read
+        this.messages.forEach(message => {
+          if (message.senderId !== this.userId) {
+            message.isRead = true;
+          }
+        });
       },
       error: err => console.error('Error marking messages as read:', err)
     });
@@ -299,9 +324,26 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.chatService.notifyTyping(this.groupId);
   }
   
-  // Public method to notify typing
+  // Update to properly handle typing notifications
   notifyUserTyping(message: string): void {
-    this.typingSubject.next(message);
+    if (!this.groupId || !message) return;
+    
+    if (!this.typingTimeout) {
+      this.chatService.notifyTyping(this.groupId);
+      
+      // Set a timeout to stop typing notification after 3 seconds of inactivity
+      this.typingTimeout = setTimeout(() => {
+        this.chatService.stopTypingNotification(this.groupId);
+        this.typingTimeout = null;
+      }, 3000);
+    } else {
+      // Reset the timeout
+      clearTimeout(this.typingTimeout);
+      this.typingTimeout = setTimeout(() => {
+        this.chatService.stopTypingNotification(this.groupId);
+        this.typingTimeout = null;
+      }, 3000);
+    }
   }
   
   sendMessage(): void {

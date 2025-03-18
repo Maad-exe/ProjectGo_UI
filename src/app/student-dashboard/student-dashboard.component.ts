@@ -108,18 +108,51 @@ export class StudentDashboardComponent implements OnInit {
     
     const token = localStorage.getItem('token');
     if (token) {
-      
       console.log('Full token payload:', this.authService.decodeToken(token));
     }
    
     this.loadStudentInfo();
     this.loadStudentGroups();
     this.notificationService.showSuccess(`Welcome ${this.studentInfo.fullName}`);
+    
+    // Subscribe to unread messages count with error handling
     this.subscriptions.push(
-      this.chatService.unreadMessages$.subscribe(count => {
-        this.unreadMessages = count;
+      this.chatService.unreadMessages$.subscribe({
+        next: count => {
+          this.unreadMessages = count;
+        },
+        error: err => {
+          console.error('Error subscribing to unread messages:', err);
+          this.unreadMessages = 0; // Fail gracefully
+        }
       })
     );
+    
+    // Initial update of unread count
+    try {
+      this.chatService.updateUnreadCount();
+    } catch (err) {
+      console.error('Error updating unread count:', err);
+    }
+    
+    // Set up periodic refresh of unread count with error handling
+    const unreadRefreshInterval = setInterval(() => {
+      if (this.authService.isLoggedIn()) {
+        try {
+          this.chatService.updateUnreadCount();
+        } catch (err) {
+          console.error('Error in periodic unread count update:', err);
+        }
+      } else {
+        clearInterval(unreadRefreshInterval);
+      }
+    }, 30000); // Check every 30 seconds
+    
+    // Store the interval for cleanup
+    this.subscriptions.push({
+      unsubscribe: () => clearInterval(unreadRefreshInterval)
+    } as Subscription);
+    
     this.setView('dashboard');
   }
 
@@ -149,35 +182,47 @@ export class StudentDashboardComponent implements OnInit {
   }
 
   setView(view: string) {
-    console.log('Setting view to:', view);
     this.currentView = view;
     
-    // Reset specific view states if we're not switching to that view
+    // Don't reset showTeachersList when switching to teachers view
+    // This is the key fix - we need to preserve the state when navigating to teachers view
+    if (view !== 'teachers') {
+      this.showTeachersList = false;
+    }
+    
     if (view === 'chat') {
       if (this.hasApprovedGroup && this.approvedGroup) {
         this.showGroupChat = true;
+        
+        // Mark messages as read when opening the chat
+        if (this.approvedGroup.id) {
+          this.chatService.markMessagesAsRead(this.approvedGroup.id).subscribe({
+            next: () => {
+              console.log(`Marked messages as read for group ${this.approvedGroup?.id}`);
+              // Update unread count after marking as read
+              try {
+                this.chatService.updateUnreadCount();
+              } catch (err) {
+                console.error('Error updating unread count after marking as read:', err);
+              }
+            },
+            error: (err) => {
+              console.error('Error marking messages as read:', err);
+              // Continue showing chat anyway, don't block UI
+            }
+          });
+        }
       } else {
         this.notificationService.showInfo('You need to have an approved group to access the chat feature.');
-        this.currentView = 'dashboard'; // Redirect to dashboard if no approved group
+        this.currentView = 'dashboard';
       }
-    }
-    
-    if (view === 'teachers') {
+    } else if (view === 'teachers') {
+      // Always load teachers when this view is selected
       this.loadTeachers();
-    } else if (view === 'groups') {
-      this.loadStudentGroups();
-      this.showGroupForm = false;
-      this.showTeachersList = false;
-    } else if (view === 'chat') {
-      if (this.hasApprovedGroup && this.approvedGroup) {
-        this.showGroupChat = true;
-      } else {
-        this.notificationService.showInfo('You need to be in an approved group to access the group chat');
-        this.setView('groups');
-      }
+    } else {
+      this.showGroupChat = false;
     }
   }
-
   loadTeachers() {
     if (!this.teachers.length) {
       this.isLoading = true;
