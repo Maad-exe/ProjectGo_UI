@@ -106,33 +106,56 @@
         <div class="section-header" *ngIf="showTeachersList">
           <h2 class="section-title">Select a Supervisor</h2>
           <p class="section-subtitle">Choose a faculty member to supervise your project</p>
-          
-          <div class="form-group message-input">
-            <label>Request Message:</label>
-            <textarea [(ngModel)]="supervisionMessage" 
-                      placeholder="Enter a brief message explaining why you'd like this teacher to supervise your project"
-                      rows="3"></textarea>
+        </div>
+
+        <!-- Add the centralized message box here - outside of any card -->
+        <div class="message-box-overlay" *ngIf="showMessageInputForTeacher !== null">
+          <div class="centralized-message-container">
+            <div class="message-box-header">
+              <h3>
+                <i class="fas fa-comment-dots"></i>
+                Request Supervision from {{ getTeacherName(showMessageInputForTeacher) }}
+              </h3>
+              <button class="close-btn" (click)="cancelMessageInput()">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            
+            <div class="message-box-content">
+              <p class="message-instruction">Please provide details about your project and why you think this professor would be a good fit as your supervisor.</p>
+              
+              <textarea 
+                [(ngModel)]="supervisionMessage" 
+                placeholder="Explain your project goals and why you believe this professor would be a good fit as your supervisor..."
+                maxlength="500"
+                autofocus></textarea>
+              
+              <div class="message-box-footer">
+               
+                <div class="message-actions">
+                  <button class="cancel-btn" (click)="cancelMessageInput()">
+                    <i class="fas fa-times"></i> Cancel
+                  </button>
+                  <button 
+                    class="request-btn" 
+                    [class.sending]="isRequestingSupervision"
+                    [disabled]="isRequestingSupervision || !supervisionMessage.trim()"
+                    (click)="requestSupervision(showMessageInputForTeacher)">
+                    <i class="fas" [class.fa-paper-plane]="!isRequestingSupervision" [class.fa-spinner]="isRequestingSupervision" [class.fa-spin]="isRequestingSupervision"></i>
+                    {{ isRequestingSupervision ? 'Sending...' : 'Send Request' }}
+                  </button>
+                </div>
+                <span class="character-count" *ngIf="supervisionMessage">
+                  {{supervisionMessage.length}}/500
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
         <!-- Loading State -->
         <div class="loading-state" *ngIf="isLoading">
           <i class="fas fa-spinner fa-spin"></i> Loading teachers...
-        </div>
-
-        <!-- Teachers List -->
-        <div class="teacher-cards">
-          <div class="teacher-card" *ngFor="let teacher of teachers">
-            <!-- Teacher information here -->
-            <!-- Make sure the request supervision button is shown when showTeachersList is true -->
-            <button *ngIf="showTeachersList" 
-                    class="request-btn" 
-                    [disabled]="isRequestingSupervision"
-                    (click)="requestSupervision(teacher.id)">
-              <i class="fas fa-paper-plane"></i>
-              {{ isRequestingSupervision ? 'Sending...' : 'Request Supervision' }}
-            </button>
-          </div>
         </div>
 
         <!-- Error State -->
@@ -157,7 +180,7 @@
               <div class="info-section">
                 <h4>Specialization</h4>
                 <p>{{teacher.areaOfSpecialization}}</p>
-                <h4>Assigend Groups</h4>
+                <h4>Assigned Groups</h4>
                 <p>{{teacher.assignedGroups}}</p>
               </div>
               <div class="info-section">
@@ -173,16 +196,14 @@
                   <i class="fas fa-location-dot"></i>
                   <span>{{teacher.officeLocation}}</span>
                 </div>
-                
-                <!-- Fix the property name from teacher.Id to teacher.id (lowercase) -->
-                <button *ngIf="showTeachersList" 
-                        class="request-btn" 
-                        [disabled]="isRequestingSupervision"
-                        (click)="requestSupervision(teacher.id)">
-                  <i class="fas fa-paper-plane"></i>
-                  {{ isRequestingSupervision ? 'Sending...' : 'Request Supervision' }}
-                </button>
               </div>
+            </div>
+            
+            <!-- Keep only the footer with the button, remove message input container -->
+            <div class="card-footer" *ngIf="showTeachersList">
+              <button class="request-btn" (click)="showMessageInput(teacher.id)">
+                <i class="fas fa-user-tie"></i> Request Supervision
+              </button>
             </div>
           </div>
         </div>

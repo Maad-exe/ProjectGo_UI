@@ -82,6 +82,9 @@ export class StudentDashboardComponent implements OnInit {
   showGroupChat: boolean = false;
   private subscriptions: Subscription[] = [];
   
+  // Add this property to track which teacher's message input is visible
+  showMessageInputForTeacher: number | null = null;
+
   constructor(
     private teacherService: TeacherService,
     private authService: AuthService,
@@ -576,16 +579,14 @@ showGroupCleanupInfo(): void {
       teacherId: teacherId,
       message: this.supervisionMessage || 'Request for supervision'
     };
-    console.log('Full request object:', request);
-    console.log('Request stringified:', JSON.stringify(request));
-  
-    console.log('Sending supervision request:', request);
 
+    console.log('Sending supervision request:', request);
     this.supervisionService.requestSupervision(request).subscribe({
       next: (response) => {
         this.notificationService.showSuccess('Supervision request sent successfully');
         this.isRequestingSupervision = false;
         this.showTeachersList = false;
+        this.showMessageInputForTeacher = null; // Reset the input visibility
         this.loadStudentGroups(); // Refresh groups to show updated status
       },
       error: (error) => {
@@ -672,9 +673,27 @@ showGroupCleanupInfo(): void {
     }
 }
 
+// Add these methods to your component class
+showMessageInput(teacherId: number): void {
+  this.showMessageInputForTeacher = teacherId;
+  this.supervisionMessage = ''; // Reset message when opening for a new teacher
+}
+
+cancelMessageInput(): void {
+  this.showMessageInputForTeacher = null;
+  this.supervisionMessage = '';
+}
+
 ngOnDestroy(): void {
   // Clean up subscriptions
   this.subscriptions.forEach(sub => sub.unsubscribe());
+}
+
+// Add this method to get the teacher name from ID
+getTeacherName(teacherId: number | null): string {
+  if (!teacherId) return '';
+  const teacher = this.teachers.find(t => t.id === teacherId);
+  return teacher ? teacher.fullName : '';
 }
 
 }
