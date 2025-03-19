@@ -42,7 +42,11 @@
         </div>
         <div class="message-content">{{ message.content }}</div>
         <div class="message-status" *ngIf="message.senderId === userId">
-          <span class="read-status">{{ getReadStatus(message) }}</span>
+          <span class="read-status" 
+                [ngClass]="{'read': message.readBy?.length, 'sent': !message.readBy?.length}"
+                [title]="getDetailedReadStatus(message)">
+            {{ getReadStatus(message) }}
+          </span>
         </div>
       </div>
     </div>

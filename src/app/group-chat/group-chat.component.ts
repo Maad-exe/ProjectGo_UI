@@ -255,13 +255,28 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   // Add this method to format read status display
   getReadStatus(message: ChatMessage): string {
     if (message.senderId !== this.userId) {
-      return ''; // Don't show read status for messages from others
+      return ''; // Don't show read status for other's messages
     }
-    
-    if (message.isRead) {
-      return 'Read';
-    } else {
+  
+    if (!message.readBy || message.readBy.length === 0) {
       return 'Sent';
+    }
+  
+    // Filter out the sender from readers
+    const readers = message.readBy
+      .filter(r => r.userId !== message.senderId)
+      .map(r => r.userName);
+  
+    if (readers.length === 0) {
+      return 'Sent';
+    } else if (readers.length === 1) {
+      return `Read by ${readers[0]}`;
+    } else if (readers.length === 2) {
+      return `Read by ${readers[0]} and ${readers[1]}`;
+    } else if (readers.length === 3) {
+      return `Read by ${readers[0]}, ${readers[1]} and ${readers[2]}`;
+    } else {
+      return `Read by ${readers[0]}, ${readers[1]} and ${readers.length - 2} others`;
     }
   }
   
@@ -277,6 +292,18 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.messages.forEach(message => {
           if (message.senderId !== this.userId) {
             message.isRead = true;
+            message.isReadByCurrentUser = true;
+            
+            // Add current user to readBy if not already there
+            if (!message.readBy?.some(r => r.userId === this.userId)) {
+              message.readBy = message.readBy || [];
+              message.readBy.push({
+                userId: this.userId!,
+                userName: 'You',
+                readAt: new Date().toISOString()
+              });
+              message.totalReadCount = message.readBy.length;
+            }
           }
         });
       },
@@ -284,10 +311,19 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     });
   }
   
-  updateMessagesReadStatus(userId: number): void {
+  updateMessagesReadStatus(userId: number, userName?: string): void {
     this.messages.forEach(message => {
       if (message.senderId === this.userId) {
-        message.isRead = true;
+        // Update the readBy array
+        const existingReader = message.readBy?.find(r => r.userId === userId);
+        if (!existingReader && message.readBy) {
+          message.readBy.push({
+            userId: userId,
+            userName: userName || `User ${userName}`, // Use actual name if provided
+            readAt: new Date().toISOString()
+          });
+          message.totalReadCount = message.readBy.length;
+        }
       }
     });
   }
@@ -375,14 +411,17 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     
     // Create a temporary message to show immediately
     const tempMessage: ChatMessage = {
-      id: -new Date().getTime(), // Temporary negative ID to identify it
+      id: -new Date().getTime(), // Temporary negative ID
       groupId: this.groupId,
       senderId: this.userId!,
-      senderName: 'You', // Will be replaced when the real message arrives
+      senderName: 'You',
       senderRole: this.userRole,
       content: messageContent,
       timestamp: new Date().toISOString(),
-      isRead: false
+      isRead: false,
+      readBy: [], // Initialize empty array
+      totalReadCount: 0, // Add missing property
+      isReadByCurrentUser: true // Add missing property - true since it's our message
     };
     
     // Add the temporary message to the UI
@@ -434,5 +473,23 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     const index = this.messages.findIndex(msg => msg === currentMessage);
     const laterMessages = this.messages.slice(index + 1);
     return !laterMessages.some(msg => msg.senderId === userId);
+  }
+
+  getDetailedReadStatus(message: ChatMessage): string {
+    if (!message.readBy || message.readBy.length === 0) {
+      return 'Not read by anyone yet';
+    }
+  
+    // Filter out sender and sort by read time
+    const readers = message.readBy
+      .filter(r => r.userId !== message.senderId)
+      .sort((a, b) => new Date(a.readAt).getTime() - new Date(b.readAt).getTime())
+      .map(r => `${r.userName} (${new Date(r.readAt).toLocaleTimeString()})`);
+  
+    if (readers.length === 0) {
+      return 'Not read by anyone yet';
+    }
+  
+    return `Read by:\n${readers.join('\n')}`;
   }
 }

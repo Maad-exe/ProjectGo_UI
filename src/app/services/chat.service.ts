@@ -6,6 +6,12 @@ import * as signalR from '@microsoft/signalr';
 import { AuthService } from './auth.service';
 import { catchError, shareReplay, tap, throttleTime, map, switchMap, retry, finalize } from 'rxjs/operators';
 
+export interface MessageReadStatus {
+  userId: number;
+  userName: string;
+  readAt: string;
+}
+
 export interface ChatMessage {
   id: number;
   groupId: number;
@@ -15,6 +21,9 @@ export interface ChatMessage {
   content: string;
   timestamp: string;
   isRead: boolean;
+  readBy?: MessageReadStatus[];
+  totalReadCount: number;
+  isReadByCurrentUser: boolean;
 }
 
 export interface UserTypingInfo {
@@ -546,7 +555,10 @@ private async startConnection(): Promise<void> {
       senderRole: currentUser?.role || 'User',
       content: content,
       timestamp: timestamp,
-      isRead: false
+      isRead: false,
+      readBy: [],
+      totalReadCount: 0,
+      isReadByCurrentUser: false
     };
     
     // Add to cache immediately for responsive UI
@@ -628,6 +640,7 @@ private async startConnection(): Promise<void> {
       tap(() => {
         console.log(`Marked messages as read in group ${groupId}`);
         // Update unread count after marking as read
+        
         this.updateUnreadCount();
         
         // Notify via SignalR if connected
