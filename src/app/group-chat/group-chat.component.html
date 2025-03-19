@@ -44,16 +44,17 @@
         <div class="message-status" *ngIf="message.senderId === userId">
           <span class="read-status">{{ getReadStatus(message) }}</span>
         </div>
-        
-        <!-- Show typing indicator only for the last message from this sender -->
-        <div *ngIf="typingUsers.has(message.senderId) && isLastMessageFromUser(message, message.senderId)" 
-             class="typing-indicator individual">
-          <span class="typing-text">typing...</span>
-          <div class="typing-dots">
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-          </div>
+      </div>
+    </div>
+
+    <!-- Keep only this typing indicator at the bottom -->
+    <div class="typing-indicator-container">
+      <div class="typing-indicator" *ngIf="typingUsers.size > 0">
+        <span class="typing-text">{{typingText}}</span>
+        <div class="typing-dots">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
         </div>
       </div>
     </div>

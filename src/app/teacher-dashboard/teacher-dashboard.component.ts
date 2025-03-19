@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -7,6 +7,8 @@ import { NotificationService } from '../services/notifications.service';
 import { SupervisionService, SupervisionRequest, SupervisionResponseDto } from '../services/supervision.service';
 import { GroupDetails } from '../services/group.service';
 import { GroupChatComponent } from '../group-chat/group-chat.component';
+import { ChatService } from '../services/chat.service';
+import { Subscription } from 'rxjs';
 
 interface TeacherInfo {
   fullName: string;
@@ -23,7 +25,7 @@ interface TeacherInfo {
   templateUrl: './teacher-dashboard.component.html',
   styleUrls: ['./teacher-dashboard.component.scss']
 })
-export class TeacherDashboardComponent implements OnInit {
+export class TeacherDashboardComponent implements OnInit, OnDestroy {
   currentView = 'dashboard';
   isLoading = false;
   teacherInfo: TeacherInfo = {
@@ -39,12 +41,17 @@ export class TeacherDashboardComponent implements OnInit {
   teacherGroups: GroupDetails[] = [];
   selectedGroupForChat: GroupDetails | null = null;
   showGroupChat: boolean = false;
+
+  // Add new properties
+  private subscriptions: Subscription[] = [];
+  unreadMessagesByGroup: { [groupId: number]: number } = {};
   
   constructor(
     private authService: AuthService,
     private router: Router,
     private supervisionService: SupervisionService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private chatService: ChatService  // Add ChatService
   ) {}
 
   ngOnInit() {
@@ -61,6 +68,28 @@ export class TeacherDashboardComponent implements OnInit {
     
     this.loadTeacherInfo();
     //this.setView('dashboard');
+
+    // Subscribe to unread messages updates
+    this.subscriptions.push(
+      this.chatService.unreadMessages$.subscribe({
+        next: () => this.updateUnreadCounts(),
+        error: err => console.error('Error in unread messages subscription:', err)
+      })
+    );
+
+    // Initial update of unread counts
+    this.updateUnreadCounts();
+
+    // Set up periodic refresh
+    const refreshInterval = setInterval(() => {
+      if (this.authService.isLoggedIn()) {
+        this.updateUnreadCounts();
+      }
+    }, 30000);
+
+    this.subscriptions.push({
+      unsubscribe: () => clearInterval(refreshInterval)
+    } as Subscription);
   }
 
   loadTeacherInfo() {
@@ -169,5 +198,18 @@ export class TeacherDashboardComponent implements OnInit {
   logout() {
     this.authService.logout();
     this.router.navigate(['/login']);
+  }
+
+  private updateUnreadCounts(): void {
+    this.chatService.getUnreadMessagesByGroup().subscribe({
+      next: (counts) => {
+        this.unreadMessagesByGroup = counts;
+      },
+      error: (err) => console.error('Error getting unread counts:', err)
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 }

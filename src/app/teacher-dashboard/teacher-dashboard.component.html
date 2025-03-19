@@ -152,6 +152,10 @@
               </div>
               <button class="chat-btn" (click)="openGroupChat(group)">
                 <i class="fas fa-comments"></i> Open Chat
+                <!-- Add unread count badge -->
+                <span class="unread-badge" *ngIf="unreadMessagesByGroup[group.id] > 0">
+                  {{ unreadMessagesByGroup[group.id] }}
+                </span>
               </button>
             </div>
           </div>

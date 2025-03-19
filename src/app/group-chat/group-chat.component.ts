@@ -317,6 +317,7 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.updateTypingIndicator();
   }
   
+  // Update the updateTypingIndicator method for more personalized messages
   updateTypingIndicator(): void {
     if (this.typingUsers.size === 0) {
       this.showTypingIndicator = false;
@@ -326,13 +327,15 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
     this.showTypingIndicator = true;
     const typingUserNames = Array.from(this.typingUsers.values())
-      .map(user => user.name)
+      .map(user => user.name.split(' ')[0]) // Only use first name for cleaner display
       .sort();
 
     if (typingUserNames.length === 1) {
       this.typingText = `${typingUserNames[0]} is typing...`;
     } else if (typingUserNames.length === 2) {
       this.typingText = `${typingUserNames[0]} and ${typingUserNames[1]} are typing...`;
+    } else if (typingUserNames.length === 3) {
+      this.typingText = `${typingUserNames[0]}, ${typingUserNames[1]} and ${typingUserNames[2]} are typing...`;
     } else {
       this.typingText = `${typingUserNames.length} people are typing...`;
     }
