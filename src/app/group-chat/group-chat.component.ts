@@ -27,7 +27,7 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   userRole: string = '';
   userId: number | null = null;
   isConnected: boolean = false;
-  typingUsers: Map<number, UserTypingInfo> = new Map();
+  typingUsers: Map<number, {name: string; timestamp: Date}> = new Map();
   showTypingIndicator: boolean = false;
   typingText: string = '';
   loadingEarlierMessages: boolean = false;
@@ -39,6 +39,8 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   private typingSubject = new BehaviorSubject<string>('');
   private scrollToBottomPending = false;
   private typingTimeout: any;
+  private typingDebounceTime = 1000; // 1 second
+  private typingTimeouts: Map<number, any> = new Map();
   
   constructor(
     private chatService: ChatService,
@@ -291,29 +293,48 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
   
   handleUserTyping(typingInfo: UserTypingInfo): void {
-    this.typingUsers.set(typingInfo.userId, typingInfo);
-    this.updateTypingIndicator();
+    if (typingInfo.userId === this.userId) return; // Don't show own typing indicator
     
-    // Remove typing indicator after a delay
-    setTimeout(() => {
+    // Clear existing timeout for this user if any
+    if (this.typingTimeouts.has(typingInfo.userId)) {
+      clearTimeout(this.typingTimeouts.get(typingInfo.userId));
+    }
+
+    // Add/Update typing user
+    this.typingUsers.set(typingInfo.userId, {
+      name: typingInfo.userName,
+      timestamp: new Date()
+    });
+
+    // Set timeout to remove typing indicator
+    const timeout = setTimeout(() => {
       this.typingUsers.delete(typingInfo.userId);
+      this.typingTimeouts.delete(typingInfo.userId);
       this.updateTypingIndicator();
     }, 3000);
+
+    this.typingTimeouts.set(typingInfo.userId, timeout);
+    this.updateTypingIndicator();
   }
   
   updateTypingIndicator(): void {
     if (this.typingUsers.size === 0) {
       this.showTypingIndicator = false;
+      this.typingText = '';
       return;
     }
-    
+
     this.showTypingIndicator = true;
-    
-    if (this.typingUsers.size === 1) {
-      const typingUser = Array.from(this.typingUsers.values())[0];
-      this.typingText = `${typingUser.userName} is typing...`;
+    const typingUserNames = Array.from(this.typingUsers.values())
+      .map(user => user.name)
+      .sort();
+
+    if (typingUserNames.length === 1) {
+      this.typingText = `${typingUserNames[0]} is typing...`;
+    } else if (typingUserNames.length === 2) {
+      this.typingText = `${typingUserNames[0]} and ${typingUserNames[1]} are typing...`;
     } else {
-      this.typingText = `${this.typingUsers.size} people are typing...`;
+      this.typingText = `${typingUserNames.length} people are typing...`;
     }
   }
   
@@ -328,22 +349,19 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   notifyUserTyping(message: string): void {
     if (!this.groupId || !message) return;
     
-    if (!this.typingTimeout) {
-      this.chatService.notifyTyping(this.groupId);
-      
-      // Set a timeout to stop typing notification after 3 seconds of inactivity
-      this.typingTimeout = setTimeout(() => {
-        this.chatService.stopTypingNotification(this.groupId);
-        this.typingTimeout = null;
-      }, 3000);
-    } else {
-      // Reset the timeout
+    // Clear existing timeout for this user
+    if (this.typingTimeout) {
       clearTimeout(this.typingTimeout);
-      this.typingTimeout = setTimeout(() => {
-        this.chatService.stopTypingNotification(this.groupId);
-        this.typingTimeout = null;
-      }, 3000);
     }
+
+    // Send typing notification
+    this.chatService.notifyTyping(this.groupId);
+    
+    // Set new timeout
+    this.typingTimeout = setTimeout(() => {
+      this.chatService.stopTypingNotification(this.groupId);
+      this.typingTimeout = null;
+    }, this.typingDebounceTime);
   }
   
   sendMessage(): void {
@@ -407,5 +425,11 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         error: (err) => console.error('Error leaving chat group:', err)
       });
     }
+  }
+
+  isLastMessageFromUser(currentMessage: ChatMessage, userId: number): boolean {
+    const index = this.messages.findIndex(msg => msg === currentMessage);
+    const laterMessages = this.messages.slice(index + 1);
+    return !laterMessages.some(msg => msg.senderId === userId);
   }
 }

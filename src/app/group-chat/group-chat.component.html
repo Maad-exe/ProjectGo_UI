@@ -28,7 +28,7 @@
     
     <!-- Chat messages -->
     <div class="chat-messages" #chatMessages>
-      <div *ngFor="let message of messages" 
+      <div *ngFor="let message of messages; let last = index" 
            class="message" 
            [ngClass]="{
              'own-message': message.senderId === userId, 
@@ -44,15 +44,16 @@
         <div class="message-status" *ngIf="message.senderId === userId">
           <span class="read-status">{{ getReadStatus(message) }}</span>
         </div>
-      </div>
-      
-      <!-- Typing indicator -->
-      <div *ngIf="showTypingIndicator" class="typing-indicator">
-        <span>{{ typingText }}</span>
-        <div class="typing-dots">
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
+        
+        <!-- Show typing indicator only for the last message from this sender -->
+        <div *ngIf="typingUsers.has(message.senderId) && isLastMessageFromUser(message, message.senderId)" 
+             class="typing-indicator individual">
+          <span class="typing-text">typing...</span>
+          <div class="typing-dots">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
         </div>
       </div>
     </div>

@@ -250,6 +250,13 @@
         color: #94a3b8;
         font-weight: 500;
       }
+      
+      .typing-indicator {
+        position: absolute;
+        bottom: -18px;
+        left: 0;
+        z-index: 1;
+      }
     }
     
     .typing-indicator {
@@ -286,6 +293,34 @@
           
           &:nth-child(3) {
             animation-delay: 0.4s;
+          }
+        }
+      }
+      
+      &.individual {
+        position: relative;
+        padding: 4px 8px;
+        font-size: 0.8em;
+        color: #666;
+        opacity: 0.8;
+        
+        .typing-text {
+          margin-right: 8px;
+        }
+        
+        .typing-dots {
+          display: inline-flex;
+          gap: 3px;
+          
+          .dot {
+            width: 4px;
+            height: 4px;
+            background: #666;
+            border-radius: 50%;
+            animation: typing-dot 1s infinite;
+            
+            &:nth-child(2) { animation-delay: 0.2s; }
+            &:nth-child(3) { animation-delay: 0.4s; }
           }
         }
       }
