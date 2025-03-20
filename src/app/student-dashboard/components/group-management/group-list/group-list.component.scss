@@ -1,0 +1,733 @@
+// Container for all groups
+.groups-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 800px; // Make cards more compact
+  margin: 0 auto; // Center the content
+
+  .section-title {
+    font-size: 1.25rem;
+    color: #1e293b;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #e2e8f0;
+    font-weight: 600;
+  }
+
+  // Common card styling for all group types
+  .group-card, .approved-group {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    }
+
+    // Card Header
+    .card-header {
+      padding: 1.5rem;
+      background: linear-gradient(135deg, #f8fafc, #ffffff);
+      border-bottom: 1px solid #e2e8f0;
+
+      h3 {
+        font-size: 1.25rem;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+      }
+
+      .created-date {
+        font-size: 0.875rem;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        i {
+          color: #94a3b8;
+        }
+      }
+    }
+
+    .card-body {
+      padding: 1.5rem;
+
+      .status-section {
+        margin-bottom: 1.5rem;
+
+        .status-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem 1rem;
+          border-radius: 24px;
+          font-size: 0.875rem;
+          font-weight: 500;
+          transition: all 0.3s ease;
+
+          i {
+            font-size: 1rem;
+          }
+
+          &.pending {
+            background: linear-gradient(135deg, #fef3c7, #fff7ed);
+            color: #d97706;
+            border: 1px solid #fcd34d;
+
+            &:hover {
+              background: linear-gradient(135deg, #fcd34d, #fbbf24);
+              color: #7c2d12;
+            }
+          }
+
+          &.requested {
+            background: linear-gradient(135deg, #dbeafe, #eff6ff);
+            color: #2563eb;
+            border: 1px solid #93c5fd;
+
+            &:hover {
+              background: linear-gradient(135deg, #93c5fd, #60a5fa);
+              color: #1e40af;
+            }
+          }
+
+          &.rejected {
+            background: linear-gradient(135deg, #fee2e2, #fef2f2);
+            color: #dc2626;
+            border: 1px solid #fca5a5;
+
+            &:hover {
+              background: linear-gradient(135deg, #fca5a5, #f87171);
+              color: #991b1b;
+            }
+          }
+        }
+      }
+
+      .teacher-info {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: #f1f5f9;
+          border-color: #cbd5e1;
+        }
+
+        .info-item {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          color: #475569;
+
+          i {
+            font-size: 1.125rem;
+            color: #3b82f6;
+          }
+        }
+      }
+
+      .members-section {
+        h4 {
+          font-size: 0.875rem;
+          color: #475569;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          margin-bottom: 1rem;
+          font-weight: 600;
+        }
+
+        .member-list {
+          background: #f8fafc;
+          border-radius: 12px;
+          overflow: hidden;
+          border: 1px solid #e2e8f0;
+
+          li {
+            padding: 0.875rem;
+            border-bottom: 1px solid #e2e8f0;
+            transition: all 0.2s ease;
+
+            &:hover {
+              background: #f1f5f9;
+            }
+
+            &:last-child {
+              border-bottom: none;
+            }
+
+            .member-details {
+              display: flex;
+              align-items: center;
+              gap: 1rem;
+              flex-wrap: wrap;
+
+              .member-name {
+                font-weight: 500;
+                color: #1e293b;
+              }
+
+              .member-email {
+                color: #64748b;
+                font-size: 0.875rem;
+              }
+
+              .badge.creator {
+                background: linear-gradient(135deg, #dbeafe, #eff6ff);
+                color: #2563eb;
+                padding: 0.25rem 0.75rem;
+                border-radius: 16px;
+                font-size: 0.75rem;
+                font-weight: 500;
+                border: 1px solid #93c5fd;
+                display: flex;
+                align-items: center;
+                gap: 0.25rem;
+
+                i {
+                  font-size: 0.75rem;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .card-actions {
+      padding: 1.5rem;
+      background: #f8fafc;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: flex-end;
+
+      .request-btn {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.25rem;
+        border-radius: 12px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+
+        i {
+          font-size: 1rem;
+          transition: transform 0.3s ease;
+        }
+
+        &:hover {
+          background: linear-gradient(135deg, #2563eb, #1d4ed8);
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+
+          i {
+            transform: translateX(2px);
+          }
+        }
+
+        &:active {
+          transform: translateY(0);
+        }
+      }
+    }
+  }
+}
+
+// Host element positioning
+:host {
+  display: block;
+  width: 100%;
+}
+
+// Approved Group Display
+.approved-group {
+  background: linear-gradient(to right, #ffffff, #f0f7ff);
+  border: 1px solid #c9e1ff;
+  border-left: 4px solid #2684ff;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 25px;
+  box-shadow: 0 4px 12px rgba(38, 132, 255, 0.08);
+  width: 100%;
+
+  .approved-badge {
+    display: inline-block;
+    background-color: #e3f2fd;
+    color: #0277bd;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 500;
+    font-size: 14px;
+    margin-bottom: 15px;
+
+    i {
+      margin-right: 6px;
+      color: #0277bd;
+    }
+  }
+
+  h3 {
+    margin: 0 0 12px 0;
+    font-size: 20px;
+    color: #172b4d;
+    font-weight: 600;
+  }
+
+  .created-date {
+    font-size: 14px;
+    color: #5e6c84;
+    margin-bottom: 20px;
+  }
+
+  h4 {
+    font-size: 16px;
+    color: #172b4d;
+    font-weight: 500;
+    margin: 20px 0 10px 0;
+    border-bottom: 1px solid #dfe1e6;
+    padding-bottom: 8px;
+  }
+
+  .supervisor-info {
+    background-color: #f4f5f7;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 15px;
+
+    .supervisor-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-gap: 10px;
+
+      div {
+        padding: 6px 0;
+        color: #253858;
+
+        i {
+          color: #6b778c;
+          margin-right: 8px;
+          width: 16px;
+          text-align: center;
+        }
+      }
+    }
+  }
+
+  .member-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+
+    li {
+      padding: 10px 0;
+      border-bottom: 1px solid #f4f5f7;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .member-details {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+
+        .member-name {
+          font-weight: 500;
+          color: #172b4d;
+        }
+
+        .member-email {
+          color: #5e6c84;
+        }
+
+        .badge.creator {
+          background-color: #e3fcef;
+          color: #00875a;
+          padding: 2px 8px;
+          font-size: 12px;
+          border-radius: 3px;
+        }
+      }
+    }
+  }
+}
+
+// Other Groups Title
+.other-groups-title {
+  font-size: 18px;
+  color: #172b4d;
+  margin: 25px 0 15px 0;
+  font-weight: 500;
+}
+
+// Group card styling
+.group-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 20px;
+  margin-bottom: 20px;
+  border-left: 4px solid #dee2e6;
+  transition: transform 0.2s, box-shadow 0.2s;
+  
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  }
+  
+  &.approved {
+    border-left-color: #28a745;
+  }
+  
+  &.requested {
+    border-left-color: #17a2b8;
+  }
+  
+  &.rejected {
+    border-left-color: #dc3545;
+  }
+  
+  h3 {
+    margin: 0 0 10px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #212529;
+  }
+  
+  .created-date {
+    font-size: 13px;
+    color: #6c757d;
+    margin-bottom: 15px;
+  }
+  
+  .group-status {
+    margin-bottom: 10px;
+    
+    .status-text {
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+      
+      &.approved {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+      }
+      
+      &.requested {
+        background-color: #e3f2fd;
+        color: #0277bd;
+      }
+      
+      &.rejected {
+        background-color: #ffebee;
+        color: #c62828;
+      }
+      
+      &.pending {
+        background-color: #fff8e1;
+        color: #ff8f00;
+      }
+    }
+  }
+  
+  .supervisor-name {
+    margin-bottom: 15px;
+    color: #495057;
+    
+    i {
+      color: #6c757d;
+      margin-right: 5px;
+    }
+  }
+  
+  h4 {
+    font-size: 16px;
+    font-weight: 500;
+    margin: 15px 0 10px 0;
+    color: #343a40;
+  }
+  
+  .member-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 15px 0;
+    
+    li {
+      padding: 8px 0;
+      border-bottom: 1px solid #f1f3f5;
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      .member-info {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        
+        .name {
+          font-weight: 500;
+          color: #343a40;
+        }
+        
+        .email {
+          color: #6c757d;
+          font-size: 13px;
+        }
+        
+        .badge.creator {
+          background-color: #e8f5e9;
+          color: #2e7d32;
+          padding: 2px 8px;
+          font-size: 12px;
+          border-radius: 12px;
+        }
+      }
+    }
+  }
+  
+  .group-actions {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10px;
+    margin-top: 15px;
+    
+    .action-btn {
+      padding: 8px 15px;
+      border-radius: 5px;
+      border: none;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background-color 0.2s;
+      
+      &.request-supervision {
+        background-color: #007bff;
+        color: white;
+        
+        &:hover {
+          background-color: #0069d9;
+        }
+      }
+    }
+    
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 12px;
+      border-radius: 5px;
+      font-size: 13px;
+      font-weight: 500;
+      
+      i {
+        margin-right: 6px;
+      }
+      
+      &.approved {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+      }
+      
+      &.rejected {
+        background-color: #ffebee;
+        color: #c62828;
+      }
+    }
+  }
+}
+
+.no-groups {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px dashed #e2e8f0;
+
+  i {
+    font-size: 2rem;
+    color: #94a3b8;
+    margin-bottom: 1rem;
+  }
+
+  p {
+    color: #64748b;
+    font-size: 1rem;
+    margin: 0;
+  }
+}
+
+// Common styles for group content
+.approved-group-details, .group-card {
+  h3 {
+    margin: 0 0 0.75rem;
+    font-size: 1.25rem;
+    color: #1e293b;
+    font-weight: 600;
+  }
+
+  .created-date {
+    color: #64748b;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+  }
+
+  .member-list {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+
+    li {
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #f1f5f9;
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+  }
+}
+
+// Status badges and action buttons
+.group-actions {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+
+  .action-btn.request-supervision {
+    background: #3b82f6;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+
+    &:hover {
+      background: #2563eb;
+    }
+  }
+}
+
+// Common Styles
+.member-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  li {
+    padding: 0.75rem;
+    border-bottom: 1px solid #f1f5f9;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .member-details {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+
+      .member-name {
+        font-weight: 500;
+        color: #1e293b;
+      }
+
+      .member-email {
+        color: #64748b;
+        font-size: 0.875rem;
+      }
+
+      .badge.creator {
+        background: #f0f7ff;
+        color: #3b82f6;
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+      }
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .groups-list {
+    padding: 1rem;
+  }
+
+  .group-card {
+    padding: 1rem;
+  }
+
+  .group-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+// Responsive Design
+@media (max-width: 640px) {
+  .groups-list {
+    .group-card, .approved-group {
+      padding: 1rem;
+
+      .supervisor-info .supervisor-details {
+        grid-template-columns: 1fr;
+      }
+
+      .card-actions {
+        flex-direction: column;
+        
+        .action-btn {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+    }
+  }
+}
+
+// Animations
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Apply animation to cards
+.group-card {
+  animation: slideIn 0.3s ease-out forwards;
+}

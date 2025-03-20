@@ -1,0 +1,40 @@
+<aside class="sidebar">
+  <div class="brand-section">
+    <div class="logo">
+      <img src="assets/Logo.png" alt="ProjectGo Logo" class="logo-image">
+    </div>
+  </div>
+  
+  <nav class="sidebar-nav">
+    <a class="nav-item" [class.active]="currentView === 'dashboard'" (click)="setView('dashboard')">
+      <i class="fas fa-home"></i>
+      <span>Dashboard</span>
+    </a>
+    
+    <a class="nav-item" [class.active]="currentView === 'teachers'" (click)="setView('teachers')">
+      <i class="fas fa-chalkboard-teacher"></i>
+      <span>Browse Supervisors</span>
+    </a>
+    
+    <a class="nav-item" [class.active]="currentView === 'projects'" (click)="setView('projects')">
+      <i class="fas fa-tasks"></i>
+      <span>Project Management</span>
+    </a>
+    
+    <a class="nav-item" [class.active]="currentView === 'proposals'" (click)="setView('proposals')">
+      <i class="fas fa-file-alt"></i>
+      <span>Submit Proposal</span>
+    </a>
+    
+    <a class="nav-item" [class.active]="currentView === 'groups'" (click)="setView('groups')">
+      <i class="fas fa-users"></i>
+      <span>My Groups</span>
+    </a>
+    
+    <a class="nav-item" [class.active]="currentView === 'chat'" [class.disabled]="!hasApprovedGroup" (click)="setView('chat')">
+      <i class="fas fa-comments"></i>
+      <span>Group Chat</span>
+      <span class="badge" *ngIf="unreadMessages > 0">{{ unreadMessages }}</span>
+    </a>
+  </nav>
+</aside>

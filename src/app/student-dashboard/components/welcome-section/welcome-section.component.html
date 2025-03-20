@@ -1,0 +1,79 @@
+<div class="dashboard-welcome">
+  <div class="welcome-card">
+    <h1>Welcome to Student Dashboard</h1>
+    <p class="subtitle">Access all your academic resources in one place</p>
+    
+    <div class="student-info">
+      <div class="info-item">
+        <span class="label">Name:</span>
+        <span class="value">{{studentInfo.fullName}}</span>
+      </div>
+      <div class="info-item">
+        <span class="label">Enrollment:</span>
+        <span class="value">{{studentInfo.enrollmentNumber}}</span>
+      </div>
+      <div class="info-item">
+        <span class="label">Department:</span>
+        <span class="value">{{studentInfo.department}}</span>
+      </div>
+    </div>
+    
+    <div class="dashboard-cards">
+      <div class="dashboard-card announcements">
+        <h2><i class="fas fa-bullhorn"></i> Announcements</h2>
+        <div class="announcement-list">
+          <div *ngFor="let announcement of announcements" class="announcement-item">
+            <h3>{{announcement.title}}</h3>
+            <p>{{announcement.content}}</p>
+            <span class="date">{{announcement.date | date}}</span>
+          </div>
+          <div *ngIf="announcements.length === 0" class="no-data">
+              No announcements available
+            </div>
+        </div>
+      </div>
+        
+        <div class="dashboard-card progress">
+          <h2><i class="fas fa-chart-line"></i> Project Progress</h2>
+          <div class="progress-info">
+            <div class="progress-item">
+              <span class="label">Current Phase:</span>
+              <span class="value">{{projectProgress.currentPhase}}</span>
+            </div>
+            <div class="progress-item">
+              <span class="label">Next Milestone:</span>
+              <span class="value">{{projectProgress.nextMilestone}}</span>
+            </div>
+            <div class="progress-bar-container">
+              <div class="progress-bar" [style.width.%]="projectProgress.completion"></div>
+              <span class="progress-label">{{projectProgress.completion}}% Complete</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Single quick actions section -->
+      <div class="quick-actions">
+        <button class="action-btn" (click)="navigateToTeachers()">
+          <i class="fas fa-users"></i>
+          View Faculty
+        </button>
+        
+        <button class="action-btn" 
+                [class.disabled]="!hasApprovedGroup" 
+                (click)="navigateToChat()"
+                [title]="!hasApprovedGroup ? 'You need an approved group to access chat' : ''">
+          <div class="btn-content">
+            <i class="fa-brands fa-rocketchat" 
+               [class.has-notifications]="unreadMessages > 0"></i>
+            <span>Group Chat</span>
+          </div>
+        </button>
+
+        <button class="action-btn">
+          <i class="fas fa-calendar"></i>
+          Schedule
+        </button>
+      </div>
+    </div>
+  </div>

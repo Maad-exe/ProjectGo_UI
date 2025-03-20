@@ -2,12 +2,17 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  max-height: calc(100vh - 130px); // Limit height to fit screen
+  width: 100%;
   background-color: #f9fafb;
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
   font-family: 'Inter', sans-serif;
+  
+  // Remove any fixed position styling that causes issues
+  margin: 0;
+  padding: 0;
+  position: relative;
 }
 
 .chat-header {
@@ -18,12 +23,16 @@
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid #f1f5f9;
+  flex-shrink: 0; // Prevent header from shrinking
   
   h2 {
     margin: 0;
     font-size: 1.125rem; // Slightly smaller
     font-weight: 600;
     color: #0f172a;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   
   .connection-status {
@@ -34,6 +43,7 @@
     color: #b91c1c;
     font-weight: 500;
     transition: all 0.2s ease;
+    flex-shrink: 0; // Prevent status from shrinking
     
     &.connected {
       background-color: #dcfce7;
@@ -48,6 +58,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-height: 0; // Important for nested flex containers
   
   .loading-spinner, .error-message {
     display: flex;
@@ -123,6 +134,7 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+    min-height: 0; // Important for flex scrolling
     
     .message {
       max-width: 75%;
@@ -392,6 +404,7 @@
   display: flex;
   gap: 10px;
   align-items: center;
+  flex-shrink: 0; // Prevent input container from shrinking
   
   .message-input {
     flex: 1;

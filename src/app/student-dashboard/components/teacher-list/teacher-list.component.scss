@@ -1,0 +1,467 @@
+// Teacher Grid Styles
+.teacher-section {
+
+  width: 100%;
+  padding: 0;
+  
+  // Remove the positioning that tries to account for sidebar/header
+  margin-left: 0;
+  margin-top: 0;
+  min-height: auto;
+  
+  // Rest of your teacher-list component styles remain the same
+  flex: 1;
+  padding-top: 1rem;
+  .section-header {
+    text-align: center;
+    margin-bottom: 3rem;
+
+    .section-title {
+      font-size: 2.5rem;
+      color: #1e293b;
+      margin-bottom: 0.5rem;
+    }
+
+    .section-subtitle {
+      color: #64748b;
+      font-size: 1.2rem;
+    }
+  }
+
+  .teacher-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 2rem;
+    padding: 1rem;
+
+    .teacher-card {
+      display: flex;
+      flex-direction: column;
+      background: rgb(255, 255, 255);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease;
+      height: 100%; // Ensure all cards have the same height
+
+      &:hover {
+        transform: translateY(-10px);
+      }
+
+      .card-header {
+        padding: 1.5rem;
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        color: white;
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+
+        .teacher-avatar {
+          flex-shrink: 0; // Prevent avatar from shrinking
+          width: 60px;
+          height: 60px;
+          background: white;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          i {
+            font-size: 1.5rem;
+            color: #3b82f6;
+          }
+        }
+
+        .teacher-primary-info {
+          h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            margin-top: 0;
+          }
+
+          .department {
+            opacity: 0.9;
+            font-size: 0.875rem;
+          }
+        }
+      }
+
+      .card-body {
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        flex: 1; // Allow card body to expand
+
+        .info-section {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1rem;
+          margin-bottom: 1.25rem;
+
+          h4 {
+            color: #64748b;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+            margin-top: 0;
+            grid-column: 1 / -1; // Span full width
+          }
+
+          p {
+            color: #1e293b;
+            font-size: 1rem;
+            margin: 0;
+          }
+        }
+
+        .contact-details {
+          margin-top: auto; // Push to bottom of card body
+          border-top: 1px solid #e2e8f0;
+          padding-top: 1rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+
+          .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #64748b;
+            text-decoration: none;
+
+            i {
+              color: #3b82f6;
+              width: 16px; // Fixed width for alignment
+              text-align: center;
+            }
+
+            &:hover {
+              color: #3b82f6;
+            }
+          }
+        }
+      }
+
+      .card-footer {
+        padding: 1rem;
+        background-color: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+        margin-top: auto; // Push footer to bottom of card
+      }
+    }
+  }
+}
+
+// Loading and error states
+.loading-state, .error-state {
+  text-align: center;
+  padding: 2rem;
+  color: #64748b;
+  
+  .retry-btn {
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+
+    &:hover {
+      opacity: 0.9;
+    }
+  }
+}
+
+// Request button style
+.request-btn {
+  width: 100%;
+  padding: 12px 16px;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  gap: 8px;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+  margin-top: 0; // No margin needed in card footer
+  
+  i {
+    font-size: 0.95rem;
+    transition: transform 0.2s ease;
+  }
+  
+  &:hover:not(:disabled) {
+    background-color: #2563eb;
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+    transform: translateY(-2px);
+    
+    i {
+      transform: translateX(2px);
+    }
+  }
+  
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+  
+  &:disabled {
+    background-color: #bfdbfe;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+  
+  &.sending {
+    position: relative;
+    overflow: hidden;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.2) 50%,
+        rgba(255, 255, 255, 0) 100%
+      );
+      animation: shine 1.5s infinite;
+    }
+  }
+}
+
+// Message overlay styles
+.message-box-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.centralized-message-container {
+  width: 90%;
+  max-width: 500px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  animation: slide-up 0.3s ease;
+  
+  .message-box-header {
+    padding: 15px 20px;
+    background: #3b82f6;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    
+    h3 {
+      margin: 0;
+      font-size: 1.125rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      
+      i {
+        font-size: 1rem;
+      }
+    }
+    
+    .close-btn {
+      background: none;
+      border: none;
+      color: white;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+      }
+    }
+  }
+  
+  .message-box-content {
+    padding: 20px;
+    position: relative;
+    padding-bottom: 70px;
+    
+    .message-instruction {
+      font-size: 0.875rem;
+      color: #64748b;
+      margin-bottom: 15px;
+      line-height: 1.5;
+    }
+    
+    textarea {
+      width: 100%;
+      padding: 12px 15px;
+      height: 120px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      color: #1e293b;
+      resize: none;
+      margin-bottom: 15px;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+      
+      &:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+      }
+    }
+    
+    .message-box-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      left: 20px;
+      
+      .character-count {
+        color: #94a3b8;
+        font-size: 0.75rem;
+      }
+      
+      .message-actions {
+        display: flex;
+        gap: 10px;
+        margin-right: auto;
+        align-items: center;
+        
+        .cancel-btn,
+        .request-btn {
+          padding: 8px 16px;
+          width: 150px;
+          min-width: 110px;
+          height: 38px;
+          border-radius: 6px;
+          font-size: 0.875rem;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          transition: all 0.2s;
+        }
+        
+        .cancel-btn {
+         
+          background-color: #f1f5f9;
+          color: #64748b;
+          border: 1px solid #e2e8f0;
+          
+          &:hover {
+            background-color: #e2e8f0;
+            color: #334155;
+          }
+        }
+        
+        .request-btn {
+          background-color: #3b82f6;
+          color: white;
+          border: none;
+          font-weight: 500;
+          
+          &:hover:not(:disabled) {
+            background-color: #2563eb;
+          }
+          
+          &:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+          }
+          
+          &.sending {
+            position: relative;
+            overflow: hidden;
+            
+            &::after {
+              content: '';
+              position: absolute;
+              left: -100%;
+              top: 0;
+              width: 100%;
+              height: 100%;
+              background: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.2) 50%,
+                rgba(255, 255, 255, 0) 100%
+              );
+              animation: shine 1.5s infinite;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+@keyframes shine {
+  to {
+    left: 100%;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Media queries for responsive design
+@media (max-width: 768px) {
+  .teacher-grid {
+    padding: 1rem;
+    grid-template-columns: 1fr;
+  }
+  
+  .section-header {
+    .section-title {
+      font-size: 2rem;
+    }
+    
+    .section-subtitle {
+      font-size: 1rem;
+    }
+  }
+  
+  .centralized-message-container {
+    width: 95%;
+    max-width: none;
+  }
+}

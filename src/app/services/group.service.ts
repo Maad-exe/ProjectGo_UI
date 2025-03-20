@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, Subject, of } from 'rxjs';
 import { environment } from '../../env/env';
-import { map, catchError, tap } from 'rxjs/operators'; 
-
+import { map, catchError, tap } from 'rxjs/operators';
+import { TeacherDetails } from './teacher.service';
 
 export interface StudentDetails {
   id: number;
@@ -50,24 +50,61 @@ export interface StudentSupervisionStatus {
   providedIn: 'root'
 })
 export class GroupService {
-  private apiUrl = `${environment.apiBaseUrl}/groups`; 
+  private apiUrl = `${environment.apiBaseUrl}/groups`;
+  
+  // State management
+  private approvedGroup: GroupDetails | null = null;
+  private groupSupervisor: TeacherDetails | null = null;
+  
+  // Subjects for state changes
+  private approvedGroupSubject = new Subject<GroupDetails | null>();
+  private supervisorSubject = new Subject<TeacherDetails | null>();
+  
+  // Observable streams
+  approvedGroupChanged = this.approvedGroupSubject.asObservable();
+  supervisorChanged = this.supervisorSubject.asObservable();
 
   constructor(private http: HttpClient) {}
 
+  // State management methods
+  getApprovedGroup(): GroupDetails | null {
+    return this.approvedGroup;
+  }
+
+  setApprovedGroup(group: GroupDetails | null): void {
+    this.approvedGroup = group;
+    this.approvedGroupSubject.next(group);
+    
+    // If group is cleared, also clear supervisor
+    if (!group) {
+      this.setSupervisor(null);
+    }
+  }
+
+  getSupervisor(): TeacherDetails | null {
+    return this.groupSupervisor;
+  }
+
+  setSupervisor(teacher: TeacherDetails | null): void {
+    this.groupSupervisor = teacher;
+    this.supervisorSubject.next(teacher);
+  }
+
+  // API methods
   getStudentGroups(studentId: number): Observable<GroupDetails[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/student/${studentId}`).pipe(
+    return this.http.get<GroupDetails[]>(`${this.apiUrl}/student/${studentId}`).pipe(
       map(groups => {
-        return groups.map(group => {
-          // Process each group to ensure it has the required fields
-          const processedGroup: GroupDetails = {
-            ...group,
-            // For groups with "Requested" or "Rejected" status, set the requestedTeacherId to be the same as teacherId
-            requestedTeacherId: (group.supervisionStatus === 'Requested' || group.supervisionStatus === 'Rejected') 
-              ? group.teacherId 
-              : null
-          };
-          return processedGroup;
-        });
+        const approvedGroup = groups.find(g => 
+          g.supervisionStatus === 'Approved' && g.teacherId != null
+        );
+        if (approvedGroup) {
+          this.setApprovedGroup(approvedGroup);
+        }
+        return groups;
+      }),
+      catchError(error => {
+        console.error('Error fetching student groups:', error);
+        throw error;
       })
     );
   }
@@ -84,17 +121,16 @@ export class GroupService {
     return this.http.get<StudentDetails>(`${this.apiUrl}/student/search?email=${email}`);
   }
 
-  // Properly implemented checkGroupsSupervisionStatus method
   checkGroupsSupervisionStatus(groupIds: number[]): Observable<GroupStatusMap> {
-    // Create a comma-separated list of IDs for the query parameter
     const idsParam = groupIds.join(',');
     return this.http.get<GroupStatusMap>(`${this.apiUrl}/supervision-status?ids=${idsParam}`);
   }
 
   cleanupOtherGroups(acceptedGroupId: number): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/cleanup/${acceptedGroupId}`, {}).pipe(
-      tap(response => {
-        console.log('Cleanup response:', response);
+      tap(() => {
+        // Refresh groups after cleanup
+        this.getStudentGroups(this.approvedGroup?.members[0]?.id || 0).subscribe();
       }),
       catchError(error => {
         console.error('Error cleaning up groups:', error);
@@ -104,12 +140,10 @@ export class GroupService {
   }
 
   checkStudentSupervisionStatus(studentId: number): Observable<StudentSupervisionStatus> {
-    return this.http.get<StudentSupervisionStatus>(`${this.apiUrl}/student/${studentId}/supervision-status`).pipe(
-      catchError(error => {
-        console.error('Error checking student supervision status:', error);
-        // Return a default value if API fails
-        return of({ isInSupervisedGroup: false });
-      })
+    return this.http.get<StudentSupervisionStatus>(
+      `${this.apiUrl}/student/${studentId}/supervision-status`
+    ).pipe(
+      catchError(() => of({ isInSupervisedGroup: false }))
     );
   }
 }

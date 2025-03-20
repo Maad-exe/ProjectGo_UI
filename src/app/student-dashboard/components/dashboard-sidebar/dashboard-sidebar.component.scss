@@ -1,0 +1,212 @@
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--sidebar-width);
+  height: 100vh;
+  background: #ffffff;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+  z-index: 1100; // Correctly set above header
+  transition: width 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+
+  .brand-section {
+    padding: 1rem;
+    height: var(--header-height, 180px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid #e2e8f0;
+    position: relative; // Added position relative
+   
+    overflow: visible; // Important to show logo
+    z-index: 1200; // Higher z-index specifically for the brand section
+
+    .logo {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      .logo-image {
+        height: 160px; // Increased from previous value
+        width: auto; // Let width adjust based on aspect ratio
+        max-width: 90%; // Prevent overflow
+        object-fit: contain;
+      }
+    }
+  }
+
+
+
+  .sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    margin-top: 1rem;
+  }
+
+  .nav-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 0.875rem 1rem;
+    margin: 0.25rem 0;
+    color: #64748b;
+    border-radius: 10px;
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+    user-select: none;
+    text-decoration: none;
+    background: transparent;
+    border: 1px solid transparent;
+    
+    i {
+      font-size: 1.125rem;
+      min-width: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s ease;
+    }
+    
+    span {
+      font-size: 0.9375rem;
+      font-weight: 500;
+      white-space: nowrap;
+      opacity: 1;
+      transition: opacity 0.2s ease;
+    }
+
+    .badge {
+      position: absolute;
+      right: 0.75rem;
+      background: #ef4444;
+      color: white;
+      padding: 0.2rem 0.5rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      
+      &.new {
+        background: #22c55e;
+      }
+    }
+
+    &:hover {
+      color: #3b82f6;
+      background: #f8fafc;
+      transform: translateX(4px);
+
+      i {
+        transform: scale(1.1);
+        color: #3b82f6;
+      }
+    }
+
+    &.active {
+      color: #3b82f6;
+      background: #eff6ff;
+      border-color: #bfdbfe;
+
+      i {
+        color: #3b82f6;
+        transform: scale(1.1);
+      }
+
+      .badge {
+        background: #3b82f6;
+        color: white;
+      }
+    }
+    
+    &.disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      pointer-events: none;
+      
+      &:hover {
+        transform: none;
+        background: transparent;
+      }
+    }
+  }
+}
+
+// Responsive Adjustments
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 240px;
+    
+    .nav-item {
+      padding: 0.75rem 0.875rem;
+      
+      i {
+        font-size: 1rem;
+      }
+      
+      span {
+        font-size: 0.875rem;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 70px;
+    padding-top: var(--header-height);
+    
+    .sidebar-nav {
+      padding: 0 0.5rem;
+    }
+    
+    .nav-item {
+      padding: 0.75rem;
+      margin: 0.5rem 0;
+      justify-content: center;
+      
+      i {
+        font-size: 1.25rem;
+        margin: 0;
+      }
+      
+      span {
+        display: none;
+      }
+      
+      .badge {
+        position: absolute;
+        top: 0;
+        right: 0;
+        padding: 0.15rem 0.35rem;
+        font-size: 0.65rem;
+        transform: translate(25%, -25%);
+      }
+
+      &:hover {
+        transform: translateX(0) scale(1.1);
+      }
+      
+      &.active {
+        background: #eff6ff;
+        transform: scale(1.1);
+      }
+    }
+
+    .brand-section {
+      padding: 0.5rem;
+
+      .logo-image {
+        height: 80px;
+        top: -10px;
+      }
+    }
+  }
+}

@@ -1,0 +1,105 @@
+<div class="create-group-section">
+  <div *ngIf="!showGroupForm && !hasApprovedGroup" class="empty-state">
+    <div class="illustration">
+      <i class="fas fa-users"></i>
+    </div>
+    <h3>Welcome to Group Management</h3>
+    <p>Get started by creating a new project group. You can add up to 4 members to collaborate on your final year project.</p>
+    <button class="create-group-btn" (click)="showCreateGroupForm()">
+      <i class="fas fa-plus-circle"></i>
+      Create New Group
+    </button>
+  </div>
+  
+ 
+
+  <!-- Create Group Form -->
+  <div class="create-group-form" *ngIf="showGroupForm">
+    <h2>Create Your Project Group</h2>
+    <form [formGroup]="createGroupForm" (ngSubmit)="createGroup()">
+      <div class="form-group">
+        <label for="groupName">
+          <i class="fas fa-project-diagram"></i>
+          Project Group Name
+        </label>
+        <input 
+          type="text" 
+          id="groupName" 
+          formControlName="groupName" 
+          placeholder="Enter a name for your project group"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="memberCount">
+          <i class="fas fa-users"></i>
+          Number of Members
+        </label>
+        <select 
+          id="memberCount" 
+          formControlName="memberCount" 
+          (change)="onMemberCountChange()"
+        >
+          <option value="2">2 Members</option>
+          <option value="3">3 Members</option>
+          <option value="4">4 Members</option>
+        </select>
+      </div>
+
+      <!-- Member emails input -->
+      <div class="form-group" *ngFor="let control of memberEmails.controls; let i = index">
+        <label for="memberEmail{{i}}">
+          <i class="fas fa-user-graduate"></i>
+          Member {{i + 1}} Email
+        </label>
+        <div class="search-input-group">
+          <input 
+            type="email" 
+            id="memberEmail{{i}}" 
+            [formControl]="control" 
+            placeholder="Enter student email address"
+            [class.error-input]="searchErrors[control.value]"
+          >
+          <button 
+            type="button" 
+            (click)="searchStudent(control.value, i)" 
+            [disabled]="isSearchingStudent || !control.value"
+          >
+            <i class="fas" 
+               [class.fa-search]="!isSearchingStudent" 
+               [class.fa-spinner]="isSearchingStudent && control.value" 
+               [class.fa-spin]="isSearchingStudent && control.value">
+            </i>
+          </button>
+        </div>
+        
+        <div *ngIf="searchErrors[control.value]" class="error-message supervised-error">
+          <i class="fas fa-exclamation-triangle"></i>
+          {{searchErrors[control.value]}}
+        </div>
+        
+        <div *ngIf="studentSearchResults[control.value]" class="student-info">
+          <span class="name">{{studentSearchResults[control.value]?.fullName}}</span>
+          <span class="enrollment">({{studentSearchResults[control.value]?.enrollmentNumber}})</span>
+          <span class="department">{{studentSearchResults[control.value]?.department}}</span>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="cancel-btn" (click)="cancelGroupCreation()">
+          <i class="fas fa-times"></i>
+          Cancel
+        </button>
+        <button type="submit" class="submit-btn" [disabled]="createGroupForm.invalid || isCreatingGroup">
+          <i class="fas" [class.fa-check]="!isCreatingGroup" [class.fa-spinner]="isCreatingGroup" [class.fa-spin]="isCreatingGroup"></i>
+          {{ isCreatingGroup ? 'Creating Group...' : 'Create Group' }}
+        </button>
+      </div>
+
+      <div *ngIf="groupCreationError" class="error-message">
+        <i class="fas fa-exclamation-circle"></i>
+        {{groupCreationError}}
+      </div>
+    </form>
+  </div>
+</div>

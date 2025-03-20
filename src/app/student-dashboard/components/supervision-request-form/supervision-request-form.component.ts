@@ -1,10 +1,10 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TeacherDetails, TeacherService } from '../../services/teacher.service';
-import { GroupDetails } from '../../services/group.service';
-import { NotificationService } from '../../services/notifications.service';
-import { SupervisionRequestDto } from '../../services/supervision.service';
+import { TeacherDetails, TeacherService } from '../../../services/teacher.service';
+import { GroupDetails } from '../../../services/group.service';
+import { NotificationService } from '../../../services/notifications.service';
+import { SupervisionRequestDto } from '../../../services/supervision.service';
 
 @Component({
   selector: 'app-supervision-request-form',

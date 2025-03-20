@@ -11,6 +11,7 @@ import { AuthService } from './services/auth.service';
 import { studentGuard } from './core/guards/student.guard';
 import { UserManagementComponent } from './dashboard/user-management/user-management.component';
 import { GroupChatComponent } from './group-chat/group-chat.component';
+import { TeacherListComponent } from './student-dashboard/components/teacher-list/teacher-list.component';
 export const routes: Routes = [
   { 
     path: '', 
@@ -49,7 +50,10 @@ export const routes: Routes = [
   { 
     path: 'student-dashboard', 
     component: StudentDashboardComponent, 
-    canActivate: [authGuard,studentGuard]
+    canActivate: [authGuard,studentGuard],
+    children: [
+      { path: 'teachers', component: TeacherListComponent }
+    ]
   },
   { 
     path: 'teacher-dashboard', 

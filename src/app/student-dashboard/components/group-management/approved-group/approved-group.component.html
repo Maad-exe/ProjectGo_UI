@@ -1,0 +1,85 @@
+<div class="approved-group" *ngIf="hasApprovedGroup && approvedGroup">
+  <div class="group-details">
+    <div class="group-header">
+      <div class="header-content">
+        <div class="approved-badge">
+          <i class="fas fa-check-circle"></i>
+          Supervised Group
+        </div>
+        <h3>{{approvedGroup.name}}</h3>
+        <span class="created-date">
+          <i class="far fa-calendar-alt"></i>
+          Created: {{approvedGroup.createdAt | date:'mediumDate'}}
+        </span>
+      </div>
+    </div>
+
+    <div class="supervisor-info" *ngIf="groupSupervisor">
+      <h4><i class="fas fa-user-tie"></i>Supervisor Information</h4>
+      <div class="info-cards">
+        <div class="info-card name">
+          <div class="card-icon">
+            <i class="fas fa-user"></i>
+          </div>
+          <div class="card-content">
+            <span class="label">Name</span>
+            <span class="value">{{groupSupervisor.fullName}}</span>
+          </div>
+        </div>
+
+        <div class="info-card email">
+          <div class="card-icon">
+            <i class="fas fa-envelope"></i>
+          </div>
+          <div class="card-content">
+            <span class="label">Email</span>
+            <span class="value">{{groupSupervisor.email}}</span>
+          </div>
+        </div>
+
+        <div class="info-card specialization">
+          <div class="card-icon">
+            <i class="fas fa-graduation-cap"></i>
+          </div>
+          <div class="card-content">
+            <span class="label">Specialization</span>
+            <span class="value">{{groupSupervisor.areaOfSpecialization}}</span>
+          </div>
+        </div>
+
+        <div class="info-card room" *ngIf="groupSupervisor.officeLocation">
+          <div class="card-icon">
+            <i class="fas fa-door-open"></i>
+          </div>
+          <div class="card-content">
+            <span class="label">Room</span>
+            <span class="value">{{groupSupervisor.officeLocation}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="members-section">
+      <h4>
+        <i class="fas fa-users"></i>
+        Group Members
+      </h4>
+      <ul class="member-list">
+        <li *ngFor="let member of approvedGroup.members; let i = index" [style.--index]="i">
+          <div class="member-details">
+            <span class="member-name">{{member.fullName}}</span>
+            <span class="member-email">{{member.email}}</span>
+            <span class="badge creator" *ngIf="member.isCreator">
+              <i class="fas fa-crown"></i>
+              Creator
+            </span>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="no-approved-group" *ngIf="!approvedGroup">
+  <p>You don't have an approved group yet.</p>
+</div>

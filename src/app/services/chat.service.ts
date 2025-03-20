@@ -858,4 +858,9 @@ private async startConnection(): Promise<void> {
       })
     );
   }
+
+  // Add a public method for chat initialization
+  ensureChatConnection(): void {
+    this.initConnection(true);
+  }
 }

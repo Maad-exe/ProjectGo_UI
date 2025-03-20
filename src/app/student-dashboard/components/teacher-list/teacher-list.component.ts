@@ -1,12 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { TeacherService, TeacherDetails } from '../../services/teacher.service';
-import { GroupService, GroupDetails } from '../../services/group.service';
-import { NotificationService } from '../../services/notifications.service';
-import { AuthService } from '../../services/auth.service';
-import { SupervisionRequestDto } from '../../services/supervision.service';
+import { TeacherService, TeacherDetails } from '../../../services/teacher.service';
+import { GroupService, GroupDetails } from '../../../services/group.service';
+import { NotificationService } from '../../../services/notifications.service';
+import { AuthService } from '../../../services/auth.service';
+import { SupervisionRequestDto } from '../../../services/supervision.service';
 
 @Component({
   selector: 'app-teacher-list',
@@ -20,6 +20,8 @@ import { SupervisionRequestDto } from '../../services/supervision.service';
   styleUrls: ['./teacher-list.component.scss']
 })
 export class TeacherListComponent implements OnInit {
+  @Input() selectedGroupId: number | null = null;
+  @Output() teacherSelected = new EventEmitter<void>();
   teachers: TeacherDetails[] = [];
   groups: GroupDetails[] = [];
   isLoading = false;
@@ -27,9 +29,11 @@ export class TeacherListComponent implements OnInit {
   isRequestingSupervision = false;
   error: string | null = null;
   groupError: string | null = null;
-  selectedGroupId: number | null = null;
   requestMessage = '';
   studentId: number | null = null;
+  showTeachersList = false;
+  supervisionMessage: string = '';
+  showMessageInputForTeacher: number | null = null;
 
   constructor(
     private teacherService: TeacherService,
@@ -41,16 +45,7 @@ export class TeacherListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadStudentInfo();
     this.loadTeachers();
-    this.loadStudentGroups();
-    
-    // Check for group ID in query params
-    this.route.queryParams.subscribe(params => {
-      if (params['groupId']) {
-        this.selectedGroupId = +params['groupId'];
-      }
-    });
   }
 
   loadStudentInfo(): void {
@@ -71,9 +66,7 @@ export class TeacherListComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading teachers:', error);
-        this.error = error.status === 403 
-          ? 'You do not have permission to view the teacher list' 
-          : 'Failed to load teachers';
+        this.error = 'Failed to load teachers';
         this.isLoading = false;
       }
     });
@@ -87,10 +80,11 @@ export class TeacherListComponent implements OnInit {
     
     this.groupService.getStudentGroups(this.studentId).subscribe({
       next: (data) => {
-        // Filter for groups without a supervisor
+        // Only show groups that need supervision
         this.groups = data.filter(group => 
-          group.supervisionStatus === 'None' || 
-          group.supervisionStatus === 'Rejected'
+          !group.teacherId && 
+          (group.supervisionStatus === 'None' || 
+           group.supervisionStatus === 'Rejected')
         );
         this.isLoadingGroups = false;
       },
@@ -154,5 +148,21 @@ export class TeacherListComponent implements OnInit {
 
   navigateBack(): void {
     this.router.navigate(['/student-dashboard']);
+  }
+
+  showMessageInput(teacherId: number): void {
+    this.showMessageInputForTeacher = teacherId;
+    this.supervisionMessage = ''; 
+  }
+
+  cancelMessageInput(): void {
+    this.showMessageInputForTeacher = null;
+    this.supervisionMessage = '';
+  }
+
+  getTeacherName(teacherId: number | null): string {
+    if (!teacherId) return '';
+    const teacher = this.teachers.find(t => t.id === teacherId);
+    return teacher ? teacher.fullName : '';
   }
 }

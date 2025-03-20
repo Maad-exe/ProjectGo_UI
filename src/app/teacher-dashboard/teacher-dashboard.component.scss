@@ -627,13 +627,16 @@
 }
 
 .chat-wrapper {
-  height: 75vh;
+  height: calc(100vh - 200px); // Fixed height for consistent display
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   overflow: hidden;
+  background: white;
+  margin-bottom: 20px;
   
   app-group-chat {
     display: block;
     height: 100%;
+    width: 100%;
   }
 }

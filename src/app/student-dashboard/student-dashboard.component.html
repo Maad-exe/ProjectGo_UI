@@ -1,432 +1,53 @@
 <div class="dashboard-container">
-  <!-- Move topbar outside main-wrapper -->
-  <header class="topbar">
-    <!-- Add logo to topbar -->
-    <div class="brand-section">
-      <div class="logo">
-        <img src="assets/Logo.png" alt="ProjectGo Logo" class="logo-image">
-      </div>
-    </div>
+  <!-- Header Component -->
+  <app-dashboard-header [studentInfo]="studentInfo" (logout)="logout()"></app-dashboard-header>
 
-    <div class="search-bar">
-      <i class="fas fa-search"></i>
-      <input type="text" placeholder="Search...">
-    </div>
-    
-    <div class="user-info">
-      <div class="user-details">
-        <h3>{{studentInfo.fullName}}</h3>
-        <div class="user-meta">
-          <span class="enrollment" title="Enrollment Number">
-            <i class="fas fa-id-card"></i>
-            {{studentInfo.enrollmentNumber}}
-          </span>
-          <span class="department" title="Department">
-            <i class="fas fa-building-columns"></i>
-            {{studentInfo.department}}
-          </span>
-          <span class="email" title="Email">
-            <i class="fas fa-envelope"></i>
-            {{studentInfo.email}}
-          </span>
-        </div>
-      </div>
-      <button class="logout-btn" (click)="logout()" title="Sign out">
-        <i class="fas fa-sign-out-alt"></i>
-        <span>Sign out</span>
-      </button>
-    </div>
-  </header>
-
-  <aside class="sidebar">
-    <!-- Remove brand-section from sidebar -->
-    <nav class="sidebar-nav">
-      <a class="nav-item" [class.active]="currentView === 'dashboard'" (click)="setView('dashboard')">
-        <i class="fas fa-home"></i>
-        <span>Dashboard</span>
-      </a>
-      <a class="nav-item" [class.active]="currentView === 'teachers'" (click)="setView('teachers')">
-        <i class="fas fa-chalkboard-teacher"></i>
-        <span>Browse Supervisors</span>
-      </a>
-      <a class="nav-item" [class.active]="currentView === 'projects'" (click)="setView('projects')">
-        <i class="fas fa-tasks"></i>
-        <span>Project Management</span>
-      </a>
-      <a class="nav-item" [class.active]="currentView === 'proposals'" (click)="setView('proposals')">
-        <i class="fas fa-file-alt"></i>
-        <span>Submit Proposal</span>
-      </a>
-      <a class="nav-item" [class.active]="currentView === 'groups'" (click)="setView('groups')">
-        <i class="fas fa-users"></i>
-        <span>My Groups</span>
-      </a>
-    
-      <a class="nav-item" [class.active]="currentView === 'chat'" (click)="setView('chat')">
-        <i class="fas fa-comments"></i>
-        <span>Group Chat</span>
-        <!-- Optional: Add a badge for unread messages -->
-        <span class="badge" *ngIf="unreadMessages > 0">{{ unreadMessages }}</span>
-      </a>
-    </nav>
-  </aside>
+  <!-- Sidebar Component -->
+  <app-dashboard-sidebar 
+    [currentView]="currentView" 
+    [unreadMessages]="unreadMessages"
+    [hasApprovedGroup]="hasApprovedGroup"
+    (viewChange)="setView($event)">
+  </app-dashboard-sidebar>
 
   <div class="main-wrapper">
-    
     <main class="main-content">
-      <!-- Dashboard View -->
-      <div class="dashboard-welcome" *ngIf="currentView === 'dashboard'">
-        <div class="welcome-card">
-          <h1>Welcome to Student Dashboard</h1>
-          <p class="subtitle">Access all your academic resources in one place</p>
-          <div class="quick-actions">
-            <button class="action-btn" (click)="setView('teachers')">
-              <i class="fas fa-users"></i>
-              View Faculty
-            </button>
-            <button class="action-btn">
-              <i class="fas fa-book"></i>
-              My Courses
-            </button>
-            <button class="action-btn">
-              <i class="fas fa-calendar"></i>
-              Schedule
-            </button>
-          </div>
-        </div>
-      </div>
+      <!-- Dashboard/Welcome View -->
+      <app-welcome-section 
+        *ngIf="currentView === 'dashboard'"
+        [studentInfo]="studentInfo"
+        [announcements]="announcements"
+        [projectProgress]="projectProgress"
+        [hasApprovedGroup]="hasApprovedGroup"
+        [unreadMessages]="unreadMessages"
+        (viewChange)="setView($event)">
+      </app-welcome-section>
 
       <!-- Teachers List View -->
-      <div class="teacher-section" *ngIf="currentView === 'teachers'">
-        <div class="section-header" *ngIf="!showTeachersList">
-          <h2 class="section-title">Our Distinguished Faculty</h2>
-          <p class="section-subtitle">Meet our experienced team of educators</p>
-        </div>
-
-        <div class="section-header" *ngIf="showTeachersList">
-          <h2 class="section-title">Select a Supervisor</h2>
-          <p class="section-subtitle">Choose a faculty member to supervise your project</p>
-        </div>
-
-        <!-- Add the centralized message box here - outside of any card -->
-        <div class="message-box-overlay" *ngIf="showMessageInputForTeacher !== null">
-          <div class="centralized-message-container">
-            <div class="message-box-header">
-              <h3>
-                <i class="fas fa-comment-dots"></i>
-                Request Supervision from {{ getTeacherName(showMessageInputForTeacher) }}
-              </h3>
-              <button class="close-btn" (click)="cancelMessageInput()">
-                <i class="fas fa-times"></i>
-              </button>
-            </div>
-            
-            <div class="message-box-content">
-              <p class="message-instruction">Please provide details about your project and why you think this professor would be a good fit as your supervisor.</p>
-              
-              <textarea 
-                [(ngModel)]="supervisionMessage" 
-                placeholder="Explain your project goals and why you believe this professor would be a good fit as your supervisor..."
-                maxlength="500"
-                autofocus></textarea>
-              
-              <div class="message-box-footer">
-               
-                <div class="message-actions">
-                  <button class="cancel-btn" (click)="cancelMessageInput()">
-                    <i class="fas fa-times"></i> Cancel
-                  </button>
-                  <button 
-                    class="request-btn" 
-                    [class.sending]="isRequestingSupervision"
-                    [disabled]="isRequestingSupervision || !supervisionMessage.trim()"
-                    (click)="requestSupervision(showMessageInputForTeacher)">
-                    <i class="fas" [class.fa-paper-plane]="!isRequestingSupervision" [class.fa-spinner]="isRequestingSupervision" [class.fa-spin]="isRequestingSupervision"></i>
-                    {{ isRequestingSupervision ? 'Sending...' : 'Send Request' }}
-                  </button>
-                </div>
-                <span class="character-count" *ngIf="supervisionMessage">
-                  {{supervisionMessage.length}}/500
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Loading State -->
-        <div class="loading-state" *ngIf="isLoading">
-          <i class="fas fa-spinner fa-spin"></i> Loading teachers...
-        </div>
-
-        <!-- Error State -->
-        <div class="error-state" *ngIf="error">
-          {{ error }}
-          <button class="retry-btn" (click)="loadTeachers()">Retry</button>
-        </div>
-
-        <!-- Teachers Grid -->
-        <div class="teacher-grid" *ngIf="!isLoading && !error && teachers.length > 0">
-          <div class="teacher-card" *ngFor="let teacher of teachers">
-            <div class="card-header">
-              <div class="teacher-avatar">
-                <i class="fas fa-user-tie"></i>
-              </div>
-              <div class="teacher-primary-info">
-                <h3>{{teacher.fullName}}</h3>
-                <span class="department">Computer Science Department</span>
-              </div>
-            </div>
-            <div class="card-body">
-              <div class="info-section">
-                <h4>Specialization</h4>
-                <p>{{teacher.areaOfSpecialization}}</p>
-                <h4>Assigned Groups</h4>
-                <p>{{teacher.assignedGroups}}</p>
-              </div>
-              <div class="info-section">
-                <h4>Qualification</h4>
-                <p>{{teacher.qualification}}</p>
-              </div>
-              <div class="contact-details">
-                <a href="mailto:{{teacher.email}}" class="contact-item">
-                  <i class="fas fa-envelope"></i>
-                  <span>{{teacher.email}}</span>
-                </a>
-                <div class="contact-item">
-                  <i class="fas fa-location-dot"></i>
-                  <span>{{teacher.officeLocation}}</span>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Keep only the footer with the button, remove message input container -->
-            <div class="card-footer" *ngIf="showTeachersList">
-              <button class="request-btn" (click)="showMessageInput(teacher.id)">
-                <i class="fas fa-user-tie"></i> Request Supervision
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <app-teacher-list 
+        *ngIf="currentView === 'teachers'"
+        [selectedGroupId]="selectedGroupId">
+      </app-teacher-list>
 
       <!-- Group Management View -->
       <div class="group-section" *ngIf="currentView === 'groups'">
-        <div class="section-header" >
-          
-          <div class="group-stats" *ngIf="!hasApprovedGroup" >
-            <h2>Your Groups</h2>
-            <p><strong>Has Approved Group:</strong> {{ hasApprovedGroup ? 'Yes' : 'No' }}</p>
-            <p><strong>Approved Group Name:</strong> {{ approvedGroup ? approvedGroup.name : 'None' }}</p>
-            <p><strong>Total Groups:</strong> {{ groups.length }}</p>
-          </div>
-          <button class="create-group-btn" 
-                  *ngIf="!hasApprovedGroup && !showGroupForm" 
-                  (click)="showCreateGroupForm()">
-            <i class="fas fa-plus-circle"></i> Create New Group
-          </button>
-        </div>
+        <app-create-group 
+          [hasApprovedGroup]="hasApprovedGroup"
+          (groupCreated)="refreshGroups()">
+        </app-create-group>
         
-        <!-- Approved Group Display (Priority) -->
-        <div class="approved-group" *ngIf="hasApprovedGroup && approvedGroup">
-          <div class="approved-badge">
-            <i class="fas fa-check-circle"></i> Supervised Group
-          </div>
-          
-          <div class="approved-group-details">
-            <h3>{{approvedGroup.name}}</h3>
-            <p class="created-date">Created: {{approvedGroup.createdAt | date}}</p>
-            
-            <div class="supervisor-info" *ngIf="groupSupervisor">
-              <h4>Supervisor</h4>
-              <div class="supervisor-details">
-                <div class="supervisor-name">
-                  <i class="fas fa-user-tie"></i> {{groupSupervisor.fullName}}
-                </div>
-                <div class="supervisor-email">
-                  <i class="fas fa-envelope"></i> {{groupSupervisor.email}}
-                </div>
-                <div class="supervisor-specialization" *ngIf="groupSupervisor.areaOfSpecialization">
-                  <i class="fas fa-microscope"></i> {{groupSupervisor.areaOfSpecialization}}
-                </div>
-                <div class="supervisor-location" *ngIf="groupSupervisor.officeLocation">
-                  <i class="fas fa-location-dot"></i> {{groupSupervisor.officeLocation}}
-                </div>
-              </div>
-            </div>
-            
-            <h4>Group Members</h4>
-            <ul class="member-list">
-              <li *ngFor="let member of approvedGroup.members">
-                <div class="member-details">
-                  <span class="member-name">{{member.fullName}}</span>
-                  <span class="member-email">{{member.email}}</span>
-                  <span class="badge creator" *ngIf="member.isCreator">Creator</span>
-                </div>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <!-- Create Group Form -->
-        <div class="create-group-form" *ngIf="showGroupForm">
-          <form [formGroup]="createGroupForm" (ngSubmit)="createGroup()">
-            <div class="form-group">
-              <label for="groupName">FYP Project Name:</label>
-              <input type="text" id="groupName" formControlName="groupName" placeholder="Enter group name">
-            </div>
-
-            <div class="form-group">
-              <label for="memberCount">Number of Members:</label>
-              <select id="memberCount" formControlName="memberCount" (change)="onMemberCountChange()">
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-              </select>
-            </div>
-
-            <!-- Update the part where you display member emails in the create group form -->
-            <div class="form-group" *ngFor="let control of memberEmails.controls; let i = index">
-              <label for="memberEmail{{i}}">Member {{i + 1}} Email:</label>
-              <div class="search-input-group">
-                <input 
-                  type="email" 
-                  id="memberEmail{{i}}" 
-                  [formControl]="control" 
-                  #emailControl="ngForm" 
-                  placeholder="Enter member email"
-                  [class.error-input]="searchErrors[control.value]">
-                <button 
-                  type="button" 
-                  (click)="searchStudent(control.value, i)" 
-                  [disabled]="isSearchingStudent || !control.value">
-                  <i class="fas" 
-                     [class.fa-search]="!isSearchingStudent" 
-                     [class.fa-spinner]="isSearchingStudent && control.value" 
-                     [class.fa-spin]="isSearchingStudent && control.value"></i>
-                </button>
-              </div>
-              <div *ngIf="searchErrors[control.value]" class="error-message supervised-error">
-                <i class="fas fa-exclamation-triangle"></i>
-                {{searchErrors[control.value]}}
-              </div>
-              <div *ngIf="studentSearchResults[control.value]" class="student-info">
-                {{studentSearchResults[control.value]?.fullName}} 
-                {{studentSearchResults[control.value]?.enrollmentNumber}}
-                {{studentSearchResults[control.value]?.department}}
-                ({{studentSearchResults[control.value]?.email}})
-              </div>
-            </div>
-
-            <button type="submit" class="submit-btn" [disabled]="createGroupForm.invalid || isCreatingGroup">
-              <i class="fas fa-check-circle"></i> {{ isCreatingGroup ? 'Creating...' : 'Create Group' }}
-            </button>
-            <div *ngIf="groupCreationError" class="error-message">
-              {{groupCreationError}}
-            </div>
-          </form>
-        </div>
-
-        <!-- Groups List -->
-        <div class="groups-list" *ngIf="groups.length > 0">
-          
-          
-          <ng-container *ngFor="let group of groups">
-            <div class="group-card" 
-                 [class.approved]="group.supervisionStatus === 'Approved'"
-                 [class.requested]="group.supervisionStatus === 'Requested'"
-                 [class.rejected]="group.supervisionStatus === 'Rejected'"
-                 *ngIf="!hasApprovedGroup || (approvedGroup && approvedGroup.id !== group.id)">
-              
-              <h3>{{ group.name }}</h3>
-              <p class="created-date">Created: {{group.createdAt | date}}</p>
-              
-              <div class="group-status">
-                <strong>Status:</strong> 
-                <span class="status-text" [ngClass]="group.supervisionStatus?.toLowerCase() || 'pending'">
-                  {{ group.supervisionStatus || 'Pending' }}
-                </span>
-              </div>
-              
-              <div *ngIf="group.teacherName" class="supervisor-name">
-                <i class="fas fa-user-tie"></i> <strong>Supervisor:</strong> {{ group.teacherName }}
-              </div>
-              
-              <h4>Members:</h4>
-              <ul class="member-list">
-                <li *ngFor="let member of group.members">
-                  <div class="member-info">
-                    <span class="name">{{ member.fullName }}</span>
-                    <span class="email">{{ member.email }}</span>
-                    <span class="badge creator" *ngIf="member.isCreator">Creator</span>
-                  </div>
-                </li>
-              </ul>
-              
-              <!-- Group Actions -->
-              <div class="group-actions">
-                <!-- Show request supervision button only if conditions met -->
-                <button 
-                  class="action-btn request-supervision" 
-                  *ngIf="isGroupCreator(group) && 
-                        (!group.supervisionStatus || group.supervisionStatus === 'None' || 
-                         group.supervisionStatus === 'Pending' || group.supervisionStatus === 'Rejected') && 
-                        !hasApprovedGroup"
-                  (click)="showRequestSupervisionForm(group.id)">
-                  <i class="fas fa-user-tie"></i> Request Supervision
-                </button>
-                
-                <!-- Status indicators -->
-                <div class="status-badge" *ngIf="group.supervisionStatus === 'Requested'">
-                  <i class="fas fa-clock"></i> Supervision Requested
-                </div>
-                <div class="supervisor-name" *ngIf="group.supervisionStatus === 'Requested' && group.requestedTeacherName">
-                  <i class="fas fa-user-tie"></i> <strong>Requested to:</strong> {{ group.requestedTeacherName }}
-                </div>
-
-                <div class="status-badge rejected" *ngIf="group.supervisionStatus === 'Rejected'">
-                  <i class="fas fa-times-circle"></i> Supervision Rejected
-                </div>
-                <div class="supervisor-name" *ngIf="group.supervisionStatus === 'Rejected' && group.requestedTeacherName">
-                  <i class="fas fa-user-tie"></i> <strong>Rejected by:</strong> {{ group.requestedTeacherName }}
-                </div>
-
-                <div class="status-badge approved" *ngIf="group.supervisionStatus === 'Approved'">
-                  <i class="fas fa-check-circle"></i> Supervision Approved
-                </div>
-                <div class="supervisor-name" *ngIf="group.supervisionStatus === 'Approved' && group.teacherName">
-                  <i class="fas fa-user-tie"></i> <strong>Supervisor:</strong> {{ group.teacherName }}
-                </div>
-              </div>
-            </div>
-          </ng-container>
-        </div>
-        
-        <!-- No groups message -->
-        <div class="no-groups" *ngIf="!isLoading && groups.length === 0">
-          <p>You are not a member of any project groups yet.</p>
-        </div>
+        <app-group-list
+          (requestSupervision)="requestSupervision($event)"
+          (hasApprovedGroupChange)="updateHasApprovedGroup($event)">
+        </app-group-list>
       </div>
 
-      <!-- Add this after the other view sections -->
       <!-- Group Chat View -->
-      <div   class="chat-view-container" *ngIf="currentView === 'chat' && showGroupChat && approvedGroup">
-        <div  class="view-header">
-          <!-- <h2 >{{ approvedGroup.name }} - Group Chat</h2> -->
-          <!-- <p >Communicate with your team and supervisor in real-time</p> -->
-        </div>
-
-        <!-- <div  style="margin-bottom: -15px; margin-top: -22px;" class="chat-view-container" *ngIf="currentView === 'chat' && showGroupChat && approvedGroup">
-          <div  class="view-header">
-            <h2 style="padding-left:4px; font-size: larger; ">{{ approvedGroup.name }} - Group Chat</h2>
-            <p style="margin-top: -15px; margin-bottom: 5px; padding-left:6px; font-weight: 100;">Communicate with your team and supervisor in real-time</p>
-          </div> -->
-        
-        <div class="chat-wrapper">
-          <app-group-chat 
-            [groupId]="approvedGroup.id" 
-            [groupName]="approvedGroup.name">
-          </app-group-chat>
-        </div>
+      <div class="chat-view-container" *ngIf="currentView === 'chat' && showGroupChat">
+        <app-group-chat 
+          [groupId]="getApprovedGroupId()" 
+          [groupName]="getApprovedGroupName()">
+        </app-group-chat>
       </div>
     </main>
   </div>

@@ -1,0 +1,30 @@
+<header class="topbar">
+  <div class="search-bar">
+    <i class="fas fa-search"></i>
+    <input type="text" placeholder="Search...">
+  </div>
+  
+  <div class="user-info">
+    <div class="user-details">
+      <h3>{{studentInfo.fullName}}</h3>
+      <div class="user-meta">
+        <span class="enrollment" title="Enrollment Number">
+          <i class="fas fa-id-card"></i>
+          {{studentInfo.enrollmentNumber}}
+        </span>
+        <span class="department" title="Department">
+          <i class="fas fa-building-columns"></i>
+          {{studentInfo.department}}
+        </span>
+        <span class="email" title="Email">
+          <i class="fas fa-envelope"></i>
+          {{studentInfo.email}}
+        </span>
+      </div>
+    </div>
+    <button class="logout-btn" (click)="logout()" title="Sign out">
+      <i class="fas fa-sign-out-alt"></i>
+      <span>Sign out</span>
+    </button>
+  </div>
+</header>

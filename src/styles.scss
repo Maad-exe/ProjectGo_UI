@@ -31,6 +31,9 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
   // Other variables
   --shadow-color: rgba(0, 0, 0, 0.08);
   --sidebar-width: 260px;
+  --shadow-color: rgba(0, 0, 0, 0.08);
+
+  --header-height: 70px; 
 }
 
 /* Success Snackbar */
@@ -75,3 +78,9 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 }
 
 
+app-welcome-section {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }

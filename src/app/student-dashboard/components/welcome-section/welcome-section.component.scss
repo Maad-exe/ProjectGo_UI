@@ -1,0 +1,469 @@
+:host {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.dashboard-welcome {
+  display: flex;
+  width: 100%;
+  overflow: hidden;
+
+  .welcome-card {
+    border-radius: 20px;
+    padding: 2rem; // Reduced from 3rem
+    width: 100%;
+    background: white;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+
+    h1 {
+      font-size: 2rem; // Reduced from 2.5rem
+      margin-top: 0; // Removed negative margin
+      color: #1e293b;
+      margin-bottom: 0.5rem; // Reduced from 1rem
+      text-align: center;
+    }
+
+    .subtitle {
+      color: #64748b;
+      font-size: 1.1rem; // Slightly reduced
+      margin-top: 0; // Removed negative margin
+      margin-bottom: 1.5rem; // Reduced from 2rem
+      text-align: center;
+    }
+    
+    .student-info {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1.5rem; // Reduced from 2rem
+      margin-bottom: 1.5rem; // Reduced from 2.5rem
+      padding-bottom: 1rem; // Reduced from 1.5rem
+      border-bottom: 1px solid #e2e8f0;
+      
+      .info-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        
+        .label {
+          font-size: 0.875rem;
+          color: #64748b;
+          margin-bottom: 0.5rem;
+        }
+        
+        .value {
+          font-size: 1.125rem;
+          font-weight: 600;
+          color: #1e293b;
+        }
+      }
+    }
+    
+    .dashboard-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem; // Reduced from 2rem
+      margin-bottom: 1.5rem; // Reduced from 2.5rem
+      
+      .dashboard-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+        border: 1px solid #e2e8f0;
+        
+        &:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+          border-color: #3b82f6;
+        }
+        
+        h2 {
+          font-size: 1.25rem;
+          color: #1e293b;
+          margin-top: 0;
+          margin-bottom: 1.25rem;
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          
+          i {
+            color: #3b82f6;
+            transition: transform 0.3s ease;
+          }
+        }
+        
+        &:hover h2 i {
+          transform: scale(1.2);
+        }
+        
+        &.announcements {
+          .announcement-list {
+            max-height: 250px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+            
+            &::-webkit-scrollbar {
+              width: 4px;
+            }
+            
+            &::-webkit-scrollbar-track {
+              background: #f1f5f9;
+              border-radius: 4px;
+            }
+            
+            &::-webkit-scrollbar-thumb {
+              background: #cbd5e1;
+              border-radius: 4px;
+            }
+            
+            .announcement-item {
+              padding: 1rem;
+              background: #f8fafc;
+              border-radius: 12px;
+              margin-bottom: 0.75rem;
+              transition: all 0.2s ease;
+              border: 1px solid transparent;
+              cursor: pointer;
+              
+              &:hover {
+                background: white;
+                border-color: #3b82f6;
+                transform: translateX(4px);
+                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+                
+                .date {
+                  color: #3b82f6;
+                }
+              }
+              
+              h3 {
+                font-size: 1rem;
+                color: #1e293b;
+                margin-top: 0;
+                margin-bottom: 0.5rem;
+                transition: color 0.2s ease;
+              }
+              
+              p {
+                color: #64748b;
+                margin-bottom: 0.5rem;
+                font-size: 0.875rem;
+                line-height: 1.5;
+              }
+              
+              .date {
+                font-size: 0.75rem;
+                color: #94a3b8;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                transition: color 0.2s ease;
+                
+                i {
+                  font-size: 0.875rem;
+                }
+              }
+            }
+          }
+        }
+        
+        &.progress {
+          .progress-info {
+            .progress-item {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              padding: 0.75rem;
+              background: #f8fafc;
+              border-radius: 8px;
+              margin-bottom: 0.75rem;
+              transition: all 0.2s ease;
+              border: 1px solid transparent;
+              
+              &:hover {
+                background: white;
+                border-color: #3b82f6;
+                transform: translateX(4px);
+                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+                
+                .label {
+                  color: #3b82f6;
+                }
+              }
+              
+              .label {
+                color: #64748b;
+                font-size: 0.875rem;
+                font-weight: 500;
+                transition: color 0.2s ease;
+              }
+              
+              .value {
+                color: #1e293b;
+                font-weight: 600;
+                font-size: 0.875rem;
+              }
+            }
+            
+            .progress-bar-container {
+              margin-top: 1.5rem;
+              background: #e2e8f0;
+              height: 8px;
+              border-radius: 12px;
+              position: relative;
+              overflow: hidden;
+              
+              &:hover .progress-bar {
+                background: linear-gradient(90deg, #3b82f6, #2563eb);
+                box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+              }
+              
+              .progress-bar {
+                height: 100%;
+                background: linear-gradient(90deg, #3b82f6, #2563eb);
+                border-radius: 12px;
+                transition: all 0.3s ease;
+                position: relative;
+                
+                &::after {
+                  content: '';
+                  position: absolute;
+                  top: 0;
+                  left: 0;
+                  right: 0;
+                  bottom: 0;
+                  background: linear-gradient(
+                    90deg,
+                    rgba(255, 255, 255, 0.1),
+                    rgba(255, 255, 255, 0.2),
+                    rgba(255, 255, 255, 0.1)
+                  );
+                  animation: shimmer 2s infinite;
+                }
+              }
+              
+              .progress-label {
+                position: absolute;
+                right: 0;
+                top: -24px;
+                font-size: 0.75rem;
+                color: #3b82f6;
+                font-weight: 600;
+                transition: transform 0.2s ease;
+              }
+              
+              &:hover .progress-label {
+                transform: translateY(-2px);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem; // Reduced from 1.5rem
+      
+      .action-btn {
+        padding: 2rem; // Reduced from 2rem
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        background: #f1f5f9;
+        border: none;
+        border-radius: 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+
+        i {
+          font-size: 2rem;
+          color: #3b82f6;
+          transition: all 0.3s ease;
+        }
+
+        // Add new notification animation styles
+        .fa-rocketchat {
+          &.has-notifications {
+            color: #d23925; // Red color for notification
+            animation: notification-ring 2s infinite;
+          }
+        }
+
+        &:hover {
+          background: #3b82f6;
+          color: white;
+          transform: translateY(-5px);
+
+          i {
+            color: white;
+            // Stop animation on hover for better UX
+            animation: none;
+          }
+        }
+
+        .btn-content {
+          position: relative;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+      
+          .unread-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: #3b82f6;
+            color: white;
+            min-width: 16px;
+            height: 16px;
+            padding: 0 3px;
+            border-radius: 8px;
+            font-size: 0.65rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            border: 1px solid #fff;
+            opacity: 0.9;
+            transform-origin: center;
+            transition: all 0.2s ease;
+
+            // Remove pulse animation for minimalism
+            animation: none;
+          }
+        }
+
+        &:hover .unread-badge {
+          opacity: 1;
+          background: #2563eb;
+          transform: scale(1.05);
+        }
+        
+        &.disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          pointer-events: none;
+          background: #f1f5f9;
+          
+          i {
+            color: #94a3b8;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Update responsive adjustments
+@media (max-width: 1024px) {
+  .dashboard-welcome {
+    .welcome-card {
+      padding: 1.5rem;
+      
+      .dashboard-cards {
+        grid-template-columns: 1fr;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-welcome {
+    padding: 1rem;
+    
+    .welcome-card {
+      padding: 1rem;
+      
+      h1 {
+        font-size: 1.75rem;
+      }
+      
+      .subtitle {
+        font-size: 1rem;
+      }
+      
+      .quick-actions {
+        grid-template-columns: 1fr;
+        
+        .action-btn {
+          padding: 1.5rem;
+        }
+      }
+    }
+  }
+}
+
+.no-data {
+  text-align: center;
+  padding: 20px;
+  color: #94a3b8;
+  font-style: italic;
+  border: 1px dashed #e2e8f0;
+  border-radius: 8px;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+// Add a simpler pulse animation
+@keyframes simplePulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+// Add new keyframes for the notification animation
+@keyframes notification-ring {
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+  2% {
+    transform: scale(1.1) rotate(5deg);
+  }
+  4% {
+    transform: scale(1.1) rotate(-5deg);
+  }
+  6% {
+    transform: scale(1.1) rotate(5deg);
+  }
+  8% {
+    transform: scale(1.1) rotate(-5deg);
+  }
+  10% {
+    transform: scale(1.1) rotate(0deg);
+  }
+  50% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
