@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, Subject, of, timer, from } from 'rxjs';
+import { Observable, BehaviorSubject, Subject, of, timer, from, concat } from 'rxjs';
 import { environment } from '../../env/env';
 import * as signalR from '@microsoft/signalr';
 import { AuthService } from './auth.service';
-import { catchError, shareReplay, tap, throttleTime, map, switchMap, retry, finalize } from 'rxjs/operators';
+import { catchError, shareReplay, tap, throttleTime, map, switchMap, retry, finalize, timeout, take } from 'rxjs/operators';
 
 export interface MessageReadStatus {
   userId: number;
@@ -74,13 +74,36 @@ export class ChatService {
   
   private _activeGroups: number[] = [];
   
+  // Add a local cache for unread counts
+  private lastKnownUnreadCount: number = 0;
+  private unreadCountsByGroup: { [groupId: string]: number } = {};
+
+  // Update the constructor to trigger unread count immediately
+  // Update constructor with immediate updates
   constructor(
     private http: HttpClient,
     private authService: AuthService
   ) {
-    // Subscribe to auth changes and initialize connection if already logged in
+    // Immediately check for unread messages
+    this.updateUnreadCountImmediate();
+    
+    // Set up visibility change listener for page reloads/tab focus
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          this.updateUnreadCountImmediate();
+        }
+      });
+
+      // Add window load event listener
+      window.addEventListener('load', () => {
+        this.updateUnreadCountImmediate();
+      });
+    }
+    
+    // Set up auth listener and periodic checks
     this.setupAuthListener();
-    this.setupPeriodicChecks();
+    this.setupAggressivePeriodicChecks();
   }
   
   // Add a getCurrentUser method to replace AuthService.getCurrentUser
@@ -108,10 +131,13 @@ export class ChatService {
     return user ? user.id : null;
   }
   
+  // Update setupAuthListener to include immediate count update
   private setupAuthListener(): void {
     this.authService.authStatusChange.subscribe(isLoggedIn => {
       console.log('Auth status changed, isLoggedIn:', isLoggedIn);
       if (isLoggedIn) {
+        // Update count before connection
+        this.updateUnreadCount();
         this.initConnection(true);
       } else {
         this.closeConnection();
@@ -119,15 +145,16 @@ export class ChatService {
       }
     });
     
-    // Initial connection if user is logged in
+    // Initial connection and count if already logged in
     if (this.authService.isLoggedIn()) {
+      this.updateUnreadCount();
       this.initConnection(true);
     }
   }
   
   private setupPeriodicChecks(): void {
-    // Check connection health every 30 seconds
-    timer(10000, 30000).subscribe(() => {
+    // Check connection health every 60 seconds
+    timer(10000, 60000).subscribe(() => {
       if (this.authService.isLoggedIn()) {
         // Check connection health
         if (this.hubConnection?.state !== signalR.HubConnectionState.Connected) {
@@ -138,8 +165,10 @@ export class ChatService {
           this.pingConnection();
         }
         
-        // Update unread count
-        this.updateUnreadCount();
+        // Only update from server if connection was lost
+        if (!this.connectedSubject.value) {
+          this.updateUnreadCount();
+        }
       }
     });
   }
@@ -149,6 +178,7 @@ export class ChatService {
       this.hubConnection.invoke('Ping').catch(err => {
         console.log('Ping failed, reconnecting:', err);
         this.reconnect(true);
+        
       });
     }
   }
@@ -346,7 +376,7 @@ private async startConnection(): Promise<void> {
     this.hubConnection.off('MessagesRead');
     this.hubConnection.off('JoinedGroup');
     
-    // Handle incoming messages
+    // Handle incoming messages with improved unread count handling
     this.hubConnection.on('ReceiveMessage', (message: ChatMessage) => {
       console.log('Message received via SignalR:', message);
       
@@ -356,8 +386,17 @@ private async startConnection(): Promise<void> {
       // Emit message for subscribers
       this.messageReceivedSubject.next(message);
       
-      // Update unread count if message is from someone else
+      // Immediately update unread counts when receiving new messages
       if (message.senderId !== this.getCurrentUserId()) {
+        // Increment local count
+        this.lastKnownUnreadCount++;
+        this.unreadMessagesSubject.next(this.lastKnownUnreadCount);
+        
+        // Update group-specific count
+        const groupId = message.groupId.toString();
+        this.unreadCountsByGroup[groupId] = (this.unreadCountsByGroup[groupId] || 0) + 1;
+
+        // Force update from server to ensure consistency
         this.updateUnreadCount();
       }
     });
@@ -367,6 +406,7 @@ private async startConnection(): Promise<void> {
       if (userId !== this.getCurrentUserId()) {
         this.userTypingSubject.next({
           userId, userName, groupId, timestamp: new Date()
+          
         });
       }
     });
@@ -634,6 +674,17 @@ private async startConnection(): Promise<void> {
       }
     });
     this.messageCache.set(groupId, [...messages]);
+
+    const unreadCount = messages.filter(m => 
+      m.senderId !== this.getCurrentUserId() && !m.isRead
+    ).length;
+    
+    if (unreadCount > 0) {
+      // Update local counts immediately
+      this.lastKnownUnreadCount = Math.max(0, this.lastKnownUnreadCount - unreadCount);
+      this.unreadMessagesSubject.next(this.lastKnownUnreadCount);
+      this.unreadCountsByGroup[groupId.toString()] = 0;
+    }
     
     // Update server
     return this.http.post<any>(`${this.apiUrl}/mark-read/${groupId}`, {}).pipe(
@@ -658,25 +709,29 @@ private async startConnection(): Promise<void> {
   }
   
   // Get unread messages count
+  // Update updateUnreadCount to be more responsive
   updateUnreadCount(): void {
     if (!this.authService.isLoggedIn()) return;
     
+    // First emit cached count for immediate feedback
+    if (this.lastKnownUnreadCount > 0) {
+      this.unreadMessagesSubject.next(this.lastKnownUnreadCount);
+    }
+    
+    // Then fetch fresh count from server
     this.http.get<{count: number}>(`${this.apiUrl}/unread-count`).pipe(
+      retry(1),    // Reduced retries for faster response
+      timeout(3000), // Reduced timeout
       catchError(error => {
         console.error('Error fetching unread count:', error);
-        
-        // Calculate from cache as fallback
-        let count = 0;
-        this.messageCache.forEach(messages => {
-          count += messages.filter(m => 
-            m.senderId !== this.getCurrentUserId() && !m.isRead
-          ).length;
-        });
-        
-        return of({count});
+        return of({ count: this.calculateCachedUnreadCount() });
       })
     ).subscribe(result => {
-      this.unreadMessagesSubject.next(result.count || 0);
+      // Only update if count has changed
+      if (this.lastKnownUnreadCount !== result.count) {
+        this.lastKnownUnreadCount = result.count;
+        this.unreadMessagesSubject.next(this.lastKnownUnreadCount);
+      }
     });
     
     // Also update unread counts by group - handle errors gracefully
@@ -690,6 +745,20 @@ private async startConnection(): Promise<void> {
         // Don't cause UI issues if this fails
       }
     });
+  }
+  
+  // Add helper method to calculate cached counts
+  private calculateCachedUnreadCount(): number {
+    let count = 0;
+    const currentUserId = this.getCurrentUserId();
+    
+    this.messageCache.forEach(messages => {
+      count += messages.filter(m => 
+        m.senderId !== currentUserId && !m.isRead
+      ).length;
+    });
+    
+    return count;
   }
   
   // Typing notifications
@@ -862,5 +931,40 @@ private async startConnection(): Promise<void> {
   // Add a public method for chat initialization
   ensureChatConnection(): void {
     this.initConnection(true);
+  }
+
+  // Add new method for immediate updates
+  private updateUnreadCountImmediate(): void {
+    if (!this.authService.isLoggedIn()) return;
+    
+    this.http.get<{count: number}>(`${this.apiUrl}/unread-count`).pipe(
+      timeout(2000), // Shorter timeout
+      retry(1),
+      catchError(error => {
+        console.error('Error fetching immediate unread count:', error);
+        return of({ count: this.calculateCachedUnreadCount() });
+      })
+    ).subscribe(result => {
+      this.lastKnownUnreadCount = result.count;
+      this.unreadMessagesSubject.next(this.lastKnownUnreadCount);
+    });
+  }
+
+  // Update periodic checks to be more aggressive initially
+  private setupAggressivePeriodicChecks(): void {
+    // Quick initial checks, then slow down
+    concat(
+      timer(0, 2000).pipe(take(3)),  // Check every 2 seconds for first 6 seconds
+      timer(0, 10000).pipe(take(3)),  // Then every 10 seconds for next 30 seconds
+      timer(0, 30000)                 // Then every 30 seconds ongoing
+    ).subscribe(() => {
+      if (this.authService.isLoggedIn()) {
+        if (this.hubConnection?.state === signalR.HubConnectionState.Connected) {
+          this.updateUnreadCount();
+        } else {
+          this.updateUnreadCountImmediate();
+        }
+      }
+    });
   }
 }
