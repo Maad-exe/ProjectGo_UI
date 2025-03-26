@@ -1,0 +1,59 @@
+<div class="container">
+  <div class="modal-content">
+    <div class="modal-header bg-light">
+      <h5 class="modal-title">
+        <i class="fas fa-users me-2"></i>
+        Assign Group to Panel
+      </h5>
+      <button type="button" class="btn-close" (click)="dialogRef.close()" aria-label="Close"></button>
+    </div>
+    
+    <div class="modal-body">
+      <form [formGroup]="assignForm" (ngSubmit)="onSubmit()">
+        <div class="mb-3">
+          <label for="groupId" class="form-label">Select Group</label>
+          <select 
+            class="form-select" 
+            id="groupId" 
+            formControlName="groupId"
+            [class.is-invalid]="assignForm.get('groupId')?.invalid && assignForm.get('groupId')?.touched">
+            <option value="" disabled>-- Select a group --</option>
+            <option *ngFor="let group of groups" [value]="group.id">
+              {{ group.name }} (Supervised by: {{ group.teacherName || 'Unknown' }})
+            </option>
+          </select>
+          <div class="invalid-feedback" *ngIf="assignForm.get('groupId')?.invalid && assignForm.get('groupId')?.touched">
+            Please select a group
+          </div>
+        </div>
+        
+        <div class="mb-3">
+          <label for="scheduledDate" class="form-label">Scheduled Date</label>
+          <input 
+            type="datetime-local" 
+            class="form-control" 
+            id="scheduledDate" 
+            formControlName="scheduledDate"
+            [class.is-invalid]="assignForm.get('scheduledDate')?.invalid && assignForm.get('scheduledDate')?.touched">
+          <div class="invalid-feedback" *ngIf="assignForm.get('scheduledDate')?.invalid && assignForm.get('scheduledDate')?.touched">
+            Scheduled date is required
+          </div>
+        </div>
+      </form>
+    </div>
+    
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="dialogRef.close()">
+        <i class="fas fa-times me-1"></i> Cancel
+      </button>
+      <button 
+        type="button" 
+        class="btn btn-success" 
+        (click)="onSubmit()"
+        [disabled]="assignForm.invalid || loading">
+        <i class="fas" [ngClass]="{'fa-calendar-check': !loading, 'fa-spinner fa-spin': loading}"></i>
+        <span class="ms-1">{{ loading ? 'Assigning...' : 'Assign Group' }}</span>
+      </button>
+    </div>
+  </div>
+</div>

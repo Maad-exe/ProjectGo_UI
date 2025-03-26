@@ -146,4 +146,9 @@ export class GroupService {
       catchError(() => of({ isInSupervisedGroup: false }))
     );
   }
+
+  // Add this method to your GroupService class
+  getGroupsWithSupervisors(): Observable<GroupDetails[]> {
+    return this.http.get<GroupDetails[]>(`${this.apiUrl}/groups/with-supervisors`);
+  }
 }

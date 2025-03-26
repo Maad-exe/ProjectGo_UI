@@ -1,4 +1,3 @@
-// src/app/app.routes.ts
 import { Routes, Router } from '@angular/router';
 import { inject } from '@angular/core';
 import { LoginComponent } from './login/login.component';
@@ -12,6 +11,13 @@ import { studentGuard } from './core/guards/student.guard';
 import { UserManagementComponent } from './dashboard/user-management/user-management.component';
 import { GroupChatComponent } from './group-chat/group-chat.component';
 import { TeacherListComponent } from './student-dashboard/components/teacher-list/teacher-list.component';
+import { adminGuard } from './core/guards/admin.guard'; // Fixed path
+import { EventListComponent } from './dashboard/components/events/event-list/event-list.component';
+import { EventDetailsComponent } from './dashboard/components/events/event-details/event-details.component';
+import { PanelListComponent } from '../app/dashboard/components/panel-list/panel-list.component';
+import { PanelDetailsComponent } from '../app/dashboard/components/panel-details/panel-details.component';
+import { RubricListComponent } from '../app/dashboard/components/rubric-list/rubric-list.component';
+import { EvaluationListComponent } from '../app/dashboard/components/evaluation-list/evaluation-list.component';
 export const routes: Routes = [
   { 
     path: '', 
@@ -39,18 +45,47 @@ export const routes: Routes = [
   { 
     path: 'admin-dashboard', 
     component: DashboardComponent, 
-    canActivate: [authGuard],
+    canActivate: [authGuard, adminGuard],
     children: [
       {
         path: 'users',
         component: UserManagementComponent
+      },
+      {
+        path: 'events',
+        component: EventListComponent
+      },
+      {
+        path: 'events/:id',
+        component: EventDetailsComponent
+      },
+      {
+        path: 'panels',
+        component: PanelListComponent
+      },
+      {
+        path: 'panels/:id',
+        component: PanelDetailsComponent
+      },
+      {
+        path: 'rubrics',
+        component: RubricListComponent
+      },
+      {
+        path: 'evaluations',
+        component: EvaluationListComponent
+      },
+      {
+        path: '',
+        redirectTo: 'users',
+        pathMatch: 'full'
       }
     ]
   },
   { 
     path: 'student-dashboard', 
     component: StudentDashboardComponent, 
-    canActivate: [authGuard,studentGuard],
+    canActivate: [authGuard, studentGuard],
     children: [
       { path: 'teachers', component: TeacherListComponent }
     ]

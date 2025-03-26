@@ -52,7 +52,7 @@ interface DashboardDataSources {
   ],
   templateUrl: './student-dashboard.component.html',
   styleUrls: ['./student-dashboard.component.scss'],
-  encapsulation: ViewEncapsulation.None // Add this line
+  // encapsulation: ViewEncapsulation.None // Add this line
 })
 export class StudentDashboardComponent implements OnInit, OnDestroy {
   currentView = 'dashboard';

@@ -14,6 +14,7 @@ import { UserManagementService, UserDetails } from '../../services/user-manageme
 import { NotificationService } from '../../services/notifications.service';
 import { EditUserDialogComponent } from './edit-user-dialog/edit-user-dialog.component';
 import { Router } from '@angular/router';
+import { EvaluationEvent } from '../event.model';
 
 @Component({
   selector: 'app-user-management',
@@ -217,4 +218,9 @@ export class UserManagementComponent implements OnInit {
   navigateBack() {
     this.router.navigate(['/admin-dashboard']);
   }
+
+  viewEvent(event: EvaluationEvent): void {
+    // Implementation
+  }
 }
+

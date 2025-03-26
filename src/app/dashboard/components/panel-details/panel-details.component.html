@@ -1,0 +1,67 @@
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+      <button class="btn btn-sm btn-outline-secondary me-2" (click)="goBack()">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      Panel Details
+    </h1>
+  </div>
+
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <ng-container *ngIf="!loading && panel">
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-light">
+            <h5 class="card-title mb-0">{{ panel.name }}</h5>
+          </div>
+          <div class="card-body">
+            <p><strong>Created At:</strong> {{ panel.createdAt | date:'medium' }}</p>
+            <h6>Panel Members</h6>
+            <ul class="list-group mb-3">
+              <li class="list-group-item" *ngFor="let member of panel.members">
+                {{ member.teacherName }}
+                <span class="badge bg-primary ms-2" *ngIf="member.isHead">Head</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Assigned Evaluations</h5>
+          </div>
+          <div class="card-body">
+            <div *ngIf="evaluations.length === 0" class="text-center py-3">
+              <p class="text-muted mb-0">No evaluations assigned to this panel</p>
+            </div>
+            <ul class="list-group" *ngIf="evaluations.length > 0">
+              <li class="list-group-item" *ngFor="let eval of evaluations">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <strong>{{ eval.groupName }}</strong> - {{ eval.eventName }}
+                    <br>
+                    <small class="text-muted">
+                      Scheduled for {{ eval.scheduledDate | date:'medium' }}
+                    </small>
+                  </div>
+                  <span class="badge" [ngClass]="eval.isCompleted ? 'bg-success' : 'bg-warning'">
+                    {{ eval.isCompleted ? 'Completed' : 'Pending' }}
+                  </span>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</div>

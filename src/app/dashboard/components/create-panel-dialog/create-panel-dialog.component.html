@@ -1,0 +1,68 @@
+<div class="container">
+  <div class="modal-content">
+    <div class="modal-header bg-light">
+      <h5 class="modal-title">{{ panelData.panel ? 'Edit' : 'Create' }} Panel</h5>
+      <button type="button" class="btn-close" (click)="dialogRef.close()" aria-label="Close"></button>
+    </div>
+    
+    <div class="modal-body">
+      <form [formGroup]="panelForm" (ngSubmit)="onSubmit()">
+        <div class="mb-3">
+          <label for="name" class="form-label">Panel Name</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-users-cog"></i></span>
+            <input 
+              type="text" 
+              class="form-control" 
+              id="name" 
+              formControlName="name"
+              placeholder="Enter panel name"
+              [class.is-invalid]="panelForm.get('name')?.invalid && panelForm.get('name')?.touched">
+          </div>
+          <div class="invalid-feedback d-block" *ngIf="panelForm.get('name')?.invalid && panelForm.get('name')?.touched">
+            Panel name is required
+          </div>
+        </div>
+        
+        <div class="mb-3">
+          <label for="teachers" class="form-label">Select Teachers (minimum 2)</label>
+          <select 
+            multiple 
+            class="form-select" 
+            id="teachers" 
+            formControlName="teacherIds" 
+            [attr.size]="5"
+            [class.is-invalid]="panelForm.get('teacherIds')?.invalid && panelForm.get('teacherIds')?.touched">
+            <option *ngFor="let teacher of teachers" [value]="teacher.id">
+              {{ teacher.fullName }} - {{ teacher.areaOfSpecialization || 'General' }}
+            </option>
+          </select>
+          <div class="form-text text-muted">
+            <small><i class="fas fa-info-circle"></i> Hold Ctrl (Cmd on Mac) to select multiple teachers</small>
+          </div>
+          <div class="invalid-feedback d-block" *ngIf="panelForm.get('teacherIds')?.invalid && panelForm.get('teacherIds')?.touched">
+            Select at least 2 teachers
+          </div>
+        </div>
+      </form>
+    </div>
+    
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="dialogRef.close()">
+        <i class="fas fa-times me-1"></i> Cancel
+      </button>
+      <button 
+        type="button" 
+        class="btn btn-primary" 
+        (click)="onSubmit()"
+        [disabled]="panelForm.invalid || loading">
+        <i class="fas" [ngClass]="{
+          'fa-save': panelData.panel && !loading,
+          'fa-plus': !panelData.panel && !loading,
+          'fa-spinner fa-spin': loading
+        }"></i>
+        <span class="ms-1">{{ loading ? 'Processing...' : (panelData.panel ? 'Update' : 'Create') }}</span>
+      </button>
+    </div>
+  </div>
+</div>

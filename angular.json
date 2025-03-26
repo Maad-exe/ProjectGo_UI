@@ -28,17 +28,24 @@
             "assets": [
               {
                 "glob": "**/*",
-               "input": "src/assets",
+                "input": "src/assets",
                 "output": "/assets"
               }
             ],
-           "styles": [
-            "src/styles.scss",
-            "node_modules/@fortawesome/fontawesome-free/css/all.min.css",
-            "@angular/material/prebuilt-themes/azure-blue.css"
-            
-          ],
-            "scripts": []
+            "styles": [
+              "@angular/material/prebuilt-themes/azure-blue.css",
+              "node_modules/@fortawesome/fontawesome-free/css/all.min.css",
+              "node_modules/bootstrap/dist/css/bootstrap.min.css",
+              "src/styles.scss"
+            ],
+            "scripts": [
+              "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"
+            ],
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "src/styles"
+              ]
+            }
           },
           "configurations": {
             "production": {
@@ -74,10 +81,16 @@
               "buildTarget": "frontend-panel:build:development"
             }
           },
-          "defaultConfiguration": "development"
+          "defaultConfiguration": "development",
+          "options": {
+            "hmr": true
+          }
         },
         "extract-i18n": {
-          "builder": "@angular-devkit/build-angular:extract-i18n"
+          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "options": {
+            "buildTarget": "frontend-panel:build"
+          }
         },
         "test": {
           "builder": "@angular-devkit/build-angular:karma",
@@ -91,16 +104,19 @@
             "assets": [
               {
                 "glob": "**/*",
-               "input": "src/assets",
+                "input": "src/assets",
                 "output": "/assets"
               }
             ],
-           "styles": [
-            "src/styles.scss",
-            "node_modules/@fortawesome/fontawesome-free/css/all.min.css",
-            "@angular/material/prebuilt-themes/azure-blue.css"
-          ],
-            "scripts": []
+            "styles": [
+              "@angular/material/prebuilt-themes/azure-blue.css",
+              "node_modules/@fortawesome/fontawesome-free/css/all.min.css",
+              "node_modules/bootstrap/dist/css/bootstrap.min.css",
+              "src/styles.scss"
+            ],
+            "scripts": [
+              "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"
+            ]
           }
         }
       }

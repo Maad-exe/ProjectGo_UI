@@ -2,17 +2,27 @@
   <!-- Sidebar -->
   <aside class="sidebar">
     <nav class="sidebar-nav">
-     
       <a routerLink="/admin-dashboard" class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
         <i class="fas fa-home"></i>
         <span>Dashboard</span>
-      </a> <a (click)="showAddUserModal()" class="nav-item">
+      </a>
+      <a (click)="showAddUserModal()" class="nav-item">
         <i class="fas fa-user-plus"></i>
         <span>User Registration</span>
       </a>
       <a routerLink="/admin-dashboard/users" class="nav-item" routerLinkActive="active">
         <i class="fas fa-users"></i>
         <span>User Management</span>
+      </a>
+      <!-- Add Event Management Navigation -->
+      <a routerLink="/admin-dashboard/events" class="nav-item" routerLinkActive="active">
+        <i class="fas fa-calendar-alt"></i>
+        <span>Event Management</span>
+      </a>
+      <!-- Add Panel Management Navigation -->
+      <a routerLink="/admin-dashboard/panels" class="nav-item" routerLinkActive="active">
+        <i class="fas fa-chalkboard-teacher"></i>
+        <span>Panel Management</span>
       </a>
       <a routerLink="/projects" class="nav-item">
         <i class="fas fa-project-diagram"></i>
