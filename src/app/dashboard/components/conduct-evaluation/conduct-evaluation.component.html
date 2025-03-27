@@ -1,0 +1,171 @@
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+      <i class="fas fa-clipboard-check me-2"></i>
+      Conduct Evaluation
+    </h1>
+    <button class="btn btn-outline-secondary" (click)="navigateBack()">
+      <i class="fas fa-arrow-left me-1"></i> Back to Group
+    </button>
+  </div>
+
+  <!-- Loading spinner -->
+  <div class="text-center my-5" *ngIf="loading">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Loading evaluation details...</p>
+  </div>
+
+  <!-- Content -->
+  <div class="row" *ngIf="!loading && event">
+    <div class="col-md-4">
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+          <h5 class="card-title mb-0">Evaluation Details</h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <strong>Event:</strong> {{ event.name }}
+          </div>
+          <div class="mb-3">
+            <strong>Total Marks:</strong> {{ event.totalMarks }}
+          </div>
+          <div class="mb-3">
+            <strong>Weight:</strong> {{ event.weight }}%
+          </div>
+          <div class="mb-3">
+            <strong>Evaluation Type:</strong> {{ isSimpleEvaluation ? 'Simple (Overall Score)' : 'Rubric-Based' }}
+          </div>
+          <div *ngIf="!isSimpleEvaluation && rubric">
+            <strong>Rubric:</strong> {{ rubric.name }}
+          </div>
+        </div>
+      </div>
+      
+      <div class="card shadow-sm">
+        <div class="card-header bg-light">
+          <h5 class="card-title mb-0">Student Info</h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <strong>Student ID:</strong> {{ studentId }}
+          </div>
+          <!-- Additional student info if available -->
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-8">
+      <div class="card shadow-sm">
+        <div class="card-header bg-light">
+          <h5 class="card-title mb-0">
+            {{ existingEvaluation ? 'Update Evaluation' : 'New Evaluation' }}
+          </h5>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="evaluationForm" (ngSubmit)="onSubmit()">
+            <!-- Simple Evaluation -->
+            <div *ngIf="isSimpleEvaluation" class="mb-4">
+              <h5 class="mb-3">Overall Score</h5>
+              <div class="form-group mb-3">
+                <label for="simpleScore">Score (out of {{ event.totalMarks }}) *</label>
+                <input 
+                  type="number" 
+                  id="simpleScore" 
+                  formControlName="simpleScore" 
+                  class="form-control" 
+                  [min]="0" 
+                  [max]="event.totalMarks"
+                >
+                <div class="invalid-feedback" *ngIf="evaluationForm.get('simpleScore')?.errors && evaluationForm.get('simpleScore')?.touched">
+                  Please enter a valid score between 0 and {{ event.totalMarks }}
+                </div>
+              </div>
+            </div>
+            
+            <!-- Rubric Evaluation -->
+            <div *ngIf="!isSimpleEvaluation && rubric" class="mb-4">
+              <h5 class="mb-3">Rubric Evaluation</h5>
+              
+              <div class="table-responsive">
+                <table class="table table-bordered">
+                  <thead>
+                    <tr>
+                      <th style="width: 40%">Category</th>
+                      <th style="width: 15%">Weight</th>
+                      <th style="width: 15%">Max Score</th>
+                      <th style="width: 15%">Score</th>
+                      <th style="width: 15%">Comments</th>
+                    </tr>
+                  </thead>
+                  <tbody formArrayName="rubricScores">
+                    <tr *ngFor="let scoreControl of rubricScores.controls; let i = index" [formGroupName]="i">
+                      <td>{{ rubric.categories[i].name }}</td>
+                      <td>{{ rubric.categories[i].weight }}%</td>
+                      <td>{{ rubric.categories[i].maxScore }}</td>
+                      <td>
+                        <input 
+                          type="number" 
+                          formControlName="score" 
+                          class="form-control form-control-sm" 
+                          [min]="0" 
+                          [max]="rubric.categories[i].maxScore"
+                        >
+                      </td>
+                      <td>
+                        <input 
+                          type="text" 
+                          formControlName="comments" 
+                          class="form-control form-control-sm"
+                          placeholder="Optional"
+                        >
+                      </td>
+                    </tr>
+                    <tr class="table-secondary">
+                      <td colspan="3" class="text-end fw-bold">Calculated Total:</td>
+                      <td colspan="2" class="fw-bold">
+                        {{ calculateTotalScore() | number:'1.1-1' }} / {{ event.totalMarks }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            <!-- Overall Comments -->
+            <div class="form-group mb-4">
+              <label for="comments">Overall Comments</label>
+              <textarea 
+                id="comments" 
+                formControlName="comments" 
+                class="form-control" 
+                rows="3"
+                placeholder="Optional overall feedback"
+              ></textarea>
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="d-flex justify-content-end">
+              <button 
+                type="button" 
+                class="btn btn-outline-secondary me-2" 
+                (click)="navigateBack()"
+              >
+                Cancel
+              </button>
+              <button 
+                type="submit" 
+                class="btn btn-primary" 
+                [disabled]="evaluationForm.invalid || submitting"
+              >
+                <i class="fas" [ngClass]="{'fa-save': !submitting, 'fa-spinner fa-spin': submitting}"></i>
+                <span class="ms-1">{{ submitting ? 'Submitting...' : (existingEvaluation ? 'Update' : 'Submit') }}</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

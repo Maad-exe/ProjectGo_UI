@@ -36,5 +36,10 @@
       <span>Group Chat</span>
       <span class="badge" *ngIf="unreadMessages > 0">{{ unreadMessages }}</span>
     </a>
+
+    <a class="nav-item" [class.active]="currentView === 'progress'" (click)="setView('progress')">
+      <i class="fas fa-chart-line"></i>
+      <span>My Progress</span>
+    </a>
   </nav>
 </aside>

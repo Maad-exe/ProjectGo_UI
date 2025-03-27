@@ -71,3 +71,16 @@
     display: block;
     font-size: 0.875rem;
   }
+
+  .event-dialog {
+    .form-control.ng-invalid.ng-touched {
+      border-color: #dc3545;
+    }
+    
+    .invalid-feedback {
+      display: block;
+      color: #dc3545;
+      font-size: 0.875em;
+      margin-top: 0.25rem;
+    }
+  }

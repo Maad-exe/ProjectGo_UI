@@ -46,6 +46,9 @@ export class PanelDetailsComponent implements OnInit {
         console.error("Error loading panel details:", error);
         this.notificationService.showError('Failed to load panel details');
         this.loading = false;
+        
+        // Optionally, use mock data while developing
+        this.panel = this.panelService.getMockPanels().find(p => p.id === this.panelId) || null;
       }
     });
   }
@@ -54,9 +57,15 @@ export class PanelDetailsComponent implements OnInit {
     this.panelService.getGroupEvaluationsByPanelId(this.panelId).subscribe({
       next: (evaluations) => {
         this.evaluations = evaluations;
+        console.log("Successfully loaded evaluations:", evaluations);
       },
       error: (error) => {
+        console.error("Error loading panel evaluations:", error);
         this.notificationService.showError('Failed to load panel evaluations');
+        
+        // Optionally, use mock data while developing
+        this.evaluations = this.panelService.getMockGroupEvaluations()
+          .filter(e => e.panelId === this.panelId);
       }
     });
   }

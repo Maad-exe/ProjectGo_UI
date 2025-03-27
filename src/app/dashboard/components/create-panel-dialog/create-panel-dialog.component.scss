@@ -29,3 +29,1027 @@
 .btn .fas {
   margin-right: 0.25rem;
 }
+
+// At the top of your file, add or update the global styling for fullscreen dialog
+::ng-deep .fullscreen-panel-dialog {
+  .mat-mdc-dialog-container {
+    padding: 0 !important;
+    overflow: hidden !important;
+    border-radius: 0 !important;
+  }
+}
+
+// Modern, clean design for panel dialog
+.panel-dialog {
+  font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+
+  .modal-content {
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, #2b6cb0, #1a4971);
+    color: white;
+    border: none;
+
+    .modal-title {
+      display: flex;
+      align-items: center;
+      font-weight: 500;
+      font-size: 1.25rem;
+
+      i {
+        margin-right: 0.75rem;
+        font-size: 1.25rem;
+      }
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+
+      .selected-count {
+        background-color: rgba(255, 255, 255, 0.2);
+        padding: 0.5rem 1rem;
+        border-radius: 2rem;
+        margin-right: 1rem;
+        font-size: 0.9rem;
+      }
+
+      .close-btn {
+        background: transparent;
+        border: none;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 1.25rem;
+        cursor: pointer;
+        padding: 0;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+
+        &:hover {
+          background-color: rgba(255, 255, 255, 0.1);
+          color: white;
+        }
+      }
+    }
+  }
+
+  .modal-body {
+    padding: 0;
+    max-height: 70vh;
+    overflow: hidden;
+  }
+
+  .modal-footer {
+    padding: 1rem 1.5rem;
+    background-color: #f8f9fa;
+    border-top: 1px solid #eaedf0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+  }
+
+  // Two-column layout - revert to fixed heights
+  .panel-container {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    height: 70vh;
+    max-height: 600px;
+  }
+
+  // Section title styling
+  .section-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 1.25rem;
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+
+    .section-title {
+      margin-bottom: 0;
+    }
+
+    .selection-badge {
+      background-color: #3182ce;
+      color: white;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+  }
+
+  // Left column - panel info
+  .panel-info {
+    padding: 1.5rem;
+    border-right: 1px solid #eaedf0;
+    background-color: #f9fafc;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto; // Keep overflow for scrolling
+
+    // Make scrollbars consistent
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: #cbd5e0;
+      border-radius: 3px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background-color: #f7fafc;
+    }
+
+    .form-group {
+      margin-bottom: 1.25rem;
+
+      label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #4a5568;
+        margin-bottom: 0.5rem;
+      }
+
+      .form-control {
+        width: 100%;
+        padding: 0.675rem 0.875rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.375rem;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+
+        &:focus {
+          border-color: #3182ce;
+          box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+          outline: none;
+        }
+
+        &.is-invalid {
+          border-color: #e53e3e;
+        }
+      }
+
+      .invalid-feedback {
+        color: #e53e3e;
+        font-size: 0.8125rem;
+        margin-top: 0.375rem;
+      }
+    }
+
+    .panel-help {
+      background-color: #ebf8ff;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      display: flex;
+      margin-bottom: 1.5rem;
+      border-left: 4px solid #4299e1;
+
+      .help-icon {
+        margin-right: 0.75rem;
+        color: #4299e1;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+      }
+
+      .help-text {
+        font-size: 0.875rem;
+        color: #2c5282;
+        flex: 1;
+
+        p {
+          margin-bottom: 0.75rem;
+          line-height: 1.5;
+
+          &:last-child {
+            margin-bottom: 0;
+          }
+
+          strong {
+            font-weight: 600;
+          }
+        }
+
+        .selection-count-container {
+          margin-top: 0.75rem;
+        }
+
+        .selection-progress {
+          height: 6px;
+          background-color: #e2e8f0;
+          border-radius: 3px;
+          margin-bottom: 0.5rem;
+          overflow: hidden;
+
+          .progress-bar {
+            height: 100%;
+            background-color: #38a169;
+            border-radius: 3px;
+            transition: width 0.3s ease;
+          }
+        }
+
+        .selection-count {
+          margin-top: 0.5rem;
+          font-weight: 500;
+          display: flex;
+          align-items: center;
+          font-size: 0.8125rem;
+
+          i {
+            margin-right: 0.5rem;
+            color: #38a169;
+          }
+
+          &.error {
+            color: #e53e3e;
+
+            i {
+              color: #e53e3e;
+            }
+          }
+
+          &.success {
+            color: #38a169;
+          }
+        }
+      }
+    }
+
+    .search-container {
+      margin-bottom: 1.5rem;
+
+      .search-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #4a5568;
+        margin-bottom: 0.5rem;
+      }
+
+      .search-bar {
+        position: relative;
+
+        .search-icon {
+          position: absolute;
+          left: 0.875rem;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #a0aec0;
+          z-index: 1;
+        }
+
+        .search-input {
+          width: 100%;
+          padding: 0.675rem 1rem 0.675rem 2.5rem;
+          border: 1px solid #e2e8f0;
+          border-radius: 0.375rem;
+          font-size: 0.875rem;
+
+          &:focus {
+            border-color: #3182ce;
+            box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+            outline: none;
+          }
+        }
+
+        .clear-button {
+          position: absolute;
+          right: 0.875rem;
+          top: 50%;
+          transform: translateY(-50%);
+          background: none;
+          border: none;
+          color: #a0aec0;
+          cursor: pointer;
+          padding: 0;
+          font-size: 0.875rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 18px;
+          height: 18px;
+          border-radius: 50%;
+
+          &:hover {
+            color: #4a5568;
+            background-color: #f7fafc;
+          }
+        }
+      }
+    }
+
+    .selection-tips {
+      margin-top: auto;
+      padding-top: 1rem;
+
+      h5 {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #4a5568;
+        margin-bottom: 0.75rem;
+      }
+
+      .status-guide {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        .status-item {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 0.8125rem;
+
+          .status-badge {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+          }
+
+          .status-label {
+            font-weight: 500;
+            width: 70px;
+          }
+
+          .status-desc {
+            color: #718096;
+          }
+        }
+      }
+    }
+  }
+
+  // Right column - teacher selection
+  .teacher-selection {
+    padding: 1.5rem;
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+
+    .teacher-list {
+      flex: 1;
+      overflow-y: auto;
+
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background-color: #cbd5e0;
+        border-radius: 3px;
+      }
+
+      &::-webkit-scrollbar-track {
+        background-color: #f7fafc;
+      }
+
+      .teacher-list-loader {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #718096;
+
+        .spinner {
+          width: 40px;
+          height: 40px;
+          border: 3px solid rgba(66, 153, 225, 0.2);
+          border-radius: 50%;
+          border-top-color: #4299e1;
+          animation: spin 1s linear infinite;
+          margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      }
+
+      .empty-search {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #718096;
+        padding: 2rem;
+        text-align: center;
+
+        i {
+          font-size: 2.5rem;
+          margin-bottom: 1rem;
+          opacity: 0.5;
+        }
+
+        p {
+          margin-bottom: 1rem;
+          font-size: 1rem;
+
+          strong {
+            color: #2d3748;
+          }
+        }
+
+        .reset-search {
+          background-color: #edf2f7;
+          border: none;
+          color: #4a5568;
+          padding: 0.5rem 1rem;
+          border-radius: 0.375rem;
+          font-size: 0.875rem;
+          font-weight: 500;
+          cursor: pointer;
+
+          &:hover {
+            background-color: #e2e8f0;
+          }
+        }
+      }
+
+      .teacher-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); // Smaller cards for compact layout
+        gap: 1rem; // Reduced spacing
+        padding: 0.5rem; // Add padding for visual breathing room
+
+        // Make cards a bit taller for fullscreen
+        .teacher-card {
+          height: auto; // Remove fixed height
+
+          .teacher-content {
+            display: flex;
+            flex-direction: column;
+            height: calc(100% - 60px); // Subtract header height
+
+            .teacher-contact {
+              margin-top: auto; // Push to bottom
+            }
+          }
+        }
+      }
+
+      .teacher-card {
+        position: relative;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        transition: all 0.2s;
+        cursor: pointer;
+        background-color: white;
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        &.selected {
+          border-color: #3182ce;
+          box-shadow: 0 0 0 2px rgba(49, 130, 206, 0.2);
+
+          .teacher-avatar {
+            background-color: #3182ce;
+            color: white;
+          }
+
+          .teacher-content {
+            background-color: rgba(49, 130, 206, 0.05);
+          }
+        }
+
+        &.teacher-busy {
+          opacity: 0.75;
+
+          &:hover {
+            opacity: 0.9;
+          }
+
+          &::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: repeating-linear-gradient(
+              -45deg,
+              transparent,
+              transparent 5px,
+              rgba(229, 62, 62, 0.05) 5px,
+              rgba(229, 62, 62, 0.05) 10px
+            );
+            pointer-events: none;
+            z-index: 1;
+          }
+        }
+
+        .selection-mark {
+          position: absolute;
+          top: 0;
+          right: 0;
+          width: 24px;
+          height: 24px;
+          background-color: #3182ce;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          border-bottom-left-radius: 0.375rem;
+          z-index: 2;
+        }
+
+        .teacher-header {
+          padding: 1rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          border-bottom: 1px solid #edf2f7;
+
+          .teacher-avatar {
+            width: 40px;
+            height: 40px;
+            background-color: #edf2f7;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+
+            &.busy {
+              background-color: #fed7d7;
+              color: #822727;
+            }
+          }
+
+          .teacher-status {
+            .badge {
+              padding: 0.25rem 0.5rem;
+              font-size: 0.75rem;
+              border-radius: 0.25rem;
+              font-weight: 500;
+            }
+          }
+        }
+
+        .teacher-content {
+          padding: 1rem;
+          transition: all 0.2s;
+
+          .teacher-name {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 0.25rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+
+          .teacher-specialty {
+            color: #4a5568;
+            font-size: 0.875rem;
+            padding: 0.25rem 0.5rem;
+            background-color: #edf2f7;
+            border-radius: 0.25rem;
+            display: inline-block;
+            margin-bottom: 0.75rem;
+          }
+
+          .teacher-workload {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+            color: #718096;
+            font-size: 0.8125rem;
+
+            i {
+              color: #4a5568;
+              opacity: 0.7;
+              width: 16px;
+              text-align: center;
+            }
+          }
+
+          .teacher-detail {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #718096;
+            font-size: 0.8125rem;
+            margin-bottom: 0.75rem;
+
+            i {
+              opacity: 0.7;
+              width: 16px;
+              text-align: center;
+            }
+          }
+
+          .teacher-contact {
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px dashed #edf2f7;
+
+            .contact-item {
+              display: flex;
+              align-items: center;
+              gap: 0.5rem;
+              color: #718096;
+              font-size: 0.8125rem;
+              margin-bottom: 0.5rem;
+
+              i {
+                opacity: 0.7;
+                width: 16px;
+                text-align: center;
+              }
+
+              span {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+              }
+
+              &:last-child {
+                margin-bottom: 0;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Button styling
+  .btn {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 0.375rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+
+    i {
+      margin-right: 0.5rem;
+    }
+
+    &.btn-cancel {
+      background-color: #e2e8f0;
+      color: #4a5568;
+
+      &:hover {
+        background-color: #cbd5e0;
+      }
+    }
+
+    &.btn-submit {
+      background-color: #3182ce;
+      color: white;
+
+      &:hover:not(:disabled) {
+        background-color: #2b6cb0;
+      }
+
+      &:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  // Status badge colors
+  .badge-available {
+    background-color: #c6f6d5;
+    color: #22543d;
+  }
+
+  .badge-active {
+    background-color: #fefcbf;
+    color: #744210;
+  }
+
+  .badge-busy {
+    background-color: #fed7d7;
+    color: #822727;
+  }
+}
+
+// Panel info card
+.panel-info-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: box-shadow 0.3s ease;
+  
+  &:hover {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  }
+  
+  .card-title {
+    color: #495057;
+    font-size: 1.15rem;
+    font-weight: 600;
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+}
+
+// Form elements
+.form-floating {
+  margin-bottom: 1.5rem;
+  
+  .form-control {
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    height: calc(3.5rem + 2px);
+    
+    &:focus {
+      box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+      border-color: #86b7fe;
+    }
+    
+    &.is-invalid {
+      background-image: none;
+    }
+  }
+  
+  label {
+    color: #6c757d;
+    padding: 1rem;
+  }
+}
+
+// Teacher selection
+.teacher-selection-wrapper {
+  .input-group {
+    .form-control {
+      border-left: 0;
+      
+      &:focus {
+        border-color: #ced4da;
+        box-shadow: none;
+      }
+    }
+    
+    .input-group-text {
+      border-right: 0;
+      color: #6c757d;
+    }
+  }
+  
+  .teacher-list {
+    margin: 1rem 0;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+}
+
+// Teacher card
+.teacher-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  &.selected {
+    border-color: #0d6efd;
+    background-color: rgba(13, 110, 253, 0.05);
+    
+    .teacher-avatar {
+      background-color: #0d6efd;
+      color: white;
+    }
+  }
+  
+  .teacher-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .teacher-avatar {
+    width: 50px;
+    height: 50px;
+    background-color: #f8f9fa;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #495057;
+    font-size: 1.5rem;
+    position: relative;
+    
+    .selection-indicator {
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background-color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      i {
+        font-size: 14px;
+        color: #0d6efd;
+      }
+    }
+  }
+  
+  .teacher-groups-info {
+    .badge {
+      font-weight: 500;
+      font-size: 0.75rem;
+      padding: 0.5em 0.75em;
+    }
+  }
+  
+  .teacher-badge {
+    display: inline-flex;
+    align-items: center;
+    background-color: #f8f9fa;
+    border-radius: 20px;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.8rem;
+    color: #6c757d;
+  }
+  
+  .teacher-contact {
+    margin-top: 0.75rem;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 0.75rem;
+    
+    .contact-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #6c757d;
+      font-size: 0.85rem;
+      margin-bottom: 0.4rem;
+      
+      i {
+        width: 14px;
+        text-align: center;
+      }
+    }
+  }
+}
+
+// Panel members card
+.panel-members-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  
+  .card-header {
+    background-color: #f8f9fa;
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid #e9ecef;
+    
+    h5 {
+      color: #495057;
+      font-weight: 600;
+    }
+    
+    .badge {
+      padding: 0.5em 0.85em;
+    }
+  }
+}
+
+// Button styling
+.btn {
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  
+  &.btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    
+    &:hover {
+      background-color: #0b5ed7;
+      border-color: #0a58ca;
+    }
+    
+    &:disabled {
+      background-color: #0d6efd;
+      border-color: #0d6efd;
+      opacity: 0.5;
+    }
+  }
+  
+  &.btn-outline-secondary {
+    color: #6c757d;
+    border-color: #6c757d;
+    
+    &:hover {
+      background-color: #6c757d;
+      border-color: #6c757d;
+      color: white;
+    }
+  }
+  
+  i {
+    margin-right: 0.25rem;
+  }
+}
+
+// Alerts
+.alert {
+  border-radius: 6px;
+  border: none;
+  padding: 0.85rem 1rem;
+  
+  &.alert-info {
+    background-color: #cfe2ff;
+    color: #0a58ca;
+  }
+  
+  &.alert-warning {
+    background-color: #fff3cd;
+    color: #856404;
+  }
+}
+
+// Form text and helpers
+.form-text {
+  color: #6c757d;
+  font-size: 0.85rem;
+  
+  &.text-danger {
+    color: #dc3545 !important;
+  }
+  
+  i {
+    width: 16px;
+    text-align: center;
+  }
+}
+
+// Scrollbars
+.modal-body::-webkit-scrollbar,
+.teacher-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-thumb,
+.teacher-list::-webkit-scrollbar-thumb {
+  background-color: #d1d1d1;
+  border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-track,
+.teacher-list::-webkit-scrollbar-track {
+  background-color: #f1f1f1;
+}
+
+// Global style to remove dialog padding and add rounded corners
+::ng-deep.panel-dialog-container .mat-mdc-dialog-container {
+  padding: 0 !important;
+  overflow: hidden !important;
+  border-radius: 0.5rem !important;
+}

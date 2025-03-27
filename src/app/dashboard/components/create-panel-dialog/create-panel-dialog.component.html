@@ -1,68 +1,174 @@
-<div class="container">
-  <div class="modal-content">
-    <div class="modal-header bg-light">
-      <h5 class="modal-title">{{ panelData.panel ? 'Edit' : 'Create' }} Panel</h5>
-      <button type="button" class="btn-close" (click)="dialogRef.close()" aria-label="Close"></button>
-    </div>
-    
-    <div class="modal-body">
-      <form [formGroup]="panelForm" (ngSubmit)="onSubmit()">
-        <div class="mb-3">
-          <label for="name" class="form-label">Panel Name</label>
-          <div class="input-group">
-            <span class="input-group-text"><i class="fas fa-users-cog"></i></span>
+<div class="panel-dialog">
+  <div class="modal-header">
+    <h4 class="modal-title">
+      <i class="fas fa-users-cog"></i>
+      {{ panelData.panel ? 'Edit' : 'Create' }} Evaluation Panel
+    </h4>
+    <button type="button" class="close-btn" (click)="dialogRef.close()">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+  
+  <div class="modal-body">
+    <form [formGroup]="panelForm" (ngSubmit)="onSubmit()">
+      <div class="panel-container">
+        <!-- Left column - Panel information -->
+        <div class="panel-info">
+          <div class="section-title">Panel Information</div>
+          
+          <div class="form-group">
+            <label for="name">Panel Name</label>
             <input 
               type="text" 
               class="form-control" 
               id="name" 
               formControlName="name"
-              placeholder="Enter panel name"
+              placeholder="Enter a descriptive name for this panel"
               [class.is-invalid]="panelForm.get('name')?.invalid && panelForm.get('name')?.touched">
+            <div class="invalid-feedback" *ngIf="panelForm.get('name')?.invalid && panelForm.get('name')?.touched">
+              Panel name is required
+            </div>
           </div>
-          <div class="invalid-feedback d-block" *ngIf="panelForm.get('name')?.invalid && panelForm.get('name')?.touched">
-            Panel name is required
+          
+          <div class="panel-help">
+            <div class="help-icon">
+              <i class="fas fa-info-circle"></i>
+            </div>
+            <div class="help-text">
+              <p>A panel must include at least <strong>3 teachers</strong> who will collaborate on evaluating student projects.</p>
+              <div class="selection-progress">
+                <div class="progress-bar" [style.width.%]="(selectedTeachersCount / 3) * 100"></div>
+              </div>
+              <p class="selection-count" [class.error]="selectedTeachersCount < 3" [class.success]="selectedTeachersCount >= 3">
+                <i class="fas" [ngClass]="selectedTeachersCount < 3 ? 'fa-exclamation-triangle' : 'fa-check-circle'"></i>
+                <span>{{ selectedTeachersCount }} of minimum 3 teachers selected</span>
+              </p>
+            </div>
+          </div>
+          
+          <div class="search-container">
+            <div class="search-bar">
+              <i class="fas fa-search search-icon"></i>
+              <input 
+                #searchInput
+                type="text"
+                class="search-input" 
+                placeholder="Search teachers..."
+                (input)="search($event)">
+              <button *ngIf="searchQuery" class="clear-button" (click)="clearSearch()">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div class="selection-tips">
+            <h5>Teacher Status Guide</h5>
+            <div class="status-guide">
+              <div class="status-item">
+                <div class="status-badge badge-available"></div>
+                <span class="status-label">Available</span>
+                <span class="status-desc">Not assigned to any panel</span>
+              </div>
+              <div class="status-item">
+                <div class="status-badge badge-active"></div>
+                <span class="status-label">Active</span>
+                <span class="status-desc">Assigned to 1-2 panels</span>
+              </div>
+              <div class="status-item">
+                <div class="status-badge badge-busy"></div>
+                <span class="status-label">Busy</span>
+                <span class="status-desc">Assigned to 3+ panels</span>
+              </div>
+            </div>
           </div>
         </div>
         
-        <div class="mb-3">
-          <label for="teachers" class="form-label">Select Teachers (minimum 2)</label>
-          <select 
-            multiple 
-            class="form-select" 
-            id="teachers" 
-            formControlName="teacherIds" 
-            [attr.size]="5"
-            [class.is-invalid]="panelForm.get('teacherIds')?.invalid && panelForm.get('teacherIds')?.touched">
-            <option *ngFor="let teacher of teachers" [value]="teacher.id">
-              {{ teacher.fullName }} - {{ teacher.areaOfSpecialization || 'General' }}
-            </option>
+        <!-- Right column - Teacher list -->
+        <div class="teacher-selection">
+          <div class="section-header">
+            <div class="section-title">
+              Select Panel Members
+            </div>
+            <div class="selection-badge" *ngIf="selectedTeachersCount > 0">
+              {{ selectedTeachersCount }}
+            </div>
+          </div>
+          
+          <div class="teacher-list">
+            <div class="teacher-list-loader" *ngIf="loading">
+              <div class="spinner"></div>
+              <p>Loading teachers...</p>
+            </div>
+            
+            <div class="empty-search" *ngIf="!loading && filteredTeachers.length === 0">
+              <i class="fas fa-search"></i>
+              <p>No teachers found matching "<strong>{{ searchQuery }}</strong>"</p>
+              <button class="reset-search" (click)="clearSearch()">
+                Clear Search
+              </button>
+            </div>
+            
+            <div class="teacher-grid" *ngIf="!loading && filteredTeachers.length > 0">
+              <div class="teacher-card" 
+                   *ngFor="let teacher of filteredTeachers"
+                   [class.selected]="isTeacherSelected(teacher.id)" 
+                   [class.teacher-busy]="teacher.workloadStatus === 'busy' && !isTeacherSelected(teacher.id)"
+                   (click)="toggleTeacherSelection(teacher.id)">
+                <div class="selection-mark" *ngIf="isTeacherSelected(teacher.id)">
+                  <i class="fas fa-check"></i>
+                </div>
+                <div class="teacher-header">
+                  <div class="teacher-avatar" [class.busy]="teacher.workloadStatus === 'busy'">
+                    <span>{{ getInitials(teacher.fullName) }}</span>
+                  </div>
+                  <div class="teacher-status">
+                    <span class="badge" [ngClass]="getWorkloadClass(teacher)">
+                      {{ getWorkloadText(teacher) }}
+                    </span>
+                  </div>
+                </div>
+                
+                <div class="teacher-content">
+                  <h3 class="teacher-name">{{ teacher.fullName }}</h3>
+                  <div class="teacher-specialty">{{ teacher.areaOfSpecialization || 'General' }}</div>
+                  
+                  <div class="teacher-detail">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>{{ getWorkloadDetails(teacher) }}</span>
+                  </div>
+                  
+                  <div class="teacher-contact">
+                    <div class="contact-item">
+                      <i class="fas fa-envelope"></i>
+                      <span>{{ teacher.email }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Hidden form control -->
+          <select multiple class="d-none" formControlName="teacherIds">
+            <option *ngFor="let teacher of teachers" [value]="teacher.id"></option>
           </select>
-          <div class="form-text text-muted">
-            <small><i class="fas fa-info-circle"></i> Hold Ctrl (Cmd on Mac) to select multiple teachers</small>
-          </div>
-          <div class="invalid-feedback d-block" *ngIf="panelForm.get('teacherIds')?.invalid && panelForm.get('teacherIds')?.touched">
-            Select at least 2 teachers
-          </div>
         </div>
-      </form>
-    </div>
-    
-    <div class="modal-footer">
-      <button type="button" class="btn btn-secondary" (click)="dialogRef.close()">
-        <i class="fas fa-times me-1"></i> Cancel
-      </button>
-      <button 
-        type="button" 
-        class="btn btn-primary" 
-        (click)="onSubmit()"
-        [disabled]="panelForm.invalid || loading">
-        <i class="fas" [ngClass]="{
-          'fa-save': panelData.panel && !loading,
-          'fa-plus': !panelData.panel && !loading,
-          'fa-spinner fa-spin': loading
-        }"></i>
-        <span class="ms-1">{{ loading ? 'Processing...' : (panelData.panel ? 'Update' : 'Create') }}</span>
-      </button>
-    </div>
+      </div>
+    </form>
+  </div>
+  
+  <div class="modal-footer">
+    <button type="button" class="btn btn-cancel" (click)="dialogRef.close()">Cancel</button>
+    <button 
+      type="button" 
+      class="btn btn-submit"
+      [disabled]="panelForm.invalid || loading || !hasMinimumTeachers" 
+      (click)="onSubmit()">
+      <i class="fas" [ngClass]="{
+        'fa-check': !loading,
+        'fa-spinner fa-spin': loading
+      }"></i>
+      {{ loading ? 'Processing...' : (panelData.panel ? 'Update Panel' : 'Create Panel') }}
+    </button>
   </div>
 </div>

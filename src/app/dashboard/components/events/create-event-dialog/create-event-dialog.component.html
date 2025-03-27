@@ -1,157 +1,127 @@
-<div class="modal-content shadow">
-    <div class="modal-header bg-light">
-      <h5 class="modal-title fw-bold">
-        <i class="fas fa-calendar-plus me-2"></i>
-        {{ isEdit ? 'Edit Event' : 'Create New Event' }}
-      </h5>
-      <button type="button" class="btn-close" (click)="close()"></button>
-    </div>
+<div class="event-dialog">
+  <h2 mat-dialog-title>{{ isEditing ? 'Edit' : 'Create' }} Evaluation Event</h2>
   
-    <form [formGroup]="eventForm" (ngSubmit)="onSubmit()">
-      <div class="modal-body p-3">
-        <div class="mb-3">
-          <label for="name" class="form-label">Event Name</label>
-          <div class="input-group">
-            <span class="input-group-text">
-              <i class="fas fa-heading"></i>
-            </span>
-            <input type="text" 
-                   class="form-control" 
-                   id="name" 
-                   formControlName="name" 
-                   placeholder="Enter event name"
-                   [class.is-invalid]="submitted && eventForm.get('name')?.errors">
-          </div>
-          <div class="invalid-feedback" *ngIf="submitted && eventForm.get('name')?.errors?.['required']">
-            Event name is required
-          </div>
+  <form [formGroup]="eventForm" (ngSubmit)="onSubmit()">
+    <mat-dialog-content>
+      <div class="form-group mb-3">
+        <label for="name">Event Name *</label>
+        <input 
+          type="text" 
+          id="name" 
+          formControlName="name" 
+          class="form-control" 
+          placeholder="Enter evaluation event name"
+        >
+        <div class="invalid-feedback" *ngIf="eventForm.get('name')?.errors?.['required'] && eventForm.get('name')?.touched">
+          Event name is required
         </div>
-  
-        <div class="mb-3">
-          <label for="description" class="form-label">Description</label>
-          <div class="input-group">
-            <span class="input-group-text">
-              <i class="fas fa-align-left"></i>
-            </span>
-            <textarea class="form-control" 
-                    id="description" 
-                    formControlName="description" 
-                    rows="3"
-                    placeholder="Enter event description"
-                    [class.is-invalid]="submitted && eventForm.get('description')?.errors"></textarea>
-          </div>
-          <div class="invalid-feedback" *ngIf="submitted && eventForm.get('description')?.errors?.['required']">
-            Description is required
-          </div>
+      </div>
+
+      <div class="form-group mb-3">
+        <label for="description">Description *</label>
+        <textarea 
+          id="description" 
+          formControlName="description" 
+          class="form-control" 
+          rows="3"
+          placeholder="Describe the evaluation event"
+        ></textarea>
+        <div class="invalid-feedback" *ngIf="eventForm.get('description')?.errors?.['required'] && eventForm.get('description')?.touched">
+          Description is required
         </div>
-  
-        <div class="row g-3 mb-3">
-          <div class="col-md-6">
-            <label for="date" class="form-label">Date</label>
-            <div class="input-group">
-              <span class="input-group-text">
-                <i class="fas fa-calendar"></i>
-              </span>
-              <input type="date" 
-                     class="form-control" 
-                     id="date" 
-                     formControlName="date"
-                     [class.is-invalid]="submitted && eventForm.get('date')?.errors">
-            </div>
-            <div class="invalid-feedback" *ngIf="submitted && eventForm.get('date')?.errors?.['required']">
-              Date is required
+      </div>
+
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="date">Event Date *</label>
+            <input 
+              type="date" 
+              id="date" 
+              formControlName="date" 
+              class="form-control"
+            >
+            <div class="invalid-feedback" *ngIf="eventForm.get('date')?.errors?.['required'] && eventForm.get('date')?.touched">
+              Event date is required
             </div>
           </div>
-  
-          <div class="col-md-6">
-            <label for="type" class="form-label">Event Type</label>
-            <select class="form-select" id="type" formControlName="type">
-              <option [ngValue]="EventType.Proposal">Proposal</option>
-              <option [ngValue]="EventType.Midterm">Midterm</option>
-              <option [ngValue]="EventType.Final">Final</option>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="type">Event Type *</label>
+            <select id="type" formControlName="type" class="form-select">
+              <option *ngFor="let type of eventTypes" [ngValue]="getEventTypeValue(type)">
+                {{ type }}
+              </option>
             </select>
-            <div class="invalid-feedback" *ngIf="eventForm.get('type')?.errors?.['required']">
-              Event type is required
-            </div>
-          </div>
-        </div>
-  
-        <div class="row g-3 mb-3">
-          <div class="col-md-6">
-            <label for="totalMarks" class="form-label">Total Marks</label>
-            <div class="input-group">
-              <span class="input-group-text">
-                <i class="fas fa-star"></i>
-              </span>
-              <input type="number" 
-                     class="form-control" 
-                     id="totalMarks" 
-                     formControlName="totalMarks" 
-                     placeholder="Enter total marks"
-                     [class.is-invalid]="submitted && eventForm.get('totalMarks')?.errors">
-            </div>
-            <div class="invalid-feedback" *ngIf="submitted && eventForm.get('totalMarks')?.errors?.['required']">
-              Total marks is required
-            </div>
-            <div class="invalid-feedback" *ngIf="submitted && eventForm.get('totalMarks')?.errors?.['min']">
-              Total marks must be greater than 0
-            </div>
-          </div>
-  
-          <div class="col-md-6">
-            <label for="weight" class="form-label">Weight</label>
-            <div class="input-group">
-              <span class="input-group-text">
-                <i class="fas fa-balance-scale"></i>
-              </span>
-              <input type="number" 
-                     class="form-control" 
-                     id="weight"
-                     formControlName="weight"
-                     step="0.1"
-                     min="0.1"
-                     placeholder="Enter weight factor"
-                     [class.is-invalid]="submitted && eventForm.get('weight')?.errors">
-            </div>
-            <div class="invalid-feedback" *ngIf="submitted && eventForm.get('weight')?.errors?.['required']">
-              Weight is required
-            </div>
-            <div class="invalid-feedback" *ngIf="submitted && eventForm.get('weight')?.errors?.['min']">
-              Weight must be at least 0.1
-            </div>
-          </div>
-        </div>
-  
-        <div class="mb-3">
-          <div class="form-check form-switch">
-            <input class="form-check-input" 
-                   type="checkbox" 
-                   id="isActive" 
-                   formControlName="isActive">
-            <label class="form-check-label" for="isActive">Active Event</label>
           </div>
         </div>
       </div>
-  
-      <div class="modal-footer">
-        <button type="button" 
-                class="btn btn-secondary" 
-                (click)="close()">
-          <i class="fas fa-times me-1"></i>
-          Cancel
-        </button>
-        <button type="submit" 
-                class="btn btn-primary" 
-                [disabled]="isLoading">
-          <i class="fas" 
-             [ngClass]="{
-               'fa-plus': !isEdit && !isLoading,
-               'fa-save': isEdit && !isLoading,
-               'fa-spinner fa-spin': isLoading
-             }">
-          </i>
-          <span class="ms-1">{{ isLoading ? 'Processing...' : (isEdit ? 'Update' : 'Create') }}</span>
-        </button>
+
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="totalMarks">Total Marks *</label>
+            <input 
+              type="number" 
+              id="totalMarks" 
+              formControlName="totalMarks" 
+              class="form-control"
+              min="1"
+            >
+            <div class="invalid-feedback" *ngIf="eventForm.get('totalMarks')?.errors && eventForm.get('totalMarks')?.touched">
+              Total marks must be at least 1
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label for="weight">Weight (%) *</label>
+            <input 
+              type="number" 
+              id="weight" 
+              formControlName="weight" 
+              class="form-control"
+              min="0"
+              max="100"
+            >
+            <div class="invalid-feedback" *ngIf="eventForm.get('weight')?.errors && eventForm.get('weight')?.touched">
+              Weight must be between 0 and 100
+            </div>
+          </div>
+        </div>
       </div>
-    </form>
-  </div>
+
+      <div class="form-group mb-3">
+        <label for="rubricId">Evaluation Rubric</label>
+        <select id="rubricId" formControlName="rubricId" class="form-select">
+          <option [ngValue]="null">No Rubric (Simple Evaluation)</option>
+          <option *ngFor="let rubric of rubrics" [ngValue]="rubric.id">
+            {{ rubric.name }}
+          </option>
+        </select>
+        <small class="text-muted">
+          <i class="fas fa-info-circle me-1"></i>
+          Select a rubric for detailed evaluation or leave empty for simple evaluation
+        </small>
+      </div>
+
+      <div class="form-check mb-3" *ngIf="isEditing">
+        <input type="checkbox" id="isActive" formControlName="isActive" class="form-check-input">
+        <label for="isActive" class="form-check-label">Active Event</label>
+      </div>
+    </mat-dialog-content>
+    
+    <mat-dialog-actions align="end">
+      <button type="button" mat-dialog-close class="btn btn-outline-secondary me-2">Cancel</button>
+      <button 
+        type="submit" 
+        class="btn btn-primary" 
+        [disabled]="eventForm.invalid || loading"
+      >
+        <i class="fas fa-spinner fa-spin me-1" *ngIf="loading"></i>
+        {{ isEditing ? 'Update' : 'Create' }} Event
+      </button>
+    </mat-dialog-actions>
+  </form>
+</div>

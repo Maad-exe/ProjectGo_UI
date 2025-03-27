@@ -1,86 +1,191 @@
 <div class="container-fluid">
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">
-      <a routerLink="/admin-dashboard/events" class="btn btn-sm btn-outline-secondary me-2">
-        <i class="fas fa-arrow-left"></i>
-      </a>
-      Event Details
-    </h1>
+    <div>
+      <h1 class="h3 mb-0" *ngIf="event">
+        <i class="fas fa-calendar-event me-2"></i>
+        {{ event.name }}
+      </h1>
+      <p class="text-muted" *ngIf="event">{{ getEventTypeString(event.type) }} Event</p>
+    </div>
+    
+    <div class="btn-group">
+      <button class="btn btn-primary me-2" (click)="openCreatePanelDialog()">
+        <i class="fas fa-users-cog me-1"></i> Create Panel
+      </button>
+      <button class="btn btn-outline-primary" (click)="openAssignGroupDialog()">
+        <i class="fas fa-user-plus me-1"></i> Assign Group
+      </button>
+    </div>
   </div>
-
-  <div *ngIf="loading" class="text-center py-5">
+  
+  <!-- Loading Spinner -->
+  <div class="text-center my-5" *ngIf="loading">
     <div class="spinner-border text-primary" role="status">
       <span class="visually-hidden">Loading...</span>
     </div>
+    <p class="mt-2">Loading event details...</p>
   </div>
-
-  <ng-container *ngIf="!loading && event">
-    <!-- Event Details -->
-    <div class="card shadow-sm mb-4">
-      <div class="card-header bg-light">
-        <h5 class="card-title mb-0">{{ event.name }}</h5>
-      </div>
-      <div class="card-body">
-        <div class="row">
-          <div class="col-md-6">
-            <p><strong>Type:</strong> {{ event.type }}</p>
-            <p><strong>Date:</strong> {{ event.date | date:'medium' }}</p>
-            <p><strong>Total Marks:</strong> {{ event.totalMarks }}</p>
-          </div>
-          <div class="col-md-6">
-            <p><strong>Weight:</strong> {{ event.weight }}</p>
-            <p><strong>Status:</strong> 
-              <span class="badge" [ngClass]="event.isActive ? 'bg-success' : 'bg-secondary'">
-                {{ event.isActive ? 'Active' : 'Inactive' }}
-              </span>
-            </p>
-            <p><strong>Description:</strong> {{ event.description }}</p>
+  
+  <!-- Event Details -->
+  <div class="row" *ngIf="!loading && event">
+    <!-- Event Information Card -->
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-light">
+          <h5 class="card-title mb-0">Event Information</h5>
+        </div>
+        <div class="card-body">
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span>Date:</span>
+              <span class="badge bg-light text-dark">{{ event.date | date:'fullDate' }}</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span>Type:</span>
+              <span class="badge bg-info">{{ getEventTypeString(event.type) }}</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span>Total Marks:</span>
+              <span class="badge bg-primary">{{ event.totalMarks }}</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span>Weight:</span>
+              <span class="badge bg-warning text-dark">{{ event.weight }}%</span>
+            </li>
+          </ul>
+          <div class="card-text mt-3">
+            <h6>Description:</h6>
+            <p>{{ event.description }}</p>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- Panel section -->
-    <div class="card shadow-sm mb-4">
-      <div class="card-header bg-light d-flex justify-content-between align-items-center">
-        <h5 class="card-title mb-0">Evaluation Panels</h5>
-        <button class="btn btn-primary btn-sm" (click)="openCreatePanelDialog()">
-          <i class="fas fa-plus"></i> Add Panel
-        </button>
-      </div>
-      <div class="card-body">
-        <div *ngIf="panels.length === 0" class="text-center py-3">
-          <p class="text-muted mb-0">No panels assigned to this event</p>
-          <button class="btn btn-outline-primary mt-3" (click)="openCreatePanelDialog()">
-            Create First Panel
-          </button>
+    
+    <!-- Rubric Information -->
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-light">
+          <h5 class="card-title mb-0">Evaluation Method</h5>
         </div>
-        
-        <div class="row" *ngIf="panels.length > 0">
-          <div class="col-md-6 mb-3" *ngFor="let panel of panels">
-            <div class="card h-100">
-              <div class="card-header bg-light">
-                <h6 class="mb-0">{{ panel.name }}</h6>
-              </div>
-              <div class="card-body">
-                <p class="mb-2"><strong>Members:</strong></p>
-                <ul class="list-group mb-3">
-                  <li class="list-group-item py-2" *ngFor="let member of panel.members">
-                    {{ member.teacherName }}
-                    <span class="badge bg-primary float-end" *ngIf="member.isHead">Head</span>
-                  </li>
-                </ul>
-                <button class="btn btn-sm btn-success w-100" (click)="assignGroupToPanel(panel)">
-                  <i class="fas fa-users"></i> Assign Groups
-                </button>
-              </div>
-              <div class="card-footer text-muted">
-                Created: {{ panel.createdAt | date:'medium' }}
+        <div class="card-body">
+          <div *ngIf="event.rubricId">
+            <p><i class="fas fa-clipboard-list me-2"></i> This event uses a rubric for detailed evaluation.</p>
+            <a [routerLink]="['/admin-dashboard/rubrics']" class="btn btn-sm btn-outline-primary">View Rubric Details</a>
+          </div>
+          <div *ngIf="!event.rubricId">
+            <p><i class="fas fa-check-circle me-2"></i> This event uses simple evaluation (overall score only).</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Panels Section -->
+  <h2 class="h4 mb-3 mt-2">Evaluation Panels</h2>
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Assigned Panels</h5>
+            <button class="btn btn-sm btn-primary" (click)="openCreatePanelDialog()">
+              <i class="fas fa-plus me-1"></i> Create Panel
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="text-center py-4" *ngIf="panels.length === 0">
+            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+            <h5>No Panels Created</h5>
+            <p class="text-muted">Create panels to assign evaluators for this event</p>
+          </div>
+          
+          <div class="row" *ngIf="panels.length > 0">
+            <div class="col-md-4 mb-3" *ngFor="let panel of panels">
+              <div class="card h-100">
+                <div class="card-header">
+                  <h5 class="mb-0">{{ panel.name }}</h5>
+                </div>
+                <div class="card-body">
+                  <h6>Panel Members:</h6>
+                  <ul class="list-group mb-3">
+                    <li class="list-group-item" *ngFor="let member of panel.members">
+                      {{ member.teacherName }}
+                      <span class="badge bg-primary ms-2" *ngIf="member.isHead">Head</span>
+                    </li>
+                  </ul>
+                  <div class="text-end">
+                    <a [routerLink]="['/admin-dashboard/panels', panel.id]" class="btn btn-sm btn-outline-primary">
+                      <i class="fas fa-eye me-1"></i> View Panel
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </ng-container>
+  </div>
+  
+  <!-- Assigned Groups Section -->
+  <h2 class="h4 mb-3 mt-2">Group Evaluations</h2>
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Groups Assigned for Evaluation</h5>
+            <button class="btn btn-sm btn-primary" (click)="openAssignGroupDialog()">
+              <i class="fas fa-plus me-1"></i> Assign Group
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="text-center py-4" *ngIf="assignedGroups.length === 0">
+            <i class="fas fa-users-slash fa-3x text-muted mb-3"></i>
+            <h5>No Groups Assigned</h5>
+            <p class="text-muted">Assign groups to evaluation panels</p>
+          </div>
+          
+          <div class="table-responsive" *ngIf="assignedGroups.length > 0">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Group Name</th>
+                  <th>Assigned Panel</th>
+                  <th>Status</th>
+                  <th>Progress</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let eval of assignedGroups">
+                  <td>{{ eval.groupName }}</td>
+                  <td>{{ eval.panelName }}</td>
+                  <td>
+                    <span class="badge" [ngClass]="eval.isCompleted ? 'bg-success' : 'bg-warning'">
+                      {{ eval.isCompleted ? 'Completed' : 'In Progress' }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="progress" style="height: 10px;">
+                      <div class="progress-bar" [style.width.%]="eval.progress">
+                        {{ eval.progress }}%
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <a [routerLink]="['/admin-dashboard/events', eventId, 'groups', eval.groupId]" class="btn btn-sm btn-primary">
+                      <i class="fas fa-clipboard-check me-1"></i> View Evaluation
+                    </a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

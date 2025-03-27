@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { EventService } from '../../../../services/event.service';
-import { EvaluationEvent, EventType } from '../../../event.model';
+import { EvaluationEvent, EventType } from '../../../../models/event.model';
 import { CreateEventDialogComponent } from '../create-event-dialog/create-event-dialog.component';
 import { ConfirmDialogComponent } from '../../../../shared/confirm-dialog/confirm-dialog.component';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';

@@ -1,0 +1,169 @@
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a [routerLink]="['/admin-dashboard/events']">Events</a></li>
+          <li class="breadcrumb-item"><a [routerLink]="['/admin-dashboard/events', eventId]">{{ event?.name }}</a></li>
+          <li class="breadcrumb-item active">{{ group?.name }} Evaluation</li>
+        </ol>
+      </nav>
+      <h1 class="h3 mb-0">
+        <i class="fas fa-clipboard-check me-2"></i>
+        Group Evaluation
+      </h1>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div class="text-center my-5" *ngIf="loading">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Loading evaluation details...</p>
+  </div>
+  
+  <!-- Main Content -->
+  <div *ngIf="!loading">
+    <div class="row">
+      <!-- Group Information -->
+      <div class="col-md-6 mb-4">
+        <div class="card shadow-sm h-100">
+          <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">{{ group?.name }}</h5>
+          </div>
+          <div class="card-body">
+            <h6 class="mb-3">Group Members</h6>
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let member of group?.members">
+                    <td>{{ member.fullName }}</td>
+                    <td>
+                      <span class="badge" [ngClass]="memberEvaluated(member.id) ? 'bg-success' : 'bg-warning'">
+                        {{ memberEvaluated(member.id) ? 'Evaluated' : 'Pending' }}
+                      </span>
+                    </td>
+                    <td>
+                      <button 
+                        class="btn btn-sm btn-primary" 
+                        (click)="evaluateStudent(member.id)"
+                        [disabled]="memberEvaluated(member.id)">
+                        <i class="fas fa-clipboard-check me-1"></i>
+                        {{ memberEvaluated(member.id) ? 'View Evaluation' : 'Evaluate' }}
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card-footer">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <span>Overall Progress:</span>
+                <div class="progress mt-1" style="height: 10px; width: 200px;">
+                  <div 
+                    class="progress-bar" 
+                    [style.width.%]="getCompletionStatus()"
+                    [ngClass]="{'bg-success': getCompletionStatus() === 100}">
+                    {{ getCompletionStatus() }}%
+                  </div>
+                </div>
+              </div>
+              <button 
+                class="btn btn-success" 
+                [disabled]="getCompletionStatus() < 100"
+                (click)="markAsComplete()">
+                <i class="fas fa-check-circle me-1"></i> Mark as Complete
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Event Details -->
+      <div class="col-md-6 mb-4">
+        <div class="card shadow-sm h-100">
+          <div class="card-header bg-light">
+            <h5 class="card-title mb-0">Event Information</h5>
+          </div>
+          <div class="card-body">
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span>Event:</span>
+                <span>{{ event?.name }}</span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span>Date:</span>
+                <span>{{ event?.date | date:'fullDate' }}</span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span>Total Marks:</span>
+                <span class="badge bg-primary">{{ event?.totalMarks }}</span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span>Evaluation Method:</span>
+                <span>{{ event?.rubricId ? 'Rubric-based' : 'Simple Evaluation' }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Evaluation Summary -->
+    <div class="row" *ngIf="evaluations.length > 0">
+      <div class="col-12">
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">Evaluation Summary</h5>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Student</th>
+                    <th>Score</th>
+                    <th>Status</th>
+                    <th>Evaluator</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let eval of evaluations">
+                    <td>{{ eval.studentName }}</td>
+                    <td>
+                      <span class="badge" [ngClass]="getScoreClass(eval.score)">
+                        {{ eval.score }} / {{ event?.totalMarks }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge" [ngClass]="eval.status === 'Completed' ? 'bg-success' : 'bg-warning'">
+                        {{ eval.status }}
+                      </span>
+                    </td>
+                    <td>{{ eval.evaluatorName }}</td>
+                    <td>
+                      <button class="btn btn-sm btn-outline-primary" (click)="viewEvaluation(eval.id)">
+                        <i class="fas fa-eye me-1"></i> View Details
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

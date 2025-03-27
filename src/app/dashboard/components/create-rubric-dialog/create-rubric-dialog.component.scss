@@ -1,0 +1,114 @@
+.rubric-dialog {
+  max-width: 100%;
+  
+  .section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #333;
+  }
+  
+  mat-dialog-content {
+    max-height: 65vh;
+    overflow-y: auto;
+  }
+  
+  .form-control.ng-invalid.ng-touched {
+    border-color: #dc3545;
+  }
+  
+  .invalid-feedback {
+    display: block;
+    color: #dc3545;
+    font-size: 0.875em;
+    margin-top: 0.25rem;
+  }
+}
+
+// Modal styling
+.modal-header {
+  border-bottom: 1px solid #e9ecef;
+}
+
+.modal-title {
+  font-weight: 600;
+}
+
+.modal-body {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+// Form controls
+.form-label {
+  font-weight: 500;
+}
+
+.form-control.is-invalid {
+  border-color: #dc3545;
+  background-image: none;
+}
+
+.invalid-feedback {
+  color: #dc3545;
+}
+
+// Card styling for categories
+.card {
+  border-radius: 0.25rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  
+  .card-header {
+    padding: 0.75rem 1rem;
+    background-color: rgba(0, 0, 0, 0.03);
+  }
+}
+
+// Alert styling
+.alert {
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+// Weight sum indicator
+.alert-success {
+  color: #155724;
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+}
+
+.alert-danger {
+  color: #721c24;
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+}
+
+// Helper text
+.form-text {
+  font-size: 0.875rem;
+}
+
+// Button spacing
+.btn i {
+  margin-right: 0.25rem;
+}
+
+// Required field indicator
+.text-danger {
+  color: #dc3545;
+}
+
+// Weight warning
+.weight-warning {
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+// Info icon
+.info-icon {
+  color: #17a2b8;
+  font-size: 0.875rem;
+  margin-right: 0.25rem;
+}

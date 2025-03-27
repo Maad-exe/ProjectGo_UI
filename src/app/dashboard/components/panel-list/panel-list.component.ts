@@ -35,17 +35,24 @@ export class PanelListComponent implements OnInit {
       next: (panels) => {
         this.panels = panels;
         this.loading = false;
+        console.log("Successfully loaded panels:", panels);
       },
       error: (error) => {
+        console.error("Error loading panels:", error);
         this.notificationService.showError('Failed to load panels');
         this.loading = false;
+        
+        // Optionally, use mock data while developing
+        this.panels = this.panelService.getMockPanels();
       }
     });
   }
   
   openCreatePanelDialog(): void {
     const dialogRef = this.dialog.open(CreatePanelDialogComponent, {
-      width: '600px'
+      width: '950px', // Back to a fixed width (not full screen)
+      panelClass: 'panel-dialog-container',
+      disableClose: true
     });
     
     dialogRef.afterClosed().subscribe(result => {
@@ -61,7 +68,9 @@ export class PanelListComponent implements OnInit {
   
   editPanel(panel: Panel): void {
     const dialogRef = this.dialog.open(CreatePanelDialogComponent, {
-      width: '600px',
+      width: '950px', // Back to a fixed width (not full screen)
+      panelClass: 'panel-dialog-container',
+      disableClose: true,
       data: { panel }
     });
     

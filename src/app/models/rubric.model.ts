@@ -1,29 +1,31 @@
-export interface Rubric {
-  id: number;
+export interface RubricCategory {
+  id?: number;
   name: string;
-  description: string;
-  isActive: boolean;
-  createdAt: string;
-  categories: RubricCategory[];
+  description?: string;
+  weight: number; // Weight as decimal (0.0-1.0)
+  maxScore: number;
 }
 
-export interface RubricCategory {
-  id: number;
+export interface Rubric {
+  id?: number;
   name: string;
   description: string;
-  weight: number;
-  maxScore: number;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  categories: RubricCategory[];
 }
 
 export interface CreateRubricDto {
   name: string;
   description: string;
-  categories: CreateRubricCategoryDto[];
+  categories: Omit<RubricCategory, 'id'>[];
 }
 
-export interface CreateRubricCategoryDto {
+export interface UpdateRubricDto {
+  id: number;
   name: string;
   description: string;
-  weight: number;
-  maxScore: number;
+  isActive?: boolean;
+  categories: RubricCategory[];
 }

@@ -23,6 +23,7 @@ export interface EvaluationEvent {
   type: EventType;
   rubricId?: number;
   rubricName?: string;
+  evaluationMethod?: 'simple' | 'rubric';
 }
 
 export interface CreateEventDto {

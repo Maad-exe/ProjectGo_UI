@@ -14,7 +14,7 @@ import { UserManagementService, UserDetails } from '../../services/user-manageme
 import { NotificationService } from '../../services/notifications.service';
 import { EditUserDialogComponent } from './edit-user-dialog/edit-user-dialog.component';
 import { Router } from '@angular/router';
-import { EvaluationEvent } from '../event.model';
+import { EvaluationEvent } from '../../models/event.model';
 
 @Component({
   selector: 'app-user-management',

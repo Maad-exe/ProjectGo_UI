@@ -49,6 +49,16 @@
           [groupName]="getApprovedGroupName()">
         </app-group-chat>
       </div>
+
+      <!-- Progress/Evaluations View -->
+      <div class="progress-view-container" *ngIf="currentView === 'progress'">
+        <app-progress></app-progress>
+      </div>
+
+      <!-- Progress View -->
+      <div class="progress-view" *ngIf="currentView === 'progress'">
+        <app-progress></app-progress>
+      </div>
     </main>
   </div>
 </div>

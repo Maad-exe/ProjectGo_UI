@@ -1,22 +1,27 @@
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { RubricService } from '../../../services/rubric.service';
 import { NotificationService } from '../../../services/notifications.service';
-import { Component, OnInit } from '@angular/core';
+import { Rubric } from '../../../models/rubric.model';
+import { CreateRubricDialogComponent } from '../create-rubric-dialog/create-rubric-dialog.component';
 
 @Component({
   selector: 'app-rubric-list',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule, MatDialogModule],
   templateUrl: './rubric-list.component.html',
   styleUrls: ['./rubric-list.component.scss']
 })
 export class RubricListComponent implements OnInit {
-  rubrics: any[] = [];
+  rubrics: Rubric[] = [];
   loading = true;
   
   constructor(
     private rubricService: RubricService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private dialog: MatDialog
   ) {}
   
   ngOnInit(): void {
@@ -35,5 +40,54 @@ export class RubricListComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  openCreateRubricDialog(): void {
+    const dialogRef = this.dialog.open(CreateRubricDialogComponent, {
+      width: '800px'
+    });
+    
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.loadRubrics();
+      }
+    });
+  }
+  
+  editRubric(rubric: Rubric): void {
+    const dialogRef = this.dialog.open(CreateRubricDialogComponent, {
+      width: '800px',
+      data: { rubric }
+    });
+    
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.loadRubrics();
+      }
+    });
+  }
+  
+  deleteRubric(rubric: Rubric): void {
+    if (confirm(`Are you sure you want to delete the rubric "${rubric.name}"?`)) {
+      this.rubricService.deleteRubric(rubric.id!).subscribe({
+        next: () => {
+          this.notificationService.showSuccess('Rubric deleted successfully');
+          this.loadRubrics();
+        },
+        error: () => {
+          this.notificationService.showError('Failed to delete rubric');
+        }
+      });
+    }
+  }
+
+  // Add this utility method to handle both decimal and percentage displays
+  formatWeight(weight: number): string {
+    // If weight is already in decimal form (0-1), convert to percentage
+    if (weight <= 1) {
+      return (weight * 100).toFixed(0);
+    }
+    // Otherwise assume it's already a percentage
+    return weight.toFixed(0);
   }
 }

@@ -1,4 +1,97 @@
 <div class="container-fluid">
-    <h1 class="h3 mb-4">Evaluations</h1>
-    <p>This feature will be implemented soon.</p>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+      <i class="fas fa-clipboard-check me-2"></i>
+      Evaluation Events
+    </h1>
+    <button class="btn btn-primary" (click)="openCreateEventDialog()">
+      <i class="fas fa-plus me-1"></i> Create Event
+    </button>
   </div>
+
+  <!-- Loading spinner -->
+  <div class="text-center my-5" *ngIf="loading">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Loading evaluation events...</p>
+  </div>
+
+  <!-- Empty state -->
+  <div class="card shadow-sm" *ngIf="!loading && events.length === 0">
+    <div class="card-body text-center py-5">
+      <i class="fas fa-calendar-alt fa-3x text-muted mb-3"></i>
+      <h4>No Evaluation Events Available</h4>
+      <p class="text-muted">Create your first evaluation event to get started</p>
+      <button class="btn btn-primary" (click)="openCreateEventDialog()">
+        <i class="fas fa-plus me-1"></i> Create Event
+      </button>
+    </div>
+  </div>
+
+  <!-- Events list -->
+  <div class="card shadow-sm" *ngIf="!loading && events.length > 0">
+    <div class="card-header bg-light">
+      <div class="row align-items-center">
+        <div class="col">
+          <h5 class="mb-0">All Evaluation Events</h5>
+        </div>
+        <div class="col-auto">
+          <div class="input-group">
+            <span class="input-group-text">
+              <i class="fas fa-search"></i>
+            </span>
+            <input type="text" class="form-control" placeholder="Search events..." [(ngModel)]="searchTerm">
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Date</th>
+            <th>Weight</th>
+            <th>Marks</th>
+            <th>Status</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let event of filteredEvents">
+            <td class="fw-medium">
+              <a [routerLink]="['/admin-dashboard/events', event.id]" class="text-decoration-none">
+                {{ event.name }}
+              </a>
+            </td>
+            <td>{{ getEventTypeString(event.type) }}</td>
+            <td>{{ event.date | date:'MMM d, yyyy' }}</td>
+            <td>{{ event.weight }}%</td>
+            <td>{{ event.totalMarks }} marks</td>
+            <td>
+              <span [class]="event.isActive ? 'badge bg-success' : 'badge bg-secondary'">
+                {{ event.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td class="text-center">
+              <div class="btn-group">
+                <button class="btn btn-sm btn-outline-primary" [routerLink]="['/admin-dashboard/events', event.id]">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" (click)="editEvent(event)">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" (click)="deleteEvent(event)">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

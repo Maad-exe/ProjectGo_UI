@@ -20,6 +20,7 @@ import { ApprovedGroupComponent } from './components/group-management/approved-g
 import { TeacherListComponent } from './components/teacher-list/teacher-list.component';
 import { GroupChatComponent } from '../group-chat/group-chat.component';
 import { FormsModule } from '@angular/forms';
+import { ProgressComponent } from './components/progress/progress.component';
 
 interface DashboardData {
   studentInfo: StudentInfo;
@@ -48,7 +49,8 @@ interface DashboardDataSources {
     CreateGroupComponent,
     GroupListComponent,
     TeacherListComponent,
-    GroupChatComponent
+    GroupChatComponent,
+    ProgressComponent  // Add this line
   ],
   templateUrl: './student-dashboard.component.html',
   styleUrls: ['./student-dashboard.component.scss'],
