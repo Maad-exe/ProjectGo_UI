@@ -1,146 +1,211 @@
 <div class="panel-dialog">
   <div class="modal-header">
-    <h4 class="modal-title">
-      <i class="fas fa-users-cog"></i>
-      {{ panelData.panel ? 'Edit' : 'Create' }} Evaluation Panel
-    </h4>
-    <button type="button" class="close-btn" (click)="dialogRef.close()">
+    <div class="header-content">
+      <h4 class="modal-title">
+        <i class="fas fa-users-cog"></i>
+        {{ panelData.panel ? 'Edit' : 'Create' }} Evaluation Panel
+      </h4>
+      <p class="header-subtitle">Select at least 3 teachers to form an evaluation panel</p>
+    </div>
+    <button type="button" class="close-btn" (click)="dialogRef.close()" aria-label="Close">
       <i class="fas fa-times"></i>
     </button>
   </div>
   
   <div class="modal-body">
-    <form [formGroup]="panelForm" (ngSubmit)="onSubmit()">
+    <form [formGroup]="panelForm">
       <div class="panel-container">
         <!-- Left column - Panel information -->
-        <div class="panel-info">
-          <div class="section-title">Panel Information</div>
-          
-          <div class="form-group">
-            <label for="name">Panel Name</label>
-            <input 
-              type="text" 
-              class="form-control" 
-              id="name" 
-              formControlName="name"
-              placeholder="Enter a descriptive name for this panel"
-              [class.is-invalid]="panelForm.get('name')?.invalid && panelForm.get('name')?.touched">
-            <div class="invalid-feedback" *ngIf="panelForm.get('name')?.invalid && panelForm.get('name')?.touched">
-              Panel name is required
-            </div>
-          </div>
-          
-          <div class="panel-help">
-            <div class="help-icon">
-              <i class="fas fa-info-circle"></i>
-            </div>
-            <div class="help-text">
-              <p>A panel must include at least <strong>3 teachers</strong> who will collaborate on evaluating student projects.</p>
-              <div class="selection-progress">
-                <div class="progress-bar" [style.width.%]="(selectedTeachersCount / 3) * 100"></div>
+        <div class="panel-sidebar">
+          <div class="panel-inputs">
+            <div class="form-group">
+              <label for="name" class="form-label">Panel Name</label>
+              <div class="input-group">
+                <span class="input-group-text">
+                  <i class="fas fa-tag"></i>
+                </span>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  id="name" 
+                  formControlName="name"
+                  placeholder="Enter a descriptive name for this panel"
+                  [class.is-invalid]="panelForm.get('name')?.invalid && panelForm.get('name')?.touched">
               </div>
-              <p class="selection-count" [class.error]="selectedTeachersCount < 3" [class.success]="selectedTeachersCount >= 3">
-                <i class="fas" [ngClass]="selectedTeachersCount < 3 ? 'fa-exclamation-triangle' : 'fa-check-circle'"></i>
-                <span>{{ selectedTeachersCount }} of minimum 3 teachers selected</span>
-              </p>
+              <div class="invalid-feedback d-block" *ngIf="panelForm.get('name')?.invalid && panelForm.get('name')?.touched">
+                Panel name is required
+              </div>
             </div>
           </div>
           
-          <div class="search-container">
-            <div class="search-bar">
-              <i class="fas fa-search search-icon"></i>
+          <div class="panel-progress mt-4">
+            <h6 class="progress-title">Selection Progress</h6>
+            <div class="progress" style="height: 8px;">
+              <div 
+                class="progress-bar" 
+                [style.width.%]="(selectedTeachersCount / 3) * 100"
+                [ngClass]="{
+                  'bg-danger': selectedTeachersCount < 2,
+                  'bg-warning': selectedTeachersCount === 2,
+                  'bg-success': selectedTeachersCount >= 3
+                }">
+              </div>
+            </div>
+            <div class="d-flex justify-content-between mt-2">
+              <span class="text-muted small">Minimum: 3</span>
+              <span class="badge" [ngClass]="selectedTeachersCount >= 3 ? 'bg-success' : 'bg-secondary'">
+                {{ selectedTeachersCount }} selected
+              </span>
+            </div>
+          </div>
+          
+          <div class="search-container mt-4">
+            <h6 class="search-title">Find Teachers</h6>
+            <div class="input-group">
+              <span class="input-group-text">
+                <i class="fas fa-search"></i>
+              </span>
               <input 
                 #searchInput
                 type="text"
-                class="search-input" 
-                placeholder="Search teachers..."
+                class="form-control" 
+                placeholder="Search by name, specialization..."
                 (input)="search($event)">
-              <button *ngIf="searchQuery" class="clear-button" (click)="clearSearch()">
+              <button *ngIf="searchQuery" class="btn btn-outline-secondary" type="button" (click)="clearSearch()">
                 <i class="fas fa-times"></i>
               </button>
             </div>
           </div>
           
-          <div class="selection-tips">
-            <h5>Teacher Status Guide</h5>
-            <div class="status-guide">
-              <div class="status-item">
-                <div class="status-badge badge-available"></div>
-                <span class="status-label">Available</span>
-                <span class="status-desc">Not assigned to any panel</span>
+          <div class="status-legend mt-4">
+            <h6 class="legend-title">Teacher Availability</h6>
+            <div class="legend-item">
+              <span class="status-indicator available"></span>
+              <div class="legend-info">
+                <span class="legend-label">Available</span>
+                <span class="legend-desc">Not assigned to any panel</span>
               </div>
-              <div class="status-item">
-                <div class="status-badge badge-active"></div>
-                <span class="status-label">Active</span>
-                <span class="status-desc">Assigned to 1-2 panels</span>
+            </div>
+            <div class="legend-item">
+              <span class="status-indicator active"></span>
+              <div class="legend-info">
+                <span class="legend-label">Active</span>
+                <span class="legend-desc">Assigned to 1-2 panels</span>
               </div>
-              <div class="status-item">
-                <div class="status-badge badge-busy"></div>
-                <span class="status-label">Busy</span>
-                <span class="status-desc">Assigned to 3+ panels</span>
+            </div>
+            <div class="legend-item">
+              <span class="status-indicator busy"></span>
+              <div class="legend-info">
+                <span class="legend-label">Busy</span>
+                <span class="legend-desc">Assigned to 3+ panels</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="selected-preview mt-4" *ngIf="selectedTeachersCount > 0">
+            <h6 class="preview-title">
+              Selected Teachers
+              <span class="badge bg-primary ms-2">{{ selectedTeachersCount }}</span>
+            </h6>
+            <div class="selected-teachers">
+              <div class="selected-teacher" *ngFor="let teacher of getSelectedTeachers()">
+                <div class="teacher-initial">{{ getInitials(teacher.fullName) }}</div>
+                <div class="teacher-name">{{ teacher.fullName }}</div>
+                <button class="remove-btn" (click)="toggleTeacherSelection(teacher.id)">
+                  <i class="fas fa-times"></i>
+                </button>
               </div>
             </div>
           </div>
         </div>
         
-        <!-- Right column - Teacher list -->
+        <!-- Right column - Teacher selection -->
         <div class="teacher-selection">
-          <div class="section-header">
-            <div class="section-title">
-              Select Panel Members
-            </div>
-            <div class="selection-badge" *ngIf="selectedTeachersCount > 0">
-              {{ selectedTeachersCount }}
+          <div class="teacher-list-header">
+            <h5 class="list-title">Select Panel Members</h5>
+            <div class="list-actions">
+              <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                  <i class="fas fa-sort"></i> Sort
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="sortDropdown">
+                  <li><a class="dropdown-item" href="#" (click)="$event.preventDefault(); sortTeachers('availability')">By Availability</a></li>
+                  <li><a class="dropdown-item" href="#" (click)="$event.preventDefault(); sortTeachers('name')">By Name</a></li>
+                  <li><a class="dropdown-item" href="#" (click)="$event.preventDefault(); sortTeachers('specialization')">By Specialization</a></li>
+                </ul>
+              </div>
             </div>
           </div>
           
-          <div class="teacher-list">
+          <div class="teacher-list-container">
+            <!-- Loading state -->
             <div class="teacher-list-loader" *ngIf="loading">
-              <div class="spinner"></div>
-              <p>Loading teachers...</p>
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <p class="text-muted mt-3">Loading teachers...</p>
             </div>
             
+            <!-- Empty search results -->
             <div class="empty-search" *ngIf="!loading && filteredTeachers.length === 0">
-              <i class="fas fa-search"></i>
-              <p>No teachers found matching "<strong>{{ searchQuery }}</strong>"</p>
-              <button class="reset-search" (click)="clearSearch()">
+              <div class="empty-icon">
+                <i class="fas fa-search"></i>
+              </div>
+              <h6>No matches found</h6>
+              <p class="text-muted">No teachers found matching "<strong>{{ searchQuery }}</strong>"</p>
+              <button class="btn btn-outline-primary btn-sm" (click)="clearSearch()">
+                <i class="fas fa-times me-1"></i>
                 Clear Search
               </button>
             </div>
             
-            <div class="teacher-grid" *ngIf="!loading && filteredTeachers.length > 0">
-              <div class="teacher-card" 
-                   *ngFor="let teacher of filteredTeachers"
-                   [class.selected]="isTeacherSelected(teacher.id)" 
-                   [class.teacher-busy]="teacher.workloadStatus === 'busy' && !isTeacherSelected(teacher.id)"
-                   (click)="toggleTeacherSelection(teacher.id)">
-                <div class="selection-mark" *ngIf="isTeacherSelected(teacher.id)">
-                  <i class="fas fa-check"></i>
-                </div>
-                <div class="teacher-header">
-                  <div class="teacher-avatar" [class.busy]="teacher.workloadStatus === 'busy'">
-                    <span>{{ getInitials(teacher.fullName) }}</span>
-                  </div>
-                  <div class="teacher-status">
-                    <span class="badge" [ngClass]="getWorkloadClass(teacher)">
-                      {{ getWorkloadText(teacher) }}
-                    </span>
-                  </div>
-                </div>
-                
-                <div class="teacher-content">
-                  <h3 class="teacher-name">{{ teacher.fullName }}</h3>
-                  <div class="teacher-specialty">{{ teacher.areaOfSpecialization || 'General' }}</div>
-                  
-                  <div class="teacher-detail">
-                    <i class="fas fa-chart-pie"></i>
-                    <span>{{ getWorkloadDetails(teacher) }}</span>
-                  </div>
-                  
-                  <div class="teacher-contact">
-                    <div class="contact-item">
-                      <i class="fas fa-envelope"></i>
-                      <span>{{ teacher.email }}</span>
+            <!-- Teacher list -->
+            <div class="teacher-list" *ngIf="!loading && filteredTeachers.length > 0">
+              <div class="row g-3">
+                <div class="col-md-6 col-lg-4 col-xl-3" *ngFor="let teacher of filteredTeachers">
+                  <div class="teacher-card" 
+                       [class.selected]="isTeacherSelected(teacher.id)" 
+                       [class.card-busy]="teacher.workloadStatus === 'busy' && !isTeacherSelected(teacher.id)"
+                       [class.card-available]="teacher.workloadStatus === 'available' && !isTeacherSelected(teacher.id)"
+                       [class.card-active]="teacher.workloadStatus === 'active' && !isTeacherSelected(teacher.id)"
+                       (click)="toggleTeacherSelection(teacher.id)">
+                    
+                    <div class="card-status" [class]="teacher.workloadStatus"></div>
+                    
+                    <div class="card-body">
+                      <div class="teacher-header">
+                        <div class="teacher-avatar" [class]="getWorkloadClass(teacher)">
+                          <span>{{ getInitials(teacher.fullName) }}</span>
+                          <div class="selection-indicator" *ngIf="isTeacherSelected(teacher.id)">
+                            <i class="fas fa-check"></i>
+                          </div>
+                        </div>
+                        <div class="teacher-info">
+                          <h6 class="teacher-name">{{ teacher.fullName }}</h6>
+                          <span class="badge status-badge" [class]="'badge-' + teacher.workloadStatus">
+                            {{ getWorkloadText(teacher) }}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div class="teacher-details">
+                        <div class="detail-item">
+                          <i class="fas fa-graduation-cap"></i>
+                          <span class="detail-text">{{ teacher.areaOfSpecialization || 'General' }}</span>
+                        </div>
+                        <div class="detail-item">
+                          <i class="fas fa-user-tie"></i>
+                          <span class="detail-text">{{ teacher.qualification || 'Not specified' }}</span>
+                        </div>
+                        <div class="detail-item">
+                          <i class="fas fa-tasks"></i>
+                          <span class="detail-text">{{ getWorkloadDetails(teacher) }}</span>
+                        </div>
+                        <div class="detail-item">
+                          <i class="fas fa-envelope"></i>
+                          <span class="detail-text text-truncate">{{ teacher.email }}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -148,7 +213,7 @@
             </div>
           </div>
           
-          <!-- Hidden form control -->
+          <!-- Hidden form control for validation -->
           <select multiple class="d-none" formControlName="teacherIds">
             <option *ngFor="let teacher of teachers" [value]="teacher.id"></option>
           </select>
@@ -158,17 +223,24 @@
   </div>
   
   <div class="modal-footer">
-    <button type="button" class="btn btn-cancel" (click)="dialogRef.close()">Cancel</button>
-    <button 
-      type="button" 
-      class="btn btn-submit"
-      [disabled]="panelForm.invalid || loading || !hasMinimumTeachers" 
-      (click)="onSubmit()">
-      <i class="fas" [ngClass]="{
-        'fa-check': !loading,
-        'fa-spinner fa-spin': loading
-      }"></i>
-      {{ loading ? 'Processing...' : (panelData.panel ? 'Update Panel' : 'Create Panel') }}
-    </button>
+    <div class="footer-info" *ngIf="selectedTeachersCount < 3">
+      <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+      Please select at least 3 teachers to create a panel
+    </div>
+    <div class="ms-auto">
+      <button type="button" class="btn btn-outline-secondary me-2" (click)="dialogRef.close()">Cancel</button>
+      <button 
+        type="button" 
+        class="btn btn-primary" 
+        [disabled]="panelForm.invalid || loading || !hasMinimumTeachers" 
+        (click)="onSubmit()">
+        <i class="fas" [ngClass]="{
+          'fa-save': panelData.panel && !loading,
+          'fa-plus': !panelData.panel && !loading,
+          'fa-spinner fa-spin': loading
+        }"></i>
+        <span class="ms-1">{{ loading ? 'Processing...' : (panelData.panel ? 'Update Panel' : 'Create Panel') }}</span>
+      </button>
+    </div>
   </div>
 </div>

@@ -50,7 +50,9 @@ export class PanelListComponent implements OnInit {
   
   openCreatePanelDialog(): void {
     const dialogRef = this.dialog.open(CreatePanelDialogComponent, {
-      width: '950px', // Back to a fixed width (not full screen)
+      width: 'calc(100% - 80px)', // Almost full screen width except for sidebar
+      maxWidth: '1600px', // Set a maximum width
+      height: '85vh', // Set a percentage of viewport height
       panelClass: 'panel-dialog-container',
       disableClose: true
     });
@@ -68,7 +70,9 @@ export class PanelListComponent implements OnInit {
   
   editPanel(panel: Panel): void {
     const dialogRef = this.dialog.open(CreatePanelDialogComponent, {
-      width: '950px', // Back to a fixed width (not full screen)
+      width: 'calc(100% - 80px)', // Almost full screen width except for sidebar
+      maxWidth: '1600px', // Set a maximum width
+      height: '85vh', // Set a percentage of viewport height
       panelClass: 'panel-dialog-container',
       disableClose: true,
       data: { panel }

@@ -307,4 +307,39 @@ export class CreatePanelDialogComponent implements OnInit, AfterViewInit {
   get panelData(): any {
     return this.data || {};
   }
+
+  // Get all selected teachers as objects (not just IDs)
+  getSelectedTeachers(): TeacherWithWorkload[] {
+    const selectedIds = this.panelForm.get('teacherIds')?.value || [];
+    return this.teachers.filter(teacher => selectedIds.includes(teacher.id));
+  }
+
+  // Sort teachers by different criteria
+  sortTeachers(criteria: 'availability' | 'name' | 'specialization'): void {
+    switch (criteria) {
+      case 'availability':
+        this.filteredTeachers = [...this.filteredTeachers].sort((a, b) => {
+          const statusOrder = {
+            'available': 0,
+            'active': 1,
+            'busy': 2
+          };
+          return statusOrder[a.workloadStatus] - statusOrder[b.workloadStatus];
+        });
+        break;
+        
+      case 'name':
+        this.filteredTeachers = [...this.filteredTeachers].sort((a, b) => 
+          a.fullName.localeCompare(b.fullName));
+        break;
+        
+      case 'specialization':
+        this.filteredTeachers = [...this.filteredTeachers].sort((a, b) => {
+          const specA = a.areaOfSpecialization || 'zzz'; // Put empty specializations at the end
+          const specB = b.areaOfSpecialization || 'zzz';
+          return specA.localeCompare(specB);
+        });
+        break;
+    }
+  }
 }

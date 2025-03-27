@@ -94,7 +94,9 @@ export class EventDetailsComponent implements OnInit {
 
   openCreatePanelDialog(): void {
     const dialogRef = this.dialog.open(CreatePanelDialogComponent, {
-      width: '950px', // Fixed width instead of full screen
+      width: 'calc(100% - 80px)', // Almost full screen width except for sidebar
+      maxWidth: '1600px', // Set a maximum width
+      height: '85vh', // Set a percentage of viewport height
       panelClass: 'panel-dialog-container',
       data: { eventId: this.eventId }
     });

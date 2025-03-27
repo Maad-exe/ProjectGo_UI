@@ -90,10 +90,14 @@ app-welcome-section {
 }
 
 /* Add this to your global styles */
-.panel-dialog-container .mat-mdc-dialog-container {
-  padding: 0;
-  overflow: hidden;
-  border-radius: 12px;
+.panel-dialog-container {
+  .mat-mdc-dialog-container {
+    padding: 0 !important;
+    overflow: hidden !important;
+    border-radius: 10px !important;
+  }
+  
+  .cdk-overlay-pane {
+    max-width: 95vw !important; // Allow the dialog to be very wide
+  }
 }
-
-// Remove any full-screen related styles that might have been added
