@@ -1,5 +1,5 @@
 <div class="rubric-dialog">
-  <div class="modal-header d-flex align-items-center border-bottom mb-3">
+  <div class="modal-header d-flex align-items-center border-bottom">
     <div class="d-flex align-items-center">
       <i class="fas fa-clipboard-list text-primary me-2 fs-4"></i>
       <h5 class="modal-title mb-0">{{ isEditing ? 'Edit' : 'Create' }} Evaluation Rubric</h5>
@@ -9,67 +9,106 @@
   
   <div class="modal-body">
     <form [formGroup]="rubricForm" (ngSubmit)="onSubmit()">
-      <!-- Rubric Basic Information -->
-      <div class="card shadow-sm mb-4">
-        <div class="card-header bg-light">
-          <h6 class="mb-0 fw-bold">Basic Information</h6>
-        </div>
-        <div class="card-body">
-          <div class="mb-3">
-            <label for="name" class="form-label fw-medium">Rubric Name <span class="text-danger">*</span></label>
-            <div class="input-group">
-              <span class="input-group-text bg-light"><i class="fas fa-tag"></i></span>
-              <input 
-                type="text" 
-                class="form-control" 
-                id="name" 
-                formControlName="name" 
-                placeholder="Enter a descriptive name for this rubric"
-                [ngClass]="{'is-invalid': rubricForm.get('name')?.invalid && rubricForm.get('name')?.touched}"
-              >
+      <div class="rubric-content-layout">
+        <!-- Left Column - Fixed sidebar with basic info and weight calculation -->
+        <div class="rubric-left-column">
+          <!-- Rubric Basic Information -->
+          <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+              <h6 class="mb-0 fw-bold">Basic Information</h6>
             </div>
-            <div class="invalid-feedback d-block text-danger small" *ngIf="rubricForm.get('name')?.invalid && rubricForm.get('name')?.touched">
-              <span *ngIf="rubricForm.get('name')?.errors?.['required']"><i class="fas fa-exclamation-circle me-1"></i>Rubric name is required</span>
-              <span *ngIf="rubricForm.get('name')?.errors?.['minlength']"><i class="fas fa-exclamation-circle me-1"></i>Name must be at least 3 characters</span>
+            <div class="card-body">
+              <div class="mb-3">
+                <label for="name" class="form-label fw-medium">Rubric Name <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light"><i class="fas fa-tag"></i></span>
+                  <input 
+                    type="text" 
+                    class="form-control" 
+                    id="name" 
+                    formControlName="name" 
+                    placeholder="Enter a descriptive name for this rubric"
+                    [ngClass]="{'is-invalid': rubricForm.get('name')?.invalid && rubricForm.get('name')?.touched}"
+                  >
+                </div>
+                <div class="invalid-feedback d-block text-danger small" *ngIf="rubricForm.get('name')?.invalid && rubricForm.get('name')?.touched">
+                  <span *ngIf="rubricForm.get('name')?.errors?.['required']"><i class="fas fa-exclamation-circle me-1"></i>Rubric name is required</span>
+                  <span *ngIf="rubricForm.get('name')?.errors?.['minlength']"><i class="fas fa-exclamation-circle me-1"></i>Name must be at least 3 characters</span>
+                </div>
+              </div>
+              
+              <div class="mb-3">
+                <label for="description" class="form-label fw-medium">Description <span class="text-danger">*</span></label>
+                <textarea 
+                  class="form-control" 
+                  id="description" 
+                  formControlName="description" 
+                  rows="3" 
+                  placeholder="Explain what this rubric is used for"
+                  [ngClass]="{'is-invalid': rubricForm.get('description')?.invalid && rubricForm.get('description')?.touched}"
+                ></textarea>
+                <div class="invalid-feedback d-block text-danger small" *ngIf="rubricForm.get('description')?.invalid && rubricForm.get('description')?.touched">
+                  <span *ngIf="rubricForm.get('description')?.errors?.['required']"><i class="fas fa-exclamation-circle me-1"></i>Description is required</span>
+                  <span *ngIf="rubricForm.get('description')?.errors?.['minlength']"><i class="fas fa-exclamation-circle me-1"></i>Description must be at least 10 characters</span>
+                </div>
+              </div>
             </div>
           </div>
           
-          <div class="mb-3">
-            <label for="description" class="form-label fw-medium">Description <span class="text-danger">*</span></label>
-            <textarea 
-              class="form-control" 
-              id="description" 
-              formControlName="description" 
-              rows="3" 
-              placeholder="Explain what this rubric is used for"
-              [ngClass]="{'is-invalid': rubricForm.get('description')?.invalid && rubricForm.get('description')?.touched}"
-            ></textarea>
-            <div class="invalid-feedback d-block text-danger small" *ngIf="rubricForm.get('description')?.invalid && rubricForm.get('description')?.touched">
-              <span *ngIf="rubricForm.get('description')?.errors?.['required']"><i class="fas fa-exclamation-circle me-1"></i>Description is required</span>
-              <span *ngIf="rubricForm.get('description')?.errors?.['minlength']"><i class="fas fa-exclamation-circle me-1"></i>Description must be at least 10 characters</span>
+          <!-- Weight Calculation -->
+          <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+              <h6 class="mb-0 fw-bold">Weight Calculation</h6>
+            </div>
+            <div class="card-body">
+              <!-- Weight sum indicator -->
+              <div class="d-flex align-items-center p-3 rounded mb-3" [ngClass]="weightSumError ? 'bg-danger-subtle' : 'bg-success-subtle'">
+                <i class="fas fa-2x me-3" [ngClass]="weightSumError ? 'fa-exclamation-triangle text-danger' : 'fa-check-circle text-success'"></i>
+                <div class="d-flex flex-column">
+                  <span class="fw-bold" [ngClass]="weightSumError ? 'text-danger' : 'text-success'">Total weight: {{ weightSum }}%</span>
+                  <small [ngClass]="weightSumError ? 'text-danger' : 'text-success'">Category weights must sum to exactly 100%</small>
+                </div>
+              </div>
+              
+              <!-- Category summary -->
+              <div class="category-summary">
+                <h6 class="mb-2">Category Summary</h6>
+                <div class="alert alert-warning d-flex align-items-center" *ngIf="categories.length === 0">
+                  <i class="fas fa-exclamation-circle me-2"></i>
+                  You must add at least one evaluation category
+                </div>
+                
+                <ul class="list-group list-group-flush" *ngIf="categories.length > 0">
+                  <li class="list-group-item d-flex justify-content-between align-items-center py-2" 
+                      *ngFor="let category of categories.controls; let i = index">
+                    <span class="text-truncate" style="max-width: 70%;">
+                      {{ category.get('name')?.value || 'Untitled Category' }}
+                    </span>
+                    <span class="badge" [ngClass]="category.get('weight')?.value == 0 ? 'bg-danger' : 'bg-primary'">
+                      {{ category.get('weight')?.value || 0 }}%
+                    </span>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-      
-      <!-- Evaluation Categories -->
-      <div class="card shadow-sm mb-3">
-        <div class="card-header bg-light d-flex justify-content-between align-items-center">
-          <h6 class="mb-0 fw-bold">Evaluation Categories</h6>
-          <button type="button" class="btn btn-sm btn-outline-primary d-flex align-items-center" (click)="addCategory()">
-            <i class="fas fa-plus me-1"></i> Add Category
-          </button>
+          
+          <!-- Quick Actions -->
+          <div class="card shadow-sm mb-4">
+            <div class="card-body">
+              <button 
+                type="button" 
+                class="btn btn-outline-primary w-100 mb-2" 
+                (click)="addCategory()">
+                <i class="fas fa-plus me-2"></i> Add New Category
+              </button>
+            </div>
+          </div>
         </div>
         
-        <div class="card-body">
-          <!-- Weight sum indicator -->
-          <div class="d-flex align-items-center mb-3 p-2 rounded" [ngClass]="weightSumError ? 'bg-danger-subtle' : 'bg-success-subtle'">
-            <i class="fas fa-2x me-3" [ngClass]="weightSumError ? 'fa-exclamation-triangle text-danger' : 'fa-check-circle text-success'"></i>
-            <div class="d-flex flex-column">
-              <span class="fw-bold" [ngClass]="weightSumError ? 'text-danger' : 'text-success'">Total weight: {{ weightSum }}%</span>
-              <small [ngClass]="weightSumError ? 'text-danger' : 'text-success'">Category weights must sum to exactly 100%</small>
-            </div>
-          </div>
+        <!-- Right Column - Scrollable content with category cards -->
+        <div class="rubric-right-column">
+          <h5 class="mb-3">Evaluation Categories</h5>
           
           <!-- No categories warning -->
           <div class="alert alert-warning d-flex align-items-center" *ngIf="categories.length === 0">
@@ -79,7 +118,7 @@
           
           <!-- Categories form array -->
           <div formArrayName="categories" class="mb-3">
-            <div *ngFor="let category of categories.controls; let i = index" class="card mb-3 category-card border" [formGroupName]="i">
+            <div *ngFor="let category of categories.controls; let i = index" class="card mb-4 category-card border" [formGroupName]="i">
               <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
                 <div class="d-flex align-items-center">
                   <span class="badge rounded-pill bg-primary me-2">{{ i+1 }}</span>
@@ -178,17 +217,6 @@
                 </div>
               </div>
             </div>
-          </div>
-          
-          <div class="d-flex justify-content-center">
-            <button 
-              type="button" 
-              class="btn btn-outline-primary d-flex align-items-center" 
-              (click)="addCategory()"
-              *ngIf="categories.length > 0"
-            >
-              <i class="fas fa-plus me-2"></i> Add Another Category
-            </button>
           </div>
         </div>
       </div>
