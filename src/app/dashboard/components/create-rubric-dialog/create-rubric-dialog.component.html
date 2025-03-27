@@ -1,186 +1,220 @@
-<div class="container">
-  <div class="modal-header bg-light">
-    <h5 class="modal-title">{{ isEditing ? 'Edit' : 'Create' }} Evaluation Rubric</h5>
-    <button type="button" class="btn-close" (click)="dialogRef.close()" aria-label="Close"></button>
+<div class="rubric-dialog">
+  <div class="modal-header d-flex align-items-center border-bottom mb-3">
+    <div class="d-flex align-items-center">
+      <i class="fas fa-clipboard-list text-primary me-2 fs-4"></i>
+      <h5 class="modal-title mb-0">{{ isEditing ? 'Edit' : 'Create' }} Evaluation Rubric</h5>
+    </div>
+    <button type="button" class="btn-close ms-auto" (click)="dialogRef.close()" aria-label="Close"></button>
   </div>
   
   <div class="modal-body">
     <form [formGroup]="rubricForm" (ngSubmit)="onSubmit()">
       <!-- Rubric Basic Information -->
-      <div class="mb-4">
-        <h6 class="mb-3 border-bottom pb-2">Basic Information</h6>
-        
-        <div class="mb-3">
-          <label for="name" class="form-label">Rubric Name <span class="text-danger">*</span></label>
-          <div class="input-group">
-            <span class="input-group-text"><i class="fas fa-clipboard-list"></i></span>
-            <input 
-              type="text" 
-              class="form-control" 
-              id="name" 
-              formControlName="name" 
-              placeholder="Enter a descriptive name for this rubric"
-              [ngClass]="{'is-invalid': rubricForm.get('name')?.invalid && rubricForm.get('name')?.touched}"
-            >
-          </div>
-          <div class="invalid-feedback d-block" *ngIf="rubricForm.get('name')?.invalid && rubricForm.get('name')?.touched">
-            <span *ngIf="rubricForm.get('name')?.errors?.['required']">Rubric name is required</span>
-            <span *ngIf="rubricForm.get('name')?.errors?.['minlength']">Name must be at least 3 characters</span>
-          </div>
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+          <h6 class="mb-0 fw-bold">Basic Information</h6>
         </div>
-        
-        <div class="mb-3">
-          <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
-          <textarea 
-            class="form-control" 
-            id="description" 
-            formControlName="description" 
-            rows="3" 
-            placeholder="Explain what this rubric is used for"
-            [ngClass]="{'is-invalid': rubricForm.get('description')?.invalid && rubricForm.get('description')?.touched}"
-          ></textarea>
-          <div class="invalid-feedback d-block" *ngIf="rubricForm.get('description')?.invalid && rubricForm.get('description')?.touched">
-            <span *ngIf="rubricForm.get('description')?.errors?.['required']">Description is required</span>
-            <span *ngIf="rubricForm.get('description')?.errors?.['minlength']">Description must be at least 10 characters</span>
+        <div class="card-body">
+          <div class="mb-3">
+            <label for="name" class="form-label fw-medium">Rubric Name <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text bg-light"><i class="fas fa-tag"></i></span>
+              <input 
+                type="text" 
+                class="form-control" 
+                id="name" 
+                formControlName="name" 
+                placeholder="Enter a descriptive name for this rubric"
+                [ngClass]="{'is-invalid': rubricForm.get('name')?.invalid && rubricForm.get('name')?.touched}"
+              >
+            </div>
+            <div class="invalid-feedback d-block text-danger small" *ngIf="rubricForm.get('name')?.invalid && rubricForm.get('name')?.touched">
+              <span *ngIf="rubricForm.get('name')?.errors?.['required']"><i class="fas fa-exclamation-circle me-1"></i>Rubric name is required</span>
+              <span *ngIf="rubricForm.get('name')?.errors?.['minlength']"><i class="fas fa-exclamation-circle me-1"></i>Name must be at least 3 characters</span>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="description" class="form-label fw-medium">Description <span class="text-danger">*</span></label>
+            <textarea 
+              class="form-control" 
+              id="description" 
+              formControlName="description" 
+              rows="3" 
+              placeholder="Explain what this rubric is used for"
+              [ngClass]="{'is-invalid': rubricForm.get('description')?.invalid && rubricForm.get('description')?.touched}"
+            ></textarea>
+            <div class="invalid-feedback d-block text-danger small" *ngIf="rubricForm.get('description')?.invalid && rubricForm.get('description')?.touched">
+              <span *ngIf="rubricForm.get('description')?.errors?.['required']"><i class="fas fa-exclamation-circle me-1"></i>Description is required</span>
+              <span *ngIf="rubricForm.get('description')?.errors?.['minlength']"><i class="fas fa-exclamation-circle me-1"></i>Description must be at least 10 characters</span>
+            </div>
           </div>
         </div>
       </div>
       
       <!-- Evaluation Categories -->
-      <div class="mb-3">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h6 class="mb-0 border-bottom pb-2">Evaluation Categories</h6>
-          <button type="button" class="btn btn-sm btn-outline-primary" (click)="addCategory()">
+      <div class="card shadow-sm mb-3">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+          <h6 class="mb-0 fw-bold">Evaluation Categories</h6>
+          <button type="button" class="btn btn-sm btn-outline-primary d-flex align-items-center" (click)="addCategory()">
             <i class="fas fa-plus me-1"></i> Add Category
           </button>
         </div>
         
-        <!-- Weight sum indicator -->
-        <div class="alert" [ngClass]="weightSumError ? 'alert-danger' : 'alert-success'" role="alert">
-          <i class="fas" [ngClass]="weightSumError ? 'fa-exclamation-triangle' : 'fa-check-circle'"></i>
-          <span class="ms-2">Total weight: {{ weightSum }}% (must equal 100%)</span>
-        </div>
-        
-        <!-- No categories warning -->
-        <div class="alert alert-warning" *ngIf="categories.length === 0">
-          <i class="fas fa-exclamation-circle me-2"></i>
-          You must add at least one evaluation category
-        </div>
-        
-        <!-- Categories form array -->
-        <div formArrayName="categories" class="mb-3">
-          <div *ngFor="let category of categories.controls; let i = index" class="card mb-3">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-              <h6 class="mb-0">Category {{ i+1 }}</h6>
-              <button 
-                type="button" 
-                class="btn btn-sm btn-outline-danger" 
-                (click)="removeCategory(i)"
-                *ngIf="categories.length > 1"
-              >
-                <i class="fas fa-trash"></i>
-              </button>
+        <div class="card-body">
+          <!-- Weight sum indicator -->
+          <div class="d-flex align-items-center mb-3 p-2 rounded" [ngClass]="weightSumError ? 'bg-danger-subtle' : 'bg-success-subtle'">
+            <i class="fas fa-2x me-3" [ngClass]="weightSumError ? 'fa-exclamation-triangle text-danger' : 'fa-check-circle text-success'"></i>
+            <div class="d-flex flex-column">
+              <span class="fw-bold" [ngClass]="weightSumError ? 'text-danger' : 'text-success'">Total weight: {{ weightSum }}%</span>
+              <small [ngClass]="weightSumError ? 'text-danger' : 'text-success'">Category weights must sum to exactly 100%</small>
             </div>
-            
-            <div class="card-body" [formGroupName]="i">
-              <div class="mb-3">
-                <label class="form-label">Category Name <span class="text-danger">*</span></label>
-                <input 
-                  type="text" 
-                  class="form-control" 
-                  formControlName="name" 
-                  placeholder="e.g., Technical Implementation, Presentation"
-                  [ngClass]="{'is-invalid': category.get('name')?.invalid && category.get('name')?.touched}"
-                >
-                <div class="invalid-feedback d-block" *ngIf="category.get('name')?.invalid && category.get('name')?.touched">
-                  <span *ngIf="category.get('name')?.errors?.['required']">Category name is required</span>
+          </div>
+          
+          <!-- No categories warning -->
+          <div class="alert alert-warning d-flex align-items-center" *ngIf="categories.length === 0">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            You must add at least one evaluation category
+          </div>
+          
+          <!-- Categories form array -->
+          <div formArrayName="categories" class="mb-3">
+            <div *ngFor="let category of categories.controls; let i = index" class="card mb-3 category-card border" [formGroupName]="i">
+              <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
+                <div class="d-flex align-items-center">
+                  <span class="badge rounded-pill bg-primary me-2">{{ i+1 }}</span>
+                  <h6 class="mb-0 fw-medium">{{ category.get('name')?.value || 'New Category' }}</h6>
                 </div>
-              </div>
-              
-              <div class="mb-3">
-                <label class="form-label">Description</label>
-                <input 
-                  type="text" 
-                  class="form-control" 
-                  formControlName="description" 
-                  placeholder="Optional brief description of this category"
+                <button 
+                  type="button" 
+                  class="btn btn-sm btn-outline-danger" 
+                  (click)="removeCategory(i)"
+                  *ngIf="categories.length > 1"
+                  data-bs-toggle="tooltip"
+                  data-bs-placement="top"
+                  title="Remove category"
                 >
+                  <i class="fas fa-trash"></i>
+                </button>
               </div>
               
-              <div class="row">
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Weight (%) <span class="text-danger">*</span></label>
-                  <input 
-                    type="number" 
-                    class="form-control" 
-                    formControlName="weight" 
-                    placeholder="Category weight percentage (1-100)"
-                    min="1" 
-                    max="100"
-                    [ngClass]="{'is-invalid': category.get('weight')?.invalid && category.get('weight')?.touched}"
-                  >
-                  <small class="form-text text-muted">
-                    <i class="fas fa-info-circle me-1"></i>
-                    All category weights must sum to exactly 100%
-                  </small>
-                  <div class="invalid-feedback d-block" *ngIf="category.get('weight')?.invalid && category.get('weight')?.touched">
-                    <span *ngIf="category.get('weight')?.errors?.['required']">Weight is required</span>
-                    <span *ngIf="category.get('weight')?.errors?.['min'] || category.get('weight')?.errors?.['max']">
-                      Weight must be between 1 and 100
-                    </span>
+              <div class="card-body">
+                <div class="mb-3">
+                  <label class="form-label fw-medium">Category Name <span class="text-danger">*</span></label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-light"><i class="fas fa-file-alt"></i></span>
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      formControlName="name" 
+                      placeholder="e.g., Technical Implementation, Presentation"
+                      [ngClass]="{'is-invalid': category.get('name')?.invalid && category.get('name')?.touched}"
+                    >
+                  </div>
+                  <div class="invalid-feedback d-block text-danger small" *ngIf="category.get('name')?.invalid && category.get('name')?.touched">
+                    <span *ngIf="category.get('name')?.errors?.['required']"><i class="fas fa-exclamation-circle me-1"></i>Category name is required</span>
                   </div>
                 </div>
                 
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Maximum Score <span class="text-danger">*</span></label>
-                  <input 
-                    type="number" 
-                    class="form-control" 
-                    formControlName="maxScore" 
-                    placeholder="Max points for this category (1-100)"
-                    min="1" 
-                    max="100"
-                    [ngClass]="{'is-invalid': category.get('maxScore')?.invalid && category.get('maxScore')?.touched}"
-                  >
-                  <small class="form-text text-muted">
-                    <i class="fas fa-info-circle me-1"></i>
-                    Maximum possible points for this category
-                  </small>
-                  <div class="invalid-feedback d-block" *ngIf="category.get('maxScore')?.invalid && category.get('maxScore')?.touched">
-                    <span *ngIf="category.get('maxScore')?.errors?.['required']">Max score is required</span>
-                    <span *ngIf="category.get('maxScore')?.errors?.['min'] || category.get('maxScore')?.errors?.['max']">
-                      Max score must be between 1 and 100
-                    </span>
+                <div class="mb-3">
+                  <label class="form-label fw-medium">Description</label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-light"><i class="fas fa-align-left"></i></span>
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      formControlName="description" 
+                      placeholder="Optional brief description of this category"
+                    >
+                  </div>
+                </div>
+                
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label fw-medium">Weight (%) <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                      <span class="input-group-text bg-light"><i class="fas fa-balance-scale"></i></span>
+                      <input 
+                        type="number" 
+                        class="form-control" 
+                        formControlName="weight" 
+                        placeholder="Category weight percentage (1-100)"
+                        min="1" 
+                        max="100"
+                        [ngClass]="{'is-invalid': category.get('weight')?.invalid && category.get('weight')?.touched}"
+                      >
+                      <span class="input-group-text">%</span>
+                    </div>
+                    <div class="invalid-feedback d-block text-danger small" *ngIf="category.get('weight')?.invalid && category.get('weight')?.touched">
+                      <span *ngIf="category.get('weight')?.errors?.['required']"><i class="fas fa-exclamation-circle me-1"></i>Weight is required</span>
+                      <span *ngIf="category.get('weight')?.errors?.['min'] || category.get('weight')?.errors?.['max']">
+                        <i class="fas fa-exclamation-circle me-1"></i>Weight must be between 1 and 100
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label fw-medium">Maximum Score <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                      <span class="input-group-text bg-light"><i class="fas fa-star"></i></span>
+                      <input 
+                        type="number" 
+                        class="form-control" 
+                        formControlName="maxScore" 
+                        placeholder="Max points for this category (1-100)"
+                        min="1" 
+                        max="100"
+                        [ngClass]="{'is-invalid': category.get('maxScore')?.invalid && category.get('maxScore')?.touched}"
+                      >
+                      <span class="input-group-text">pts</span>
+                    </div>
+                    <div class="invalid-feedback d-block text-danger small" *ngIf="category.get('maxScore')?.invalid && category.get('maxScore')?.touched">
+                      <span *ngIf="category.get('maxScore')?.errors?.['required']"><i class="fas fa-exclamation-circle me-1"></i>Max score is required</span>
+                      <span *ngIf="category.get('maxScore')?.errors?.['min'] || category.get('maxScore')?.errors?.['max']">
+                        <i class="fas fa-exclamation-circle me-1"></i>Max score must be between 1 and 100
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
+          
+          <div class="d-flex justify-content-center">
+            <button 
+              type="button" 
+              class="btn btn-outline-primary d-flex align-items-center" 
+              (click)="addCategory()"
+              *ngIf="categories.length > 0"
+            >
+              <i class="fas fa-plus me-2"></i> Add Another Category
+            </button>
           </div>
         </div>
       </div>
     </form>
   </div>
   
-  <div class="modal-footer">
+  <div class="modal-footer border-top pt-3">
     <div class="d-flex w-100 justify-content-between align-items-center">
       <div>
-        <small class="text-muted" *ngIf="weightSumError">
-          <i class="fas fa-exclamation-triangle text-danger me-1"></i>
+        <span class="text-danger" *ngIf="weightSumError">
+          <i class="fas fa-exclamation-triangle me-1"></i>
           Category weights must sum to exactly 100%
-        </small>
+        </span>
       </div>
       <div>
-        <button type="button" class="btn btn-secondary me-2" (click)="dialogRef.close()">
+        <button type="button" class="btn btn-outline-secondary me-2 d-flex align-items-center" (click)="dialogRef.close()">
           <i class="fas fa-times me-1"></i> Cancel
         </button>
         <button 
           type="button" 
-          class="btn btn-primary" 
+          class="btn btn-primary d-flex align-items-center" 
           [disabled]="rubricForm.invalid || weightSumError || loading"
           (click)="onSubmit()"
         >
-          <i class="fas" [ngClass]="loading ? 'fa-spinner fa-spin' : (isEditing ? 'fa-save' : 'fa-plus')"></i>
-          <span class="ms-1">{{ loading ? 'Processing...' : (isEditing ? 'Update' : 'Create') }}</span>
+          <i class="fas me-2" [ngClass]="loading ? 'fa-spinner fa-spin' : (isEditing ? 'fa-save' : 'fa-plus')"></i>
+          <span>{{ loading ? 'Processing...' : (isEditing ? 'Update' : 'Create') }} Rubric</span>
         </button>
       </div>
     </div>
