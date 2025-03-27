@@ -1,53 +1,98 @@
 .rubric-dialog {
-  width: calc(100% - 80px) !important; /* Full screen width minus sidebar width with !important to override Material defaults */
-  max-width: 1200px !important; /* Increased max-width with !important to override Material defaults */
+  width: calc(100% - 50px) !important;
+  max-width: 1400px !important;
   margin: 0 auto;
   box-sizing: border-box;
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
-  height: 85vh; /* Control the overall height */
+  height: 90vh;
+}
+
+// Two-column layout with flex properties for better fitting
+.rubric-content-layout {
+  display: flex;
+  flex: 1;
+  width: 100%;
+  height: calc(100% - 120px); // Account for header and footer
+  overflow: hidden;
+}
+
+// Left column - more compact with better fit
+.rubric-left-column {
+  width: 33%;
+  padding-right: 16px;
+  border-right: 1px solid #e9ecef;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
   
-  .section-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-    color: #333;
+  // Make content more compact
+  .card {
+    margin-bottom: 12px;
+  }
+  
+  .card-body {
+    padding: 1rem;
+  }
+  
+  .form-group {
+    margin-bottom: 0.75rem;
+  }
+  
+  // Smaller text areas to save space
+  textarea.form-control {
+    min-height: 60px;
+  }
+  
+  // Category summary with fixed height
+  .category-summary {
+    ul {
+      max-height: 200px;
+      margin-bottom: 0.5rem;
+    }
+    
+    .list-group-item {
+      padding: 0.5rem 0;
+    }
   }
 }
 
-// Two-column layout
-.rubric-content-layout {
-  display: flex;
-  height: 100%;
-  width: 100%;
-}
-
-.rubric-left-column {
-  width: 33%; /* Takes 1/3 of the dialog width */
-  padding-right: 20px;
-  border-right: 1px solid #e9ecef;
-  overflow-y: auto;
-  position: sticky;
-  top: 0;
-}
-
+// Right column - more compact
 .rubric-right-column {
-  width: 67%; /* Takes 2/3 of the dialog width */
-  padding-left: 20px;
+  width: 67%;
+  padding-left: 16px;
   overflow-y: auto;
-  max-height: 65vh;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative; // For the fixed position button
+  
+  h5 {
+    margin-bottom: 1rem;
+  }
+  
+  // Make category cards more compact
+  .category-card {
+    margin-bottom: 1rem;
+    
+    .card-body {
+      padding: 1rem;
+    }
+    
+    .mb-3 {
+      margin-bottom: 0.75rem !important;
+    }
+  }
 }
 
-// Override Material Dialog styles
-::ng-deep .mat-mdc-dialog-container, ::ng-deep .mat-dialog-container {
-  padding: 0 !important;
-  overflow: hidden !important;
-}
-
-::ng-deep .cdk-overlay-pane {
-  max-width: calc(100% - 80px) !important;
-  width: 1200px !important;
+// Add New Category button in top right
+.add-category-fixed {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 100;
 }
 
 // Modal components
@@ -55,14 +100,18 @@
   border-bottom: 1px solid #e9ecef;
   padding: 1rem;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
 }
 
 .modal-title {
   font-weight: 600;
+  font-size: 1.25rem;
+  margin: 0;
 }
 
 .modal-body {
-  flex-grow: 1;
+  flex: 1 1 auto;
   overflow-y: hidden;
   padding: 1rem;
   display: flex;
@@ -75,23 +124,35 @@
   flex-shrink: 0;
 }
 
-// Form controls
+// Equal size buttons in footer
+.footer-buttons {
+  display: flex;
+  align-items: center;
+  
+  .btn {
+    min-width: 120px;
+    height: 42px; // Consistent height
+  }
+}
+
+// Form controls - consistent sizing but more compact
 .form-label {
   font-weight: 500;
   margin-bottom: 0.3rem;
+  font-size: 0.9rem;
 }
 
-.form-control.is-invalid {
-  border-color: #dc3545;
-  background-image: none;
+.form-control, .input-group {
+  min-height: 38px; // Slightly smaller
+  font-size: 0.9rem;
 }
 
 .invalid-feedback {
-  color: #dc3545;
   font-size: 0.8rem;
+  margin-top: 0.2rem;
 }
 
-// Card styling for categories
+// Card styling - more compact
 .card {
   border-radius: 0.25rem;
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
@@ -101,6 +162,152 @@
     padding: 0.75rem 1rem;
     background-color: rgba(0, 0, 0, 0.03);
     border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+  }
+}
+
+.category-card {
+  border-left: 3px solid #3b82f6;
+  transition: all 0.2s ease-in-out;
+}
+
+// Alert styling - more compact
+.alert {
+  padding: 0.75rem 1rem;
+  border-radius: 0.25rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+}
+
+// Weight sum indicator - more compact
+.weight-indicator {
+  padding: 0.75rem !important;
+  margin-bottom: 0.75rem !important;
+}
+
+// Button styling - consistent sizing
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.btn-sm {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.85rem;
+  height: 32px;
+}
+
+.btn i {
+  margin-right: 0.4rem;
+  font-size: 0.9em;
+}
+
+// Animate category addition and removal
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Override Material Dialog styles for larger dialog
+::ng-deep .mat-mdc-dialog-container, ::ng-deep .mat-dialog-container {
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+::ng-deep .cdk-overlay-pane {
+  max-width: calc(100% - 50px) !important;
+  width: 1400px !important;
+}
+
+// Modal components
+.modal-header {
+  border-bottom: 1px solid #e9ecef;
+  padding: 1.25rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.modal-title {
+  font-weight: 600;
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+.modal-body {
+  flex: 1 1 auto;
+  overflow-y: hidden;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-footer {
+  border-top: 1px solid #e9ecef;
+  padding: 1.25rem;
+  flex-shrink: 0;
+}
+
+// Form controls - consistent sizing
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.form-control, .input-group {
+  min-height: 42px;
+  font-size: 0.95rem;
+}
+
+textarea.form-control {
+  min-height: 80px;
+}
+
+.form-control.is-invalid {
+  border-color: #dc3545;
+  background-image: none;
+}
+
+.invalid-feedback {
+  color: #dc3545;
+  font-size: 0.85rem;
+  margin-top: 0.4rem;
+}
+
+// Card styling for categories - consistent sizing
+.card {
+  border-radius: 0.25rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  transition: all 0.2s ease;
+  margin-bottom: 1.25rem;
+  
+  .card-header {
+    padding: 0.875rem 1rem;
+    background-color: rgba(0, 0, 0, 0.03);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+  }
+  
+  .card-body {
+    padding: 1.25rem;
+  }
+  
+  .card-footer {
+    padding: 0.875rem 1rem;
+    background-color: rgba(0, 0, 0, 0.02);
   }
 }
 
@@ -116,9 +323,11 @@
 
 // Alert styling
 .alert {
-  padding: 0.75rem 1.25rem;
+  padding: 0.875rem 1.25rem;
   border-radius: 0.25rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
 }
 
 // Weight sum indicator
@@ -137,18 +346,29 @@
 // Helper text
 .form-text {
   font-size: 0.875rem;
+  margin-top: 0.4rem;
 }
 
-// Button styling
+// Button styling - consistent sizing
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
+  padding: 0.5rem 1.25rem;
+  font-weight: 500;
+  height: 42px;
+}
+
+.btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  height: 34px;
 }
 
 .btn i {
-  margin-right: 0.25rem;
+  margin-right: 0.5rem;
+  font-size: 0.9em;
 }
 
 .btn-primary {
@@ -159,6 +379,16 @@
 .btn-primary:hover {
   background-color: #2563eb;
   border-color: #2563eb;
+}
+
+.btn-outline-primary {
+  color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.btn-outline-primary:hover {
+  background-color: #3b82f6;
+  color: white;
 }
 
 // Required field indicator
@@ -182,6 +412,10 @@
 
 .input-group-text {
   border-right: none;
+  background-color: #f8f9fa;
+  color: #6c757d;
+  min-width: 40px;
+  justify-content: center;
 }
 
 .input-group .form-control {
@@ -190,19 +424,33 @@
 
 // Category summary styling
 .category-summary {
+  h6 {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+  }
+  
   ul {
     max-height: 300px;
     overflow-y: auto;
+    margin-bottom: 1rem;
   }
   
   .list-group-item {
     border-left: none;
     border-right: none;
-    padding: 0.5rem 0;
+    padding: 0.75rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
   
   .list-group-item:first-child {
     border-top: none;
+  }
+  
+  .badge {
+    font-size: 0.85rem;
+    padding: 0.35rem 0.65rem;
   }
 }
 
@@ -216,4 +464,11 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+// Make the dialog content take full height
+form {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }

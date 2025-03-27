@@ -44,8 +44,9 @@ export class RubricListComponent implements OnInit {
 
   openCreateRubricDialog(): void {
     const dialogRef = this.dialog.open(CreateRubricDialogComponent, {
-      maxWidth: 'calc(100% - 80px)',
-      width: '1200px',
+      maxWidth: 'calc(100% - 50px)', // Match with CSS (changed from 80px)
+      width: '1400px', // Increased from 1200px
+      height: '90vh', // Added height to match CSS
       panelClass: 'rubric-dialog-container'
     });
     
@@ -58,8 +59,9 @@ export class RubricListComponent implements OnInit {
   
   editRubric(rubric: Rubric): void {
     const dialogRef = this.dialog.open(CreateRubricDialogComponent, {
-      maxWidth: 'calc(100% - 80px)',
-      width: '1200px',
+      maxWidth: 'calc(100% - 50px)', // Match with CSS (changed from 80px)
+      width: '1400px', // Increased from 1200px
+      height: '90vh', // Added height to match CSS
       panelClass: 'rubric-dialog-container',
       data: { rubric }
     });

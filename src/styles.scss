@@ -105,9 +105,11 @@ app-welcome-section {
 // These styles should be added to src/styles.scss
 .rubric-dialog-container .mat-dialog-container {
   padding: 0;
+  overflow: hidden !important;
+  border-radius: 8px;
 }
 
 .rubric-dialog-container .cdk-overlay-pane {
-  max-width: calc(100% - 80px) !important;
-  width: 1200px !important;
+  max-width: calc(100% - 50px) !important; /* Match with CSS (changed from 80px) */
+  width: 1400px !important; /* Increased from 1200px */
 }
