@@ -86,7 +86,8 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
   
   ngAfterViewChecked(): void {
-    if (this.scrollToBottomPending) {
+    // Only scroll if explicitly marked as pending
+    if (this.scrollToBottomPending && this.messages.length > 0) {
       this.scrollToBottom();
       this.scrollToBottomPending = false;
     }
@@ -217,6 +218,11 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
   
   addMessage(message: ChatMessage): void {
+    // Make sure readBy is never undefined
+    if (!message.readBy) {
+      message.readBy = [];
+    }
+    
     // Check if this is a message from the current user that would replace a temp message
     if (message.senderId === this.userId) {
       // Look for temporary messages with the same content and approximately the same time
@@ -249,23 +255,39 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       this.markMessagesAsRead();
     }
     
-    this.scrollToBottomPending = true;
+    // Check if user was near bottom before receiving the message
+    if (this.chatMessagesContainer) {
+      const element = this.chatMessagesContainer.nativeElement;
+      const atBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 100;
+      
+      // For immediate receiving of messages (not during initial load)
+      // Always set scroll pending for new messages, but scroll immediately if at bottom
+      this.scrollToBottomPending = true;
+      if (atBottom) {
+        this.scrollToBottom(); // Scroll immediately if user was at bottom
+      }
+    }
   }
   
-  // Add this method to format read status display
+  // Fix the undefined username issue in the getReadStatus method
   getReadStatus(message: ChatMessage): string {
-    if (message.senderId !== this.userId) {
+    if (!message || message.senderId !== this.userId) {
       return ''; // Don't show read status for other's messages
     }
   
-    if (!message.readBy || message.readBy.length === 0) {
+    // Initialize readBy if it's undefined
+    if (!message.readBy) {
+      message.readBy = [];
+    }
+  
+    if (message.readBy.length === 0) {
       return 'Sent';
     }
   
-    // Filter out the sender from readers
+    // Filter out the sender from readers, and ensure we have valid usernames
     const readers = message.readBy
-      .filter(r => r.userId !== message.senderId)
-      .map(r => r.userName);
+      .filter(r => r.userId !== message.senderId && r.userName)
+      .map(r => r.userName || `User ${r.userId}`); // Fallback name if undefined
   
     if (readers.length === 0) {
       return 'Sent';
@@ -280,7 +302,7 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
   }
   
-  // Enhance the markMessagesAsRead method to update UI
+  // Enhance the markMessagesAsRead method to update UI and handle undefined names
   markMessagesAsRead(): void {
     if (!this.groupId) return;
     
@@ -297,9 +319,17 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
             // Add current user to readBy if not already there
             if (!message.readBy?.some(r => r.userId === this.userId)) {
               message.readBy = message.readBy || [];
+              
+              // Get current user's full name from local storage or any message they've sent
+              let currentUserName = 'You'; // Default
+              const ownMessage = this.messages.find(m => m.senderId === this.userId);
+              if (ownMessage && ownMessage.senderName) {
+                currentUserName = ownMessage.senderName;
+              }
+              
               message.readBy.push({
                 userId: this.userId!,
-                userName: 'You',
+                userName: currentUserName,
                 readAt: new Date().toISOString()
               });
               message.totalReadCount = message.readBy.length;
@@ -311,7 +341,21 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     });
   }
   
+  // Update the updateMessagesReadStatus method to handle undefined usernames
   updateMessagesReadStatus(userId: number, userName?: string): void {
+    // If userName is undefined, try to find it from other messages
+    let resolvedUserName = userName;
+    
+    if (!resolvedUserName) {
+      // Look for this user's name in other messages where they were the sender
+      const userMessage = this.messages.find(m => m.senderId === userId);
+      if (userMessage && userMessage.senderName) {
+        resolvedUserName = userMessage.senderName;
+      } else {
+        resolvedUserName = `User ${userId}`; // Fallback
+      }
+    }
+    
     this.messages.forEach(message => {
       if (message.senderId === this.userId) {
         // Update the readBy array
@@ -319,10 +363,13 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         if (!existingReader && message.readBy) {
           message.readBy.push({
             userId: userId,
-            userName: userName || `User ${userName}`, // Use actual name if provided
+            userName: resolvedUserName, // Use resolved name
             readAt: new Date().toISOString()
           });
           message.totalReadCount = message.readBy.length;
+        } else if (existingReader && !existingReader.userName && resolvedUserName) {
+          // Update the name if it was previously undefined
+          existingReader.userName = resolvedUserName;
         }
       }
     });
@@ -449,10 +496,18 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     });
   }
   
+  // Improve scrollToBottom method to be more reliable
   scrollToBottom(): void {
-    if (this.chatMessagesContainer) {
-      const element = this.chatMessagesContainer.nativeElement;
-      element.scrollTop = element.scrollHeight;
+    try {
+      if (this.chatMessagesContainer) {
+        // Use requestAnimationFrame for smoother scrolling that happens after DOM rendering
+        requestAnimationFrame(() => {
+          const element = this.chatMessagesContainer.nativeElement;
+          element.scrollTop = element.scrollHeight;
+        });
+      }
+    } catch (err) {
+      console.error('Error scrolling to bottom:', err);
     }
   }
   
@@ -475,21 +530,27 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     return !laterMessages.some(msg => msg.senderId === userId);
   }
 
+  // Fix the detailed read status method too
   getDetailedReadStatus(message: ChatMessage): string {
-    if (!message.readBy || message.readBy.length === 0) {
+    // Initialize readBy if it's undefined
+    if (!message.readBy) {
+      message.readBy = [];
+    }
+
+    if (message.readBy.length === 0) {
       return 'Not read by anyone yet';
     }
-  
-    // Filter out sender and sort by read time
+
+    // Filter out sender and invalid usernames, sort by read time
     const readers = message.readBy
-      .filter(r => r.userId !== message.senderId)
+      .filter(r => r.userId !== message.senderId && r.userName)
       .sort((a, b) => new Date(a.readAt).getTime() - new Date(b.readAt).getTime())
-      .map(r => `${r.userName} (${new Date(r.readAt).toLocaleTimeString()})`);
-  
+      .map(r => `${r.userName || `User ${r.userId}`} (${new Date(r.readAt).toLocaleTimeString()})`);
+
     if (readers.length === 0) {
       return 'Not read by anyone yet';
     }
-  
+
     return `Read by:\n${readers.join('\n')}`;
   }
 }

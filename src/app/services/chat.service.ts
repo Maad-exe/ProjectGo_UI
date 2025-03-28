@@ -10,6 +10,7 @@ export interface MessageReadStatus {
   userId: number;
   userName: string;
   readAt: string;
+  
 }
 
 export interface ChatMessage {
@@ -21,7 +22,7 @@ export interface ChatMessage {
   content: string;
   timestamp: string;
   isRead: boolean;
-  readBy?: MessageReadStatus[];
+  readBy: MessageReadStatus[];
   totalReadCount: number;
   isReadByCurrentUser: boolean;
 }
@@ -66,7 +67,8 @@ export class ChatService {
     throttleTime(1000)
   );
   
-  private messageReadSubject = new Subject<{userId: number, groupId: number}>();
+  // Update the messageRead$ observable to include userName
+  private messageReadSubject = new Subject<{userId: number, userName?: string, groupId: number}>();
   messageRead$ = this.messageReadSubject.asObservable();
   
   private connectedSubject = new BehaviorSubject<boolean>(false);
@@ -367,6 +369,7 @@ private async startConnection(): Promise<void> {
     }
   }
   
+  // Update the SignalR callback to properly handle user names
   private setupSignalRCallbacks(): void {
     if (!this.hubConnection) return;
     
@@ -412,9 +415,27 @@ private async startConnection(): Promise<void> {
     });
     
     // Handle messages read notifications
-    this.hubConnection.on('MessagesRead', (userId: number, groupId: number) => {
-      console.log(`MessagesRead event: User ${userId} read messages in group ${groupId}`);
-      this.messageReadSubject.next({ userId, groupId });
+    this.hubConnection.on('MessagesRead', (userId: number, userName: string, groupId: number) => {
+      console.log(`MessagesRead event: User ${userId} (${userName || 'unknown'}) read messages in group ${groupId}`);
+      
+      // Make sure we have a valid userName
+      let resolvedUserName = userName;
+      if (!resolvedUserName) {
+        // Try to find user's name from message cache
+        const messages = this.messageCache.get(groupId) || [];
+        const userMessage = messages.find(m => m.senderId === userId);
+        if (userMessage && userMessage.senderName) {
+          resolvedUserName = userMessage.senderName;
+        } else {
+          resolvedUserName = `User ${userId}`;
+        }
+      }
+      
+      this.messageReadSubject.next({ 
+        userId, 
+        userName: resolvedUserName, 
+        groupId 
+      });
       
       // Update local cache to mark messages as read
       const messages = this.messageCache.get(groupId);
@@ -423,14 +444,22 @@ private async startConnection(): Promise<void> {
         messages.forEach(msg => {
           if (msg.senderId === this.getCurrentUserId() && !msg.isRead) {
             msg.isRead = true;
+            
+            // Add this user to readBy array if they're not already there
+            if (!msg.readBy) msg.readBy = [];
+            if (!msg.readBy.some(r => r.userId === userId)) {
+              msg.readBy.push({
+                userId: userId,
+                userName: resolvedUserName,
+                readAt: new Date().toISOString()
+              });
+            }
             updated = true;
           }
         });
         
         if (updated) {
           this.messageCache.set(groupId, [...messages]);
-          // Emit an event to update the UI
-          this.messageReadSubject.next({ userId, groupId });
         }
       }
     });

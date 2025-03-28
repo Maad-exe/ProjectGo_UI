@@ -6,7 +6,8 @@
     </span>
   </div>
   
-  <div class="chat-messages-container">
+  <!-- Update the message container to ensure better scrolling -->
+  <div class="chat-messages-container" #chatMessages>
     <!-- Loading indicator -->
     <div *ngIf="isLoading" class="loading-spinner">
       <i class="fas fa-spinner fa-spin"></i> Loading messages...
@@ -27,7 +28,7 @@
     </div>
     
     <!-- Chat messages -->
-    <div class="chat-messages" #chatMessages>
+    <div class="chat-messages">
       <div *ngFor="let message of messages; let last = index" 
            class="message" 
            [ngClass]="{
@@ -43,7 +44,10 @@
         <div class="message-content">{{ message.content }}</div>
         <div class="message-status" *ngIf="message.senderId === userId">
           <span class="read-status" 
-                [ngClass]="{'read': message.readBy?.length, 'sent': !message.readBy?.length}"
+                [ngClass]="{
+                  'read': message.readBy && message.readBy.length > 1, 
+                  'sent': !message.readBy || message.readBy.length <= 1
+                }"
                 [title]="getDetailedReadStatus(message)">
             {{ getReadStatus(message) }}
           </span>
