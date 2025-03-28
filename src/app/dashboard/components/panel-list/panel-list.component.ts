@@ -52,7 +52,7 @@ export class PanelListComponent implements OnInit {
     const dialogRef = this.dialog.open(CreatePanelDialogComponent, {
       width: 'calc(100% - 120px)', 
       maxWidth: '1500px',
-      height: '92vh',
+      height: '99vh',
       panelClass: 'panel-dialog-container',
       position: { right: '20px' },
       disableClose: true

@@ -1,49 +1,52 @@
 // Modern Panel Dialog styling with consistent design approach as rubric dialog
 
 .panel-dialog {
-  width: calc(100% - 120px) !important;
+  width: calc(100% - 20px) !important;
   max-width: 1500px !important;
-  margin-left: auto !important;
-  margin-right: 20px !important;
   box-sizing: border-box;
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
   height: 92vh;
+ 
 }
 
 // Modal components with consistent styling
 .modal-header {
   border-bottom: 1px solid #e9ecef;
-  padding: 1rem 1.25rem;
+  padding: 1rem;
+
   display: flex;
   align-items: center;
-  background-color: white;
-  
+  background-color: rgb(255, 255, 255);
+
   .header-content {
     flex: 1;
-    
+
     .modal-title {
       display: flex;
       align-items: center;
-      font-size: 1.25rem;
-      font-weight: 600;
+      font-size: 1.2rem; // Slightly smaller
+      font-weight: 500; // Less bold (was 600)
       margin-bottom: 0.25rem;
       color: #1e293b;
-      
+      letter-spacing: -0.01em; // Subtle letter-spacing for modern look
+
       i {
         margin-right: 0.75rem;
         color: #3b82f6;
+        opacity: 0.9; // Slightly softer icon
       }
     }
-    
+
     .header-subtitle {
       color: #6b7280;
-      font-size: 0.9rem;
+      font-size: 0.875rem; // Slightly smaller
       margin: 0;
+      font-weight: 400; // Normal weight
     }
   }
-  
+
   .close-btn {
     background: transparent;
     border: none;
@@ -56,7 +59,7 @@
     align-items: center;
     justify-content: center;
     margin-left: auto;
-    
+
     &:hover {
       background-color: #f1f5f9;
       color: #1e293b;
@@ -66,76 +69,51 @@
 
 .modal-body {
   flex: 1;
-  padding: 1rem 1.25rem;
+  padding: 1rem 0rem 1rem 1rem; // Reduced left padding
   overflow-y: auto;
-  
+
   form {
     height: 100%;
   }
 }
 
 .modal-footer {
-  border-top: 1px solid #e9ecef;
-  padding: 1rem 1.25rem;
+  border-top: 1px solid #E5E5EA; // iOS-style divider
+  
+  padding: 1rem;
+
   display: flex;
   justify-content: space-between;
   align-items: center;
   background-color: white;
-  
+ 
+
   .footer-info {
     display: flex;
     align-items: center;
-    color: #f59e0b;
-    font-size: 0.9rem;
-  }
-  
-  .btn {
-    min-width: 120px;
-    font-weight: 500;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    height: 42px;
-    padding: 0 1.25rem;
-    border-radius: 0.375rem;
-    transition: all 0.15s ease;
-    
+    color: #FF9500; // iOS orange for warnings
+    font-size: 0.875rem;
+    font-weight: 400; // Normal weight
+
     i {
-      margin-right: 0.5rem;
+      margin-right: 0.375rem;
+      font-size: 0.875rem;
     }
-    
-    &.btn-primary {
-      background-color: #3b82f6;
-      border-color: #3b82f6;
-      color: white;
-      
-      &:hover:not(:disabled) {
-        background-color: #2563eb;
-        border-color: #2563eb;
-      }
-      
-      &:disabled {
-        opacity: 0.65;
-      }
-    }
-    
-    &.btn-outline-secondary {
-      color: #64748b;
-      border-color: #d1d5db;
-      
-      &:hover {
-        background-color: #f1f5f9;
-        color: #1e293b;
-      }
-    }
+  }
+
+  .footer-actions {
+    display: flex;
+    gap: 0.75rem; // Reduced gap between buttons
   }
 }
 
 // Panel container with flex layout
 .panel-container {
+ 
   display: flex;
   height: 100%;
   gap: 2rem;
+   
 }
 
 // Left sidebar with panel information
@@ -144,24 +122,35 @@
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  
+  padding-right: 16px; // Add right padding instead of having empty space on left
+
+  // Remove any left margin/padding that might be causing the empty space
+  padding-left: 0;
+  margin-left: 0;
+
   .panel-inputs {
     margin-bottom: 1.5rem;
-    
+    width: 100%; // Ensure full width
+
     .form-group {
       margin-bottom: 1.25rem;
-      
+      width: 100%; // Ensure full width
+
       .form-label {
         display: block;
         margin-bottom: 0.375rem;
-        font-weight: 500;
-        font-size: 0.9rem;
-        color: #374151;
+        font-weight: 450; // Less bold (was 500)
+        font-size: 0.875rem; // Slightly smaller
+        color: #4b5563; // Slightly lighter
+        text-align: left; // Ensure text is left-aligned
+        text-transform: none; // Remove text transform if any
+        letter-spacing: 0; // Normal letter spacing
       }
-      
+
       .input-group {
         display: flex;
-        
+        width: 100%; // Ensure full width
+
         .input-group-text {
           display: flex;
           align-items: center;
@@ -173,7 +162,7 @@
           border-radius: 0.375rem 0 0 0.375rem;
           color: #64748b;
         }
-        
+
         .form-control {
           flex: 1;
           height: 42px;
@@ -181,44 +170,46 @@
           font-size: 0.95rem;
           border: 1px solid #d1d5db;
           border-radius: 0 0.375rem 0.375rem 0;
-          
+
           &:focus {
             border-color: #3b82f6;
             box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
             outline: none;
           }
-          
+
           &.is-invalid {
             border-color: #ef4444;
           }
         }
       }
-      
+
       .invalid-feedback {
         font-size: 0.8rem;
         color: #ef4444;
         margin-top: 0.375rem;
+        font-weight: var(--fw-normal);
       }
     }
   }
-  
+
   // Panel progress bar
   .panel-progress {
     margin-bottom: 1.5rem;
-    
+
     .progress-title {
-      font-size: 0.9rem;
+      font-size: 0.875rem; // Slightly smaller
       color: #374151;
-      font-weight: 500;
+      font-weight: 450; // Less bold
       margin-bottom: 0.5rem;
+      text-align: left;
     }
-    
+
     .progress {
       height: 8px;
       background-color: #e5e7eb;
       border-radius: 1rem;
       overflow: hidden;
-      
+
       .progress-bar {
         height: 100%;
         border-radius: 1rem;
@@ -226,39 +217,41 @@
       }
     }
   }
-  
+
   // Selected teachers preview
   .selected-preview {
     .preview-title {
-      font-size: 0.9rem;
+      font-size: 0.875rem; // Slightly smaller
       color: #374151;
-      font-weight: 500;
+      font-weight: 450; // Less bold
       margin-bottom: 0.75rem;
       display: flex;
       align-items: center;
-      
+      text-align: left;
+
       .badge {
         background-color: #3b82f6;
         color: white;
-        font-weight: 500;
+        font-weight: 450; // Less bold
         font-size: 0.75rem;
         padding: 0.25rem 0.5rem;
         border-radius: 0.25rem;
       }
     }
-    
+
     .selected-teachers {
       display: flex;
       flex-wrap: wrap;
       gap: 0.5rem;
-      
+      justify-content: flex-start; // Align items to the left
+
       .selected-teacher {
         display: flex;
         align-items: center;
         background-color: #f1f5f9;
         border-radius: 0.375rem;
         padding: 0.375rem 0.5rem;
-        
+
         .teacher-initial {
           width: 24px;
           height: 24px;
@@ -272,7 +265,7 @@
           justify-content: center;
           margin-right: 0.5rem;
         }
-        
+
         .teacher-name {
           font-size: 0.85rem;
           color: #374151;
@@ -281,8 +274,9 @@
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+          font-weight: 400; // Normal weight
         }
-        
+
         .remove-btn {
           background: transparent;
           border: none;
@@ -293,7 +287,7 @@
           justify-content: center;
           cursor: pointer;
           font-size: 0.75rem;
-          
+
           &:hover {
             color: #ef4444;
           }
@@ -301,55 +295,57 @@
       }
     }
   }
-  
+
   // Availability legend
   .status-legend {
     margin-top: 2rem;
-    
+    text-align: left;
+
     .legend-title {
-      font-size: 0.9rem;
+      font-size: 0.875rem; // Slightly smaller
       color: #374151;
-      font-weight: 500;
+      font-weight: 450; // Less bold
       margin-bottom: 0.75rem;
+      text-align: left;
     }
-    
+
     .legend-item {
       display: flex;
       align-items: center;
       margin-bottom: 0.5rem;
-      
+
       .status-indicator {
         width: 12px;
         height: 12px;
         border-radius: 50%;
         margin-right: 0.75rem;
-        
+
         &.available {
           background-color: #10b981;
         }
-        
+
         &.active {
           background-color: #f59e0b;
         }
-        
+
         &.busy {
           background-color: #ef4444;
         }
       }
-      
+
       .legend-info {
         flex: 1;
-        
+
         .legend-label {
-          font-weight: 500;
-          font-size: 0.85rem;
+          font-weight: 450; // Less bold
+          font-size: 0.825rem;
           color: #374151;
           display: block;
         }
-        
+
         .legend-desc {
           font-size: 0.8rem;
-          color: #64748b;
+          color: #71717A; // iOS gray
         }
       }
     }
@@ -362,28 +358,29 @@
   display: flex;
   flex-direction: column;
   min-width: 0; // Prevent flex items from overflowing
-  
+  padding-left: 0; // Ensure no left padding
+
   .teacher-list-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1rem;
-    
+
     .list-title {
-      font-size: 1rem;
-      font-weight: 600;
+      font-size: 0.95rem;
+      font-weight: 500; // Less bold
       color: #1e293b;
       margin: 0;
     }
-    
+
     .list-actions {
       display: flex;
       gap: 0.5rem;
-      
+
       .search-container {
         position: relative;
         width: 240px;
-        
+
         input {
           width: 100%;
           padding: 0.5rem 1rem;
@@ -391,14 +388,14 @@
           border: 1px solid #d1d5db;
           border-radius: 0.375rem;
           font-size: 0.9rem;
-          
+
           &:focus {
             border-color: #3b82f6;
             outline: none;
             box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
           }
         }
-        
+
         .search-icon {
           position: absolute;
           left: 0.75rem;
@@ -407,7 +404,7 @@
           color: #64748b;
           font-size: 0.9rem;
         }
-        
+
         .clear-btn {
           position: absolute;
           right: 0.75rem;
@@ -418,16 +415,16 @@
           color: #64748b;
           cursor: pointer;
           padding: 0;
-          
+
           &:hover {
             color: #ef4444;
           }
         }
       }
-      
+
       .dropdown {
         position: relative;
-        
+
         .dropdown-toggle {
           display: flex;
           align-items: center;
@@ -438,16 +435,16 @@
           border-radius: 0.375rem;
           font-size: 0.9rem;
           cursor: pointer;
-          
+
           &:hover {
             background-color: #e2e8f0;
           }
-          
+
           i {
             margin-right: 0.375rem;
           }
         }
-        
+
         .dropdown-menu {
           position: absolute;
           right: 0;
@@ -460,14 +457,14 @@
           min-width: 150px;
           z-index: 10;
           padding: 0.5rem 0;
-          
+
           .dropdown-item {
             display: block;
             padding: 0.5rem 1rem;
             color: #374151;
             text-decoration: none;
             font-size: 0.9rem;
-            
+
             &:hover {
               background-color: #f1f5f9;
             }
@@ -476,11 +473,11 @@
       }
     }
   }
-  
+
   .teacher-list-container {
     flex: 1;
     overflow-y: auto;
-    
+
     // Loading state
     .teacher-list-loader {
       display: flex;
@@ -488,26 +485,26 @@
       align-items: center;
       justify-content: center;
       padding: 3rem 0;
-      
+
       .spinner-border {
         color: #3b82f6;
         width: 3rem;
         height: 3rem;
         margin-bottom: 1rem;
       }
-      
+
       p {
         color: #6b7280;
         font-size: 0.95rem;
       }
     }
-    
+
     .teacher-list {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 1rem;
       padding: 0.5rem 0;
-      
+
       .teacher-card {
         position: relative;
         border: 1px solid #e5e7eb;
@@ -516,42 +513,42 @@
         transition: all 0.2s ease;
         cursor: pointer;
         background-color: #ffffff;
-        
+
         &:hover {
           border-color: #3b82f6;
-          transform: translateY(-2px);
+          transform: translateY(-1px) !important; // Smaller movement
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
-        
+
         &.selected {
           border-color: #3b82f6;
           background-color: #eff6ff;
-          
+
           .selection-indicator {
             display: flex;
           }
         }
-        
+
         &.card-busy {
           border-left: 3px solid #ef4444;
         }
-        
+
         &.card-active {
           border-left: 3px solid #f59e0b;
         }
-        
+
         &.card-available {
           border-left: 3px solid #10b981;
         }
-        
+
         .card-body {
           padding: 1rem;
-          
+
           .teacher-header {
             display: flex;
             align-items: center;
             margin-bottom: 0.75rem;
-            
+
             .teacher-avatar {
               width: 42px;
               height: 42px;
@@ -559,25 +556,25 @@
               display: flex;
               align-items: center;
               justify-content: center;
-              font-weight: 600;
+              font-weight: 500; // Less bold
               font-size: 1rem;
               color: white;
               margin-right: 1rem;
               position: relative;
               flex-shrink: 0;
-              
+
               &.badge-available {
                 background-color: #10b981;
               }
-              
+
               &.badge-active {
                 background-color: #f59e0b;
               }
-              
+
               &.badge-busy {
                 background-color: #ef4444;
               }
-              
+
               .selection-indicator {
                 position: absolute;
                 inset: 0;
@@ -590,37 +587,39 @@
                 font-size: 1rem;
               }
             }
-            
+
             .teacher-info {
               flex: 1;
               min-width: 0;
-              
+
               .teacher-name {
-                font-weight: 600;
+                font-weight: 500; // Less bold
                 font-size: 0.95rem;
                 color: #1e293b;
                 margin-bottom: 0.25rem;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
+                letter-spacing: -0.01em; // Subtle letter spacing for modern look
               }
-              
+
               .status-badge {
                 padding: 0.25rem 0.5rem;
-                font-size: 0.75rem;
+                font-size: 0.7rem; // Smaller text
                 border-radius: 0.25rem;
-                font-weight: 500;
-                
+                font-weight: 450; // Less bold
+                opacity: 0.9; // Slightly softer
+
                 &.badge-available {
                   background-color: #d1fae5;
                   color: #10b981;
                 }
-                
+
                 &.badge-active {
                   background-color: #fef3c7;
                   color: #f59e0b;
                 }
-                
+
                 &.badge-busy {
                   background-color: #fee2e2;
                   color: #ef4444;
@@ -628,28 +627,30 @@
               }
             }
           }
-          
+
           .teacher-details {
             margin-top: 0.75rem;
-            
+
             .detail-item {
               display: flex;
               align-items: center;
               margin-bottom: 0.375rem;
-              
+
               i {
                 width: 16px;
                 color: #64748b;
                 margin-right: 0.5rem;
                 font-size: 0.85rem;
               }
-              
+
               .detail-text {
                 font-size: 0.85rem;
-                color: #374151;
+                color: #4B5563; // Slightly lighter
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
+                font-weight: 400; // Normal weight
+                transition: color 0.2s ease;
               }
             }
           }
@@ -661,8 +662,14 @@
 
 // Animation
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animated {
@@ -688,7 +695,7 @@
   .panel-container {
     gap: 1.5rem;
   }
-  
+
   .panel-sidebar {
     width: 260px;
   }
@@ -698,13 +705,212 @@
   .panel-container {
     flex-direction: column;
   }
-  
+
   .panel-sidebar {
     width: 100%;
     margin-bottom: 1.5rem;
   }
-  
+
   .teacher-selection {
     max-height: 600px;
   }
+}
+
+// Modern, minimalistic iOS-style buttons
+
+.btn {
+  min-width: 120px; // Reduced from 160px for a more compact look
+  font-weight: 450; // Less bold (was 500)
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px; // Reduced from 42px for a more compact appearance
+  padding: 0 1rem; // Reduced horizontal padding
+  border-radius: 8px; // More iOS-style rounded corners
+  transition: all 0.2s ease;
+  font-size: 0.875rem; // Slightly smaller font size
+  letter-spacing: -0.01em; // Modern iOS-like letter spacing
+  box-shadow: none; // Remove default shadow for cleaner look
+
+  &:active {
+    transform: scale(0.98); // Subtle press effect
+  }
+
+  i {
+    font-size: 0.875rem; // Smaller icon
+    margin-right: 0.375rem; // Reduced spacing
+  }
+
+  &.btn-primary {
+    background-color: #0A84FF; // iOS blue
+    border: none; // No border for cleaner look
+    color: white;
+
+    &:hover:not(:disabled) {
+      background-color: #007AFF; // Slightly darker on hover
+      box-shadow: 0 2px 8px rgba(10, 132, 255, 0.3); // Subtle hover shadow
+    }
+
+    &:disabled {
+      opacity: 0.5; // More iOS-like opacity for disabled state
+      background-color: #0A84FF;
+    }
+  }
+
+  &.btn-outline-secondary {
+    color: #8E8E93; // iOS gray
+    border: 1px solid #E5E5EA; // iOS light gray border
+    background-color: transparent;
+
+    &:hover {
+      background-color: #F2F2F7; // iOS system gray 6
+      color: #636366; // iOS gray darker on hover
+      border-color: #D1D1D6; // iOS system gray 4
+    }
+  }
+
+  &.btn-danger {
+    background-color: #FF3B30; // iOS red
+    border: none;
+    color: white;
+
+    &:hover:not(:disabled) {
+      background-color: #FF2D20;
+      box-shadow: 0 2px 8px rgba(255, 59, 48, 0.3);
+    }
+  }
+
+  &.btn-success {
+    background-color: #34C759; // iOS green
+    border: none;
+    color: white;
+
+    &:hover:not(:disabled) {
+      background-color: #30BF5B;
+      box-shadow: 0 2px 8px rgba(52, 199, 89, 0.3);
+    }
+  }
+
+  // Small variant
+  &.btn-sm {
+    height: 32px;
+    min-width: 90px;
+    font-size: 0.8125rem;
+    padding: 0 0.75rem;
+  }
+
+  // Large variant
+  &.btn-lg {
+    height: 46px;
+    min-width: 140px;
+    font-size: 0.9375rem;
+    padding: 0 1.25rem;
+  }
+
+  // Icon-only button
+  &.btn-icon {
+    min-width: auto;
+    width: 38px;
+    padding: 0;
+
+    i {
+      margin-right: 0;
+    }
+
+    &.btn-sm {
+      width: 32px;
+    }
+
+    &.btn-lg {
+      width: 46px;
+    }
+  }
+}
+
+// Update other button-like elements for consistency
+.dropdown-toggle {
+  height: 36px; // Smaller height
+  border-radius: 8px; // Match the iOS-style rounded corners
+  font-size: 0.875rem;
+  border: 1px solid #E5E5EA;
+  background-color: white;
+  color: #8E8E93;
+  padding: 0 0.75rem;
+
+  &:hover {
+    background-color: #F2F2F7;
+  }
+
+  i {
+    font-size: 0.875rem;
+  }
+}
+
+.close-btn {
+  width: 30px; // Make it circular
+  height: 30px;
+  border-radius: 15px; // Fully rounded for iOS-style
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+
+  &:hover {
+    background-color: #F2F2F7;
+  }
+
+  i {
+    font-size: 0.875rem;
+  }
+}
+
+.remove-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+
+  &:hover {
+    background-color: rgba(255, 59, 48, 0.1);
+    color: #FF3B30;
+  }
+}
+
+// Update typography for a more minimalistic, modern look
+
+// Add a subtle text shadow to headings for a modern emphasis instead of bold
+.modal-title, .list-title, .preview-title, .legend-title, .progress-title {
+  text-shadow: 0 0 1px rgba(0, 0, 0, 0.01); // Almost imperceptible text shadow
+}
+
+// Use spacing rather than weight for emphasis
+.teacher-name, .legend-label, .form-label {
+  letter-spacing: -0.01em; // Subtle tracking
+}
+
+// Make status indicators more subtle
+.status-badge {
+  opacity: 0.9; // Slightly softer
+  font-size: 0.7rem; // Smaller text
+}
+
+// Use CSS variables for font weights to maintain consistency
+:root {
+  --fw-normal: 400;
+  --fw-medium: 450;
+  --fw-semi: 500;
+  --fw-bold: 600;
+}
+
+// Update alert text to be less heavy
+.alert, .invalid-feedback {
+  font-weight: var(--fw-normal);
+}
+
+// Add subtle transitions for text elements
+.teacher-name, .detail-text, .legend-label, .status-badge {
+  transition: color 0.2s ease;
 }

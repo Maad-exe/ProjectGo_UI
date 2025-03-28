@@ -28,14 +28,15 @@
             <span class="date">{{announcement.date | date}}</span>
           </div>
           <div *ngIf="announcements.length === 0" class="no-data">
-              No announcements available
-            </div>
+            No announcements available
+          </div>
         </div>
       </div>
-        
-        <div class="dashboard-card progress">
-          <h2><i class="fas fa-chart-line"></i> Project Progress</h2>
-          <div class="progress-info">
+      
+      <div class="dashboard-card progress">
+        <h2><i class="fas fa-chart-line"></i> Project Progress</h2>
+        <div class="progress-info">
+          <div class="progress-details">
             <div class="progress-item">
               <span class="label">Current Phase:</span>
               <span class="value">{{projectProgress.currentPhase}}</span>
@@ -44,36 +45,37 @@
               <span class="label">Next Milestone:</span>
               <span class="value">{{projectProgress.nextMilestone}}</span>
             </div>
-            <div class="progress-bar-container">
-              <div class="progress-bar" [style.width.%]="projectProgress.completion"></div>
-              <span class="progress-label">{{projectProgress.completion}}% Complete</span>
-            </div>
+          </div>
+          <div class="progress-bar-container">
+            <div class="progress-bar" [style.width.%]="projectProgress.completion"></div>
+            <span class="progress-label">{{projectProgress.completion}}% Complete</span>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Single quick actions section -->
-      <div class="quick-actions">
-        <button class="action-btn" (click)="navigateToTeachers()">
-          <i class="fas fa-users"></i>
-          View Faculty
-        </button>
-        
-        <button class="action-btn" 
-                [class.disabled]="!hasApprovedGroup" 
-                (click)="navigateToChat()"
-                [title]="!hasApprovedGroup ? 'You need an approved group to access chat' : ''">
-          <div class="btn-content">
-            <i class="fa-brands fa-rocketchat" 
-               [class.has-notifications]="unreadMessages > 0"></i>
-            <span>Group Chat</span>
-          </div>
-        </button>
+    <!-- Single quick actions section -->
+    <div class="quick-actions">
+      <button class="action-btn" (click)="navigateToTeachers()">
+        <i class="fas fa-users"></i>
+        View Faculty
+      </button>
+      
+      <button class="action-btn" 
+              [class.disabled]="!hasApprovedGroup" 
+              (click)="navigateToChat()"
+              [title]="!hasApprovedGroup ? 'You need an approved group to access chat' : ''">
+        <div class="btn-content">
+          <i class="fa-brands fa-rocketchat" 
+             [class.has-notifications]="unreadMessages > 0"></i>
+          <span>Group Chat</span>
+        </div>
+      </button>
 
-        <button class="action-btn">
-          <i class="fas fa-calendar"></i>
-          Schedule
-        </button>
-      </div>
+      <button class="action-btn">
+        <i class="fas fa-calendar"></i>
+        Schedule
+      </button>
     </div>
   </div>
+</div>

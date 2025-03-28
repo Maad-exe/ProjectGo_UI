@@ -64,8 +64,8 @@
     .dashboard-cards {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 1rem; // Reduced from 2rem
-      margin-bottom: 1.5rem; // Reduced from 2.5rem
+      gap: 1rem; // Keep the reduced gap
+      margin-bottom: 1.5rem;
       
       .dashboard-card {
         background: white;
@@ -74,6 +74,10 @@
         box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         transition: all 0.3s ease;
         border: 1px solid #e2e8f0;
+        display: flex; // Add this
+        flex-direction: column; // Add this
+        height: 60%; // Add fixed height
+        min-height: 200px; // Set min height for both cards
         
         &:hover {
           transform: translateY(-4px);
@@ -102,9 +106,12 @@
         
         &.announcements {
           .announcement-list {
-            max-height: 250px;
+            max-height: none; // Remove fixed max-height
+            flex: 1; // Make this grow to fill space
             overflow-y: auto;
             padding-right: 0.5rem;
+            display: flex;
+            flex-direction: column;
             
             &::-webkit-scrollbar {
               width: 4px;
@@ -173,6 +180,18 @@
         
         &.progress {
           .progress-info {
+            display: flex; // Add this
+            flex-direction: column; // Add this
+            flex: 1; // Add this to fill space
+            justify-content: space-between; // Space between items and progress bar
+            
+            .progress-items {
+              flex: 1; // Add this to fill space
+              display: flex; // Add this
+              flex-direction: column; // Add this
+              margin-bottom: 1rem; // Add spacing before progress bar
+            }
+            
             .progress-item {
               display: flex;
               justify-content: space-between;
@@ -183,6 +202,10 @@
               margin-bottom: 0.75rem;
               transition: all 0.2s ease;
               border: 1px solid transparent;
+              
+              &:last-child {
+                margin-bottom: 0; // Remove margin from last item
+              }
               
               &:hover {
                 background: white;
@@ -210,7 +233,7 @@
             }
             
             .progress-bar-container {
-              margin-top: 1.5rem;
+              margin-top: auto; // Push to bottom
               background: #e2e8f0;
               height: 8px;
               border-radius: 12px;
@@ -369,6 +392,9 @@
       
       .dashboard-cards {
         grid-template-columns: 1fr;
+        .dashboard-card {
+          min-height: 280px; // Slightly smaller min height on smaller screens
+        }
       }
     }
   }
