@@ -27,6 +27,8 @@ export class CreateRubricDialogComponent implements OnInit {
   loading = false;
   weightSumError = false;
   weightSum = 0;
+  editingCategoryIndex: number = -1;
+  editingCategory: FormGroup | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -86,6 +88,10 @@ export class CreateRubricDialogComponent implements OnInit {
       }));
     });
     
+    // Set editingCategoryIndex to -1 (no category being edited initially)
+    this.editingCategoryIndex = -1;
+    this.editingCategory = null;
+    
     this.updateWeightSum();
   }
 
@@ -95,6 +101,15 @@ export class CreateRubricDialogComponent implements OnInit {
   }
   
   addCategory(): void {
+    // If already editing a category, save it first
+    if (this.editingCategoryIndex !== -1) {
+      if (this.editingCategory?.valid) {
+        this.saveCategory();
+      } else {
+        return; // Don't add a new one if current edit is invalid
+      }
+    }
+    
     const newCategory = this.fb.group({
       id: [null],
       name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
@@ -103,7 +118,9 @@ export class CreateRubricDialogComponent implements OnInit {
       maxScore: [10, [Validators.required, Validators.min(1), Validators.max(100)]]
     });
     
+    const index = this.categories.length;
     this.categories.push(newCategory);
+    this.editCategory(index); // Start editing the new category immediately
     this.updateWeightSum();
   }
   
@@ -142,6 +159,10 @@ export class CreateRubricDialogComponent implements OnInit {
   }
 
   onSubmit(): void {
+    if (this.editingCategoryIndex !== -1 && this.editingCategory?.valid) {
+      this.saveCategory();
+    }
+    
     if (this.rubricForm.invalid) {
       // Mark all fields as touched to trigger validation UI
       this.markFormGroupTouched(this.rubricForm);
@@ -208,5 +229,29 @@ export class CreateRubricDialogComponent implements OnInit {
         control?.markAsTouched();
       }
     });
+  }
+
+  editCategory(index: number): void {
+    this.editingCategoryIndex = index;
+    this.editingCategory = this.categories.controls[index] as FormGroup;
+  }
+
+  saveCategory(): void {
+    if (this.editingCategory?.valid) {
+      this.editingCategoryIndex = -1;
+      this.editingCategory = null;
+      this.updateWeightSum();
+    } else {
+      this.markFormGroupTouched(this.editingCategory as FormGroup);
+    }
+  }
+
+  cancelEdit(): void {
+    // If this is a new category that hasn't been filled out yet, remove it
+    if (this.editingCategory && !this.editingCategory.get('name')?.value) {
+      this.categories.removeAt(this.editingCategoryIndex);
+    }
+    this.editingCategoryIndex = -1;
+    this.editingCategory = null;
   }
 }

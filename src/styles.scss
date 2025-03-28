@@ -38,6 +38,28 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
   --shadow-color: rgba(0, 0, 0, 0.08);
 
   --header-height: 70px; 
+
+  // Blue colors
+  --blue-50: #eff6ff;
+  --blue-100: #dbeafe;
+  --blue-500: #3b82f6;
+  --blue-600: #2563eb;
+  --blue-700: #1d4ed8;
+  
+  // Gray colors
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  
+  // Functional colors
+  --danger: #dc2626;
+  --warning: #f59e0b;
+  --success: #10b981;
+  --info: #3b82f6;
 }
 
 /* Success Snackbar */
@@ -110,6 +132,8 @@ app-welcome-section {
 }
 
 .rubric-dialog-container .cdk-overlay-pane {
-  max-width: calc(100% - 50px) !important; /* Match with CSS (changed from 80px) */
-  width: 1400px !important; /* Increased from 1200px */
+  max-width: calc(100% - 150px) !important;
+  width: 1300px !important;
+  margin-left: auto !important;
+  margin-right: 25px !important;
 }

@@ -44,10 +44,11 @@ export class RubricListComponent implements OnInit {
 
   openCreateRubricDialog(): void {
     const dialogRef = this.dialog.open(CreateRubricDialogComponent, {
-      maxWidth: 'calc(100% - 50px)', // Match with CSS (changed from 80px)
-      width: '1400px', // Increased from 1200px
-      height: '90vh', // Added height to match CSS
-      panelClass: 'rubric-dialog-container'
+      maxWidth: 'calc(100% - 120px)',
+      width: '1500px',
+      height: '92vh',
+      panelClass: 'rubric-dialog-container',
+      position: { right: '20px' }
     });
     
     dialogRef.afterClosed().subscribe(result => {
@@ -59,10 +60,11 @@ export class RubricListComponent implements OnInit {
   
   editRubric(rubric: Rubric): void {
     const dialogRef = this.dialog.open(CreateRubricDialogComponent, {
-      maxWidth: 'calc(100% - 50px)', // Match with CSS (changed from 80px)
-      width: '1400px', // Increased from 1200px
-      height: '90vh', // Added height to match CSS
+      maxWidth: 'calc(100% - 120px)',
+      width: '1500px',
+      height: '92vh',
       panelClass: 'rubric-dialog-container',
+      position: { right: '20px' },
       data: { rubric }
     });
     

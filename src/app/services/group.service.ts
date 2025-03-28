@@ -149,6 +149,6 @@ export class GroupService {
 
   // Add this method to your GroupService class
   getGroupsWithSupervisors(): Observable<GroupDetails[]> {
-    return this.http.get<GroupDetails[]>(`${this.apiUrl}/groups/with-supervisors`);
+    return this.http.get<GroupDetails[]>(`${this.apiUrl}/with-supervisors`);
   }
 }

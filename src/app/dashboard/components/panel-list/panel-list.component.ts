@@ -50,10 +50,11 @@ export class PanelListComponent implements OnInit {
   
   openCreatePanelDialog(): void {
     const dialogRef = this.dialog.open(CreatePanelDialogComponent, {
-      width: 'calc(100% - 80px)', // Almost full screen width except for sidebar
-      maxWidth: '1600px', // Set a maximum width
-      height: '85vh', // Set a percentage of viewport height
+      width: 'calc(100% - 120px)', 
+      maxWidth: '1500px',
+      height: '92vh',
       panelClass: 'panel-dialog-container',
+      position: { right: '20px' },
       disableClose: true
     });
     
