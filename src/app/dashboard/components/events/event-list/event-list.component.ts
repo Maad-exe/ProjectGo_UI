@@ -144,8 +144,10 @@ export class EventListComponent implements OnInit {
     return new Date(date).toLocaleDateString();
   }
 
+  // Update the viewEvent method to navigate correctly
   viewEvent(event: EvaluationEvent): void {
-    this.router.navigate(['/events', event.id]);
+    // This should navigate to the event details page
+    this.router.navigate(['/admin-dashboard/events', event.id]);
   }
 
   // Modified applyFilter method

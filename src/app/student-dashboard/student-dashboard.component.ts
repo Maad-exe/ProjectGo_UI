@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
-import { GroupService } from '../services/group.service';
+import { GroupService, GroupDetails } from '../services/group.service'; // Make sure to import GroupDetails
 import { NotificationService } from '../services/notifications.service';
 import { ChatService } from '../services/chat.service';
 import { Subscription, forkJoin, Observable, of, timer } from 'rxjs';
@@ -71,6 +71,9 @@ export class StudentDashboardComponent implements OnInit, OnDestroy {
   showGroupChat: boolean = false;
   private subscriptions: Subscription[] = [];
   
+  // Add the missing groups property
+  groups: GroupDetails[] = [];
+  
   // Shared data for child components
   announcements: Announcement[] = [
     {
@@ -134,6 +137,9 @@ export class StudentDashboardComponent implements OnInit, OnDestroy {
         this.studentInfo = results.studentInfo;
         this.hasApprovedGroup = results.groupStatus.hasApprovedGroup;
         this.unreadMessages = results.unreadMessages;
+        
+        // Load groups for the student
+        this.loadGroups();
         
         // Enable chat if user has approved group
         if (this.hasApprovedGroup) {
@@ -215,6 +221,22 @@ export class StudentDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  // Add a method to load groups
+  private loadGroups(): void {
+    const userId = this.authService.getUserId();
+    if (userId) {
+      this.groupService.getStudentGroups(userId).subscribe({
+        next: (groupsData) => {
+          this.groups = groupsData;
+          console.log('Student Dashboard - Groups loaded:', groupsData.length);
+        },
+        error: (error) => {
+          console.error('Failed to load groups:', error);
+        }
+      });
+    }
+  }
+
   setView(view: string): void {
     const previousView = this.currentView;
     this.currentView = view;
@@ -273,9 +295,15 @@ export class StudentDashboardComponent implements OnInit, OnDestroy {
 
   // Method to refresh groups after creation
   refreshGroups(): void {
-    // Emit an event to tell GroupListComponent to refresh
+    // This will immediately trigger a reload in the GroupListComponent
     if (this.currentView === 'groups') {
-      this.setView('groups'); // This will trigger a reload
+      this.groupService.refreshGroups(); // Add a new method in GroupService
+      
+      // Also refresh the local groups array
+      this.loadGroups();
+      
+      // Debug log
+      console.log('Student Dashboard - Refreshing groups, current groups count:', this.groups?.length || 0);
     }
   }
 

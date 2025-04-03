@@ -1,5 +1,14 @@
 <div class="create-group-section">
-  <div *ngIf="!showGroupForm && !hasApprovedGroup" class="empty-state">
+  <!-- Fixed "Create More Groups" button when groups exist but form is not shown and no approved group -->
+  <div *ngIf="hasAnyGroups && !showGroupForm && !groupCreationSuccess && !hasApprovedGroup" class="create-more-groups-container">
+    <button class="create-more-btn" (click)="showCreateGroupForm()">
+      <i class="fas fa-plus-circle"></i>
+      Create More Groups
+    </button>
+  </div>
+  
+  <!-- Empty state when no form is shown, no approved group, no groups at all -->
+  <div *ngIf="!showGroupForm && !hasApprovedGroup && !groupCreationSuccess && !hasAnyGroups" class="empty-state">
     <div class="illustration">
       <i class="fas fa-users"></i>
     </div>
@@ -11,11 +20,32 @@
     </button>
   </div>
   
- 
-
+  <!-- Success message after group creation -->
+  <div *ngIf="groupCreationSuccess" class="success-message">
+    <i class="fas fa-check-circle"></i>
+    <div class="success-content">
+      <span class="success-title">Group Created Successfully!</span>
+      <span class="success-details">
+        Your group "{{ createdGroupName }}" has been created and is now available in your group list.
+      </span>
+    </div>
+  </div>
+  
   <!-- Create Group Form -->
-  <div class="create-group-form" *ngIf="showGroupForm">
+  <div class="create-group-form" *ngIf="showGroupForm && !groupCreationSuccess">
     <h2>Create Your Project Group</h2>
+    
+    <!-- Form-level error message container -->
+    <div *ngIf="formErrors.length > 0" class="form-error-container">
+      <div class="error-header">
+        <i class="fas fa-exclamation-circle"></i>
+        <span>Please fix the following issues:</span>
+      </div>
+      <ul class="error-list">
+        <li *ngFor="let error of formErrors">{{ error }}</li>
+      </ul>
+    </div>
+    
     <form [formGroup]="createGroupForm" (ngSubmit)="createGroup()">
       <div class="form-group">
         <label for="groupName">
@@ -27,7 +57,12 @@
           id="groupName" 
           formControlName="groupName" 
           placeholder="Enter a name for your project group"
+          [class.error-input]="createGroupForm.get('groupName')?.invalid && createGroupForm.get('groupName')?.touched"
         >
+        <div *ngIf="createGroupForm.get('groupName')?.invalid && createGroupForm.get('groupName')?.touched" class="field-error">
+          <i class="fas fa-exclamation-triangle"></i>
+          Group name is required
+        </div>
       </div>
 
       <div class="form-group">
@@ -58,27 +93,57 @@
             id="memberEmail{{i}}" 
             [formControl]="control" 
             placeholder="Enter student email address"
-            [class.error-input]="searchErrors[control.value]"
+            [class.error-input]="searchErrors[control.value] || (control.invalid && control.touched)"
+            (input)="autoSearchStudent(control.value, i)"
           >
           <button 
             type="button" 
             (click)="searchStudent(control.value, i)" 
             [disabled]="isSearchingStudent || !control.value"
+            aria-label="Search student"
           >
             <i class="fas" 
-               [class.fa-search]="!isSearchingStudent" 
-               [class.fa-spinner]="isSearchingStudent && control.value" 
-               [class.fa-spin]="isSearchingStudent && control.value">
+               [class.fa-search]="!isSearchingStudent || !isSearchingMember[i]" 
+               [class.fa-spinner]="isSearchingStudent && control.value && isSearchingMember[i]" 
+               [class.fa-spin]="isSearchingStudent && control.value && isSearchingMember[i]">
             </i>
           </button>
         </div>
         
-        <div *ngIf="searchErrors[control.value]" class="error-message supervised-error">
+        <!-- Email validation error -->
+        <div *ngIf="control.invalid && control.touched && !searchErrors[control.value]" class="field-error">
           <i class="fas fa-exclamation-triangle"></i>
-          {{searchErrors[control.value]}}
+          Please enter a valid email address
         </div>
         
+        <!-- Search errors with more detailed styling -->
+        <div *ngIf="searchErrors[control.value]" class="error-message supervised-error">
+          <i class="fas fa-exclamation-triangle"></i>
+          <div class="error-content">
+            <span class="error-title">
+              <span *ngIf="searchErrors[control.value].includes('already part of an approved group')">
+                Member Already In Group
+              </span>
+              <span *ngIf="!searchErrors[control.value].includes('already part of an approved group')">
+                Verification Failed
+              </span>
+            </span>
+            <span class="error-detail">{{searchErrors[control.value]}}</span>
+          </div>
+        </div>
+        
+        <!-- Loading indicator -->
+        <div *ngIf="isSearchingMember[i] && !searchErrors[control.value] && !studentSearchResults[control.value]" class="search-status searching">
+          <i class="fas fa-spinner fa-spin"></i>
+          <span>Verifying student...</span>
+        </div>
+        
+        <!-- Student info with success indicator -->
         <div *ngIf="studentSearchResults[control.value]" class="student-info">
+          <div class="student-verified">
+            <i class="fas fa-check-circle"></i>
+            <span>Verified</span>
+          </div>
           <span class="name">{{studentSearchResults[control.value]?.fullName}}</span>
           <span class="enrollment">({{studentSearchResults[control.value]?.enrollmentNumber}})</span>
           <span class="department">{{studentSearchResults[control.value]?.department}}</span>
@@ -90,15 +155,15 @@
           <i class="fas fa-times"></i>
           Cancel
         </button>
-        <button type="submit" class="submit-btn" [disabled]="createGroupForm.invalid || isCreatingGroup">
+        <button type="submit" class="submit-btn" [disabled]="createGroupForm.invalid || isCreatingGroup || hasSearchErrors() || isAnyMemberSearching()">
           <i class="fas" [class.fa-check]="!isCreatingGroup" [class.fa-spinner]="isCreatingGroup" [class.fa-spin]="isCreatingGroup"></i>
           {{ isCreatingGroup ? 'Creating Group...' : 'Create Group' }}
         </button>
       </div>
 
-      <div *ngIf="groupCreationError" class="error-message">
+      <div *ngIf="groupCreationError" class="error-message creation-error">
         <i class="fas fa-exclamation-circle"></i>
-        {{groupCreationError}}
+        <span>{{groupCreationError}}</span>
       </div>
     </form>
   </div>

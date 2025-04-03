@@ -47,6 +47,10 @@ export const routes: Routes = [
     component: DashboardComponent, 
     canActivate: [authGuard, adminGuard],
     children: [
+      { 
+        path: '', 
+        component: DashboardComponent 
+      },
       {
         path: 'users',
         component: UserManagementComponent
@@ -70,10 +74,6 @@ export const routes: Routes = [
       {
         path: 'rubrics',
         component: RubricListComponent
-      },
-      {
-        path: 'evaluations',
-        component: EvaluationListComponent
       },
       {
         path: '',

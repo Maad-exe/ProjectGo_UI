@@ -64,6 +64,10 @@ export class GroupService {
   approvedGroupChanged = this.approvedGroupSubject.asObservable();
   supervisorChanged = this.supervisorSubject.asObservable();
 
+  // Add this property and method
+  private groupsRefreshSubject = new Subject<void>();
+  groupsRefresh$ = this.groupsRefreshSubject.asObservable();
+
   constructor(private http: HttpClient) {}
 
   // State management methods
@@ -150,5 +154,10 @@ export class GroupService {
   // Add this method to your GroupService class
   getGroupsWithSupervisors(): Observable<GroupDetails[]> {
     return this.http.get<GroupDetails[]>(`${this.apiUrl}/with-supervisors`);
+  }
+
+  // Method to trigger a group refresh
+  refreshGroups(): void {
+    this.groupsRefreshSubject.next();
   }
 }

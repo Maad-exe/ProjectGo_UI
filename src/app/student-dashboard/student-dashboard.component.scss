@@ -48,9 +48,10 @@ app-dashboard-sidebar {
 
 // Main content area
 .main-content {
-  padding: 2rem;
+  padding: 20px;
   width: 100%;
-  box-sizing: border-box;
+  max-width: 100%;
+  overflow-x: hidden;
   
   // Remove any duplicate margins/padding from component containers
   app-welcome-section,
@@ -128,4 +129,10 @@ app-dashboard-sidebar {
   width: 100%;
   display: flex;
   flex-direction: column;
+}
+
+.group-section {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }

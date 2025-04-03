@@ -33,6 +33,7 @@
       <div class="group-section" *ngIf="currentView === 'groups'">
         <app-create-group 
           [hasApprovedGroup]="hasApprovedGroup"
+          [hasAnyGroups]="groups && groups.length > 0"
           (groupCreated)="refreshGroups()">
         </app-create-group>
         
@@ -55,10 +56,7 @@
         <app-progress></app-progress>
       </div>
 
-      <!-- Progress View -->
-      <div class="progress-view" *ngIf="currentView === 'progress'">
-        <app-progress></app-progress>
-      </div>
+      <!-- Remove duplicate Progress View -->
     </main>
   </div>
 </div>

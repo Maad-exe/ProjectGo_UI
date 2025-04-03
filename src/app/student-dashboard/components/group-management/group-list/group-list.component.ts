@@ -40,8 +40,15 @@ export class GroupListComponent implements OnInit {
 
   ngOnInit() {
     this.loadStudentGroups();
+    
+    // Subscribe to group supervisor changes
     this.groupService.supervisorChanged.subscribe(teacher => {
       this.groupSupervisor = teacher;
+    });
+    
+    // Subscribe to group refresh events
+    this.groupService.groupsRefresh$.subscribe(() => {
+      this.loadStudentGroups();
     });
   }
 
@@ -336,5 +343,9 @@ export class GroupListComponent implements OnInit {
       g.supervisionStatus !== 'Approved' || 
       (this.approvedGroup && g.id !== this.approvedGroup.id)
     ).length > 0;
+  }
+
+  get hasAnyGroups(): boolean {
+    return this.groups.length > 0;
   }
 }
