@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, Subject, of } from 'rxjs';
 import { environment } from '../../env/env';
-import { map, catchError, tap } from 'rxjs/operators';
+import { map, catchError, tap, delay } from 'rxjs/operators';
 import { TeacherDetails } from './teacher.service';
 
 export interface StudentDetails {
@@ -159,5 +159,37 @@ export class GroupService {
   // Method to trigger a group refresh
   refreshGroups(): void {
     this.groupsRefreshSubject.next();
+  }
+
+  // Add this method to your GroupService
+  getAllGroups(): Observable<any[]> {
+    // Replace with the actual API endpoint if available
+    const url = `${this.apiUrl}/groups`;
+    
+    // For now, return mock data
+    return of([
+      {
+        id: 1,
+        name: 'Project Group 1',
+        supervisionStatus: 'Approved',
+        members: [/* members here */],
+        createdAt: '2023-05-10'
+      },
+      {
+        id: 2,
+        name: 'Project Group 2',
+        supervisionStatus: 'Pending',
+        members: [/* members here */],
+        createdAt: '2023-05-15'
+      },
+      {
+        id: 3,
+        name: 'Project Group 3',
+        supervisionStatus: 'Rejected',
+        members: [/* members here */],
+        createdAt: '2023-05-20'
+      }
+      // Add more mock groups as needed
+    ]).pipe(delay(500));
   }
 }

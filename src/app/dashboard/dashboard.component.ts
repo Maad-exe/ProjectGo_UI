@@ -6,7 +6,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router } from '@angular/router';
 import { NotificationService } from '../services/notifications.service';
 import { Subscription } from 'rxjs';
-import { UserManagementComponent } from './user-management/user-management.component';
+import { DashboardVisualizationComponent } from './components/dashboard-visualization/dashboard-visualization.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -14,15 +14,14 @@ import { UserManagementComponent } from './user-management/user-management.compo
   imports: [
     CommonModule, 
     RouterModule, 
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    DashboardVisualizationComponent  // This must be a standalone component
   ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
   encapsulation: ViewEncapsulation.None
-
 })
 export class DashboardComponent implements OnInit, OnDestroy {
-  //private fb = inject(FormBuilder);
   isSidebarCollapsed = false;
   isAddUserModalOpen = false;
   showPassword: boolean = false; 
@@ -46,17 +45,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     totalTeachers: 32,
     activeProjects: 85,
   };
-
-  // recentActivities = [
-  //   { action: 'New Project Assigned', user: 'Dr. Sarah Smith', project: 'AI Healthcare System', time: '5 min ago' },
-  //   { action: 'Evaluation Scheduled', user: 'Prof. Mike Johnson', project: 'Smart IoT Platform', time: '15 min ago' },
-  //   { action: 'Deadline Updated', user: 'System', project: 'Mid-Term Evaluation', time: '1 hour ago' }
-  // ];
-
-  // upcomingEvaluations = [
-  //   { title: 'Project Proposal Defense', date: '2025-03-01', venue: 'Lab 1', panels: ['Dr. Smith', 'Dr. Johnson'] },
-  //   { title: 'Mid-Term Evaluation', date: '2025-04-15', venue: 'Conference Room', panels: ['Dr. Wilson', 'Dr. Brown'] }
-  // ];
 
   constructor(
     private authService: AuthService,

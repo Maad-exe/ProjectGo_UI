@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { delay } from 'rxjs/operators';
 import { environment } from '../../env/env';
 import { 
   StudentEvaluation, 
@@ -100,5 +101,75 @@ export class EvaluationService {
   
   completeGroupEvaluationById(eventId: number, groupId: number): Observable<any> {
     return this.http.post<any>(`${this.baseUrl}/events/${eventId}/groups/${groupId}/complete`, {});
+  }
+
+  // Add this method to your existing EvaluationService
+  getPerformanceData(): Observable<{labels: string[], averageScores: number[]}> {
+    // This would typically fetch from an API endpoint
+    return of({
+      labels: ['Proposal', 'Design', 'Implementation', 'Testing', 'Presentation'],
+      averageScores: [78, 82, 75, 89, 91]
+    }).pipe(
+      delay(500) // Simulate network delay
+    );
+  }
+
+  getAllEvaluations(): Observable<any[]> {
+    // This would typically fetch from your API
+    return of([
+      {
+        id: 1, 
+        name: 'Project Proposal', 
+        date: new Date(2023, 9, 15), 
+        isCompleted: true,
+        averageScore: 85.5
+      },
+      {
+        id: 2, 
+        name: 'Design Document', 
+        date: new Date(2023, 10, 5), 
+        isCompleted: true,
+        averageScore: 78.2
+      },
+      {
+        id: 3, 
+        name: 'Midterm Presentation', 
+        date: new Date(2023, 11, 10), 
+        isCompleted: true,
+        averageScore: 82.7
+      },
+      {
+        id: 4, 
+        name: 'Implementation Review', 
+        date: new Date(2023, 12, 1), 
+        isCompleted: true,
+        averageScore: 88.3
+      },
+      {
+        id: 5, 
+        name: 'Final Presentation', 
+        date: new Date(2024, 0, 15), 
+        isCompleted: true,
+        averageScore: 90.1
+      },
+      {
+        id: 6, 
+        name: 'Code Review', 
+        date: new Date(2024, 1, 5), 
+        isCompleted: false
+      },
+      {
+        id: 7, 
+        name: 'System Testing', 
+        date: new Date(2024, 1, 20), 
+        isCompleted: false
+      },
+      {
+        id: 8, 
+        name: 'Final Demonstration', 
+        date: new Date(2024, 2, 10), 
+        isCompleted: false
+      }
+    ]).pipe(delay(600));
   }
 }

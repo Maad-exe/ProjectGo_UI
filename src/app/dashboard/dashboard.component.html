@@ -218,33 +218,16 @@
       </div>
     </header>
 
-    <!-- Show dashboard content only when on main dashboard route -->
-    <div class="dashboard-content" *ngIf="isMainDashboard">
-      <div class="stats-grid">
-        <div class="stat-card students">
-          <div class="stat-content">
-            <h3>Students</h3>
-            <p>{{statistics.totalStudents}}</p>
-          </div>
-        </div>
-        
-        <div class="stat-card teachers">
-          <div class="stat-content">
-            <h3>Teachers</h3>
-            <p>{{statistics.totalTeachers}}</p>
-          </div>
-        </div>
-        
-        <div class="stat-card projects">
-          <div class="stat-content">
-            <h3>Projects</h3>
-            <p>{{statistics.activeProjects}}</p>
-          </div>
-        </div>
+    <!-- Conditional Content Area - CHANGED THIS PART -->
+    <ng-container *ngIf="isMainDashboard; else routedContent">
+      <div class="dashboard-content">
+        <app-dashboard-visualization></app-dashboard-visualization>
       </div>
-    </div>
+    </ng-container>
     
-    <!-- Router outlet for nested routes -->
-    <router-outlet></router-outlet>
+    <ng-template #routedContent>
+      <router-outlet></router-outlet>
+    </ng-template>
+    <!-- End of changed section -->
   </main>
 </div>

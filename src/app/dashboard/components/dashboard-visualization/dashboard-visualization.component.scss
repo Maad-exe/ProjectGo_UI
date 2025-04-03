@@ -1,0 +1,294 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.dashboard-visualization {
+  width: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+// Loading state
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  
+  .loading-spinner {
+    font-size: 2rem;
+    color: #3b82f6;
+    margin-bottom: 1rem;
+  }
+  
+  .loading-text {
+    color: #6b7280;
+    font-size: 0.95rem;
+  }
+}
+
+// Stat summary cards
+.stat-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+  
+  .stat-card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    display: flex;
+    align-items: flex-start;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    }
+    
+    .stat-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      margin-right: 16px;
+      
+      i {
+        font-size: 1.4rem;
+      }
+    }
+    
+    .stat-details {
+      flex: 1;
+      
+      .stat-title {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #6b7280;
+        margin: 0 0 5px 0;
+      }
+      
+      .stat-value {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 8px;
+      }
+      
+      .stat-distribution {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        
+        .distribution-item {
+          display: inline-flex;
+          align-items: center;
+          font-size: 0.8rem;
+          color: #4b5563;
+          background: #f3f4f6;
+          padding: 4px 10px;
+          border-radius: 20px;
+          
+          i {
+            font-size: 0.8rem;
+            margin-right: 5px;
+          }
+        }
+      }
+    }
+    
+    // Card type specific styles
+    &.users {
+      .stat-icon {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+      }
+      
+      .distribution-item.students i {
+        color: #3b82f6;
+      }
+      
+      .distribution-item.teachers i {
+        color: #10b981;
+      }
+    }
+    
+    &.groups {
+      .stat-icon {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+      }
+      
+      .distribution-item.approved i {
+        color: #10b981;
+      }
+      
+      .distribution-item.pending i {
+        color: #f59e0b;
+      }
+    }
+    
+    &.evaluations {
+      .stat-icon {
+        background: rgba(139, 92, 246, 0.1);
+        color: #8b5cf6;
+      }
+      
+      .distribution-item.upcoming i {
+        color: #8b5cf6;
+      }
+      
+      .distribution-item.completed i {
+        color: #3b82f6;
+      }
+    }
+    
+    &.panels {
+      .stat-icon {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+      }
+      
+      .distribution-item.teachers i {
+        color: #f59e0b;
+      }
+      
+      .distribution-item.average i {
+        color: #ef4444;
+      }
+    }
+  }
+}
+
+// Charts container
+.charts-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  
+  .chart-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+    gap: 24px;
+    
+    @media (max-width: 1024px) {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  .chart-card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+    
+    &:hover {
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    }
+    
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      
+      h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin: 0;
+      }
+      
+      .chart-actions {
+        display: flex;
+        gap: 8px;
+        
+        .action-btn {
+          width: 32px;
+          height: 32px;
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: transparent;
+          border: none;
+          color: #6b7280;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          
+          &:hover {
+            background: #f3f4f6;
+            color: #1f2937;
+          }
+          
+          &.refresh:hover {
+            color: #3b82f6;
+          }
+        }
+      }
+    }
+    
+    .chart-body {
+      padding: 20px;
+      
+      .chart-container {
+        height: 300px;
+        position: relative;
+        
+        canvas {
+          width: 100%;
+          height: 100%;
+        }
+      }
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .stat-summary-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  .charts-container .chart-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .chart-card .chart-body .chart-container {
+    height: 250px;
+  }
+}
+
+// Animations
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.loading-spinner i {
+  animation: rotate 1s linear infinite;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.stat-card, .chart-card {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+// Add a bit of delay to each card for staggered effect
+.stat-card:nth-child(1) { animation-delay: 0.1s; }
+.stat-card:nth-child(2) { animation-delay: 0.2s; }
+.stat-card:nth-child(3) { animation-delay: 0.3s; }
+.stat-card:nth-child(4) { animation-delay: 0.4s; }

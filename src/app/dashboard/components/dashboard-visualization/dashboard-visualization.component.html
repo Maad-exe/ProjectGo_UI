@@ -1,0 +1,176 @@
+<div class="dashboard-visualization">
+  <!-- Loading state -->
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="loading-spinner">
+      <i class="fas fa-spinner fa-spin"></i>
+    </div>
+    <p class="loading-text">Loading dashboard data...</p>
+  </div>
+
+  <!-- Dashboard content -->
+  <div class="visualization-container" *ngIf="!isLoading">
+    <!-- Header statistics -->
+    <div class="stat-summary-cards">
+      <!-- Total users card -->
+      <div class="stat-card users">
+        <div class="stat-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-details">
+          <h4 class="stat-title">Total Users</h4>
+          <div class="stat-value">{{ metrics.userCounts.total }}</div>
+          <div class="stat-distribution">
+            <span class="distribution-item students">
+              <i class="fas fa-user-graduate"></i>
+              {{ metrics.userCounts.students }} Students
+            </span>
+            <span class="distribution-item teachers">
+              <i class="fas fa-chalkboard-teacher"></i>
+              {{ metrics.userCounts.teachers }} Teachers
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Groups card -->
+      <div class="stat-card groups">
+        <div class="stat-icon">
+          <i class="fas fa-users-cog"></i>
+        </div>
+        <div class="stat-details">
+          <h4 class="stat-title">Project Groups</h4>
+          <div class="stat-value">{{ metrics.groupMetrics.totalGroups }}</div>
+          <div class="stat-distribution">
+            <span class="distribution-item approved">
+              <i class="fas fa-check-circle"></i>
+              {{ metrics.groupMetrics.approvedGroups }} Approved
+            </span>
+            <span class="distribution-item pending">
+              <i class="fas fa-clock"></i>
+              {{ metrics.groupMetrics.pendingGroups }} Pending
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Evaluations card -->
+      <div class="stat-card evaluations">
+        <div class="stat-icon">
+          <i class="fas fa-clipboard-check"></i>
+        </div>
+        <div class="stat-details">
+          <h4 class="stat-title">Evaluations</h4>
+          <div class="stat-value">{{ metrics.evaluationMetrics.totalEvents }}</div>
+          <div class="stat-distribution">
+            <span class="distribution-item upcoming">
+              <i class="fas fa-calendar-alt"></i>
+              {{ metrics.evaluationMetrics.upcomingEvents }} Upcoming
+            </span>
+            <span class="distribution-item completed">
+              <i class="fas fa-flag-checkered"></i>
+              {{ metrics.evaluationMetrics.completedEvents }} Completed
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panels card -->
+      <div class="stat-card panels">
+        <div class="stat-icon">
+          <i class="fas fa-chalkboard"></i>
+        </div>
+        <div class="stat-details">
+          <h4 class="stat-title">Evaluation Panels</h4>
+          <div class="stat-value">{{ metrics.panelMetrics.totalPanels }}</div>
+          <div class="stat-distribution">
+            <span class="distribution-item teachers">
+              <i class="fas fa-user-tie"></i>
+              {{ metrics.panelMetrics.teachersInPanels }} Teachers
+            </span>
+            <span class="distribution-item average">
+              <i class="fas fa-calculator"></i>
+              {{ metrics.panelMetrics.averageTeachersPerPanel | number:'1.1-1' }} Avg. per Panel
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts section -->
+    <div class="charts-container">
+      <!-- First row of charts -->
+      <div class="chart-row">
+        <!-- User distribution chart -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>User Distribution</h3>
+            <div class="chart-actions">
+              <button class="action-btn refresh" title="Refresh Data">
+                <i class="fas fa-sync-alt"></i>
+              </button>
+            </div>
+          </div>
+          <div class="chart-body">
+            <div class="chart-container user-distribution">
+              <canvas #userDistributionChart></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Monthly signups chart -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>Monthly Signups</h3>
+            <div class="chart-actions">
+              <button class="action-btn refresh" title="Refresh Data">
+                <i class="fas fa-sync-alt"></i>
+              </button>
+            </div>
+          </div>
+          <div class="chart-body">
+            <div class="chart-container monthly-signups">
+              <canvas #monthlySignupsChart></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Second row of charts -->
+      <div class="chart-row">
+        <!-- Group status chart -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>Group Status Distribution</h3>
+            <div class="chart-actions">
+              <button class="action-btn refresh" title="Refresh Data">
+                <i class="fas fa-sync-alt"></i>
+              </button>
+            </div>
+          </div>
+          <div class="chart-body">
+            <div class="chart-container group-status">
+              <canvas #groupStatusChart></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Evaluation performance chart -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>Evaluation Performance</h3>
+            <div class="chart-actions">
+              <button class="action-btn refresh" title="Refresh Data">
+                <i class="fas fa-sync-alt"></i>
+              </button>
+            </div>
+          </div>
+          <div class="chart-body">
+            <div class="chart-container evaluation-performance">
+              <canvas #evaluationPerformanceChart></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
