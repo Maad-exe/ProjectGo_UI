@@ -640,3 +640,193 @@
     width: 100%;
   }
 }
+
+// Add these styles to your component's SCSS file
+
+.evaluation-section {
+  margin-bottom: 2rem;
+  
+  h3 {
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.5rem;
+    
+    .badge {
+      font-size: 0.9rem;
+    }
+  }
+}
+
+.evaluation-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 1.5rem;
+}
+
+.evaluation-card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+  
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  }
+  
+  &.completed {
+    border-left: 4px solid #28a745;
+  }
+  
+  .card-header {
+    background: #f8f9fa;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #eee;
+    
+    h4 {
+      margin: 0;
+      font-size: 1.2rem;
+      color: #333;
+    }
+    
+    .scheduled-date, .completed-date {
+      display: block;
+      font-size: 0.9rem;
+      color: #6c757d;
+      margin-top: 0.5rem;
+      
+      i {
+        margin-right: 0.5rem;
+      }
+    }
+  }
+  
+  .card-body {
+    padding: 1.5rem;
+    
+    .group-info {
+      margin-bottom: 1.5rem;
+      
+      h5 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.1rem;
+      }
+      
+      p {
+        margin: 0;
+        color: #6c757d;
+      }
+    }
+    
+    .student-list {
+      h6 {
+        margin-bottom: 1rem;
+        font-size: 1rem;
+      }
+      
+      ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        
+        li {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0.75rem 0;
+          border-bottom: 1px solid #eee;
+          
+          &:last-child {
+            border-bottom: none;
+          }
+          
+          .student-info {
+            display: flex;
+            flex-direction: column;
+            
+            .name {
+              font-weight: 500;
+            }
+            
+            .status {
+              font-size: 0.8rem;
+              padding: 0.25rem 0.5rem;
+              border-radius: 4px;
+              display: inline-block;
+              margin-top: 0.25rem;
+              width: fit-content;
+              
+              &.pending {
+                background: #ffeeba;
+                color: #856404;
+              }
+              
+              &.completed {
+                background: #d4edda;
+                color: #155724;
+              }
+            }
+          }
+          
+          .btn-evaluate {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            
+            i {
+              margin-right: 0.5rem;
+            }
+            
+            &:hover {
+              background: #0069d9;
+            }
+            
+            &:disabled {
+              background: #6c757d;
+              cursor: not-allowed;
+            }
+          }
+        }
+      }
+    }
+    
+    .student-summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      
+      h6 {
+        margin: 0;
+      }
+      
+      .btn-view-details {
+        background: #6c757d;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background 0.2s;
+        display: flex;
+        align-items: center;
+        
+        i {
+          margin-right: 0.5rem;
+        }
+        
+        &:hover {
+          background: #5a6268;
+        }
+      }
+    }
+  }
+}

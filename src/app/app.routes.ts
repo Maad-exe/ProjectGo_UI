@@ -18,6 +18,9 @@ import { PanelListComponent } from '../app/dashboard/components/panel-list/panel
 import { PanelDetailsComponent } from '../app/dashboard/components/panel-details/panel-details.component';
 import { RubricListComponent } from '../app/dashboard/components/rubric-list/rubric-list.component';
 import { EvaluationListComponent } from '../app/dashboard/components/evaluation-list/evaluation-list.component';
+import { ConductEvaluationComponent } from './teacher-dashboard/components/conduct-evaluation/conduct-evaluation.component';
+import { teacherGuard } from './core/guards/teacher.guard';
+
 export const routes: Routes = [
   { 
     path: '', 
@@ -95,7 +98,11 @@ export const routes: Routes = [
     component: TeacherDashboardComponent, 
     canActivate: [authGuard]
   },
-
+  { 
+    path: 'teacher-dashboard/evaluate/:eventId/:groupId/:studentId', 
+    component: ConductEvaluationComponent,
+    canActivate: [authGuard] // You can add teacherGuard if needed
+  },
   { path: 'group-chat/:groupId', component: GroupChatComponent },
   { path: '**', redirectTo: '/login' } 
 ];

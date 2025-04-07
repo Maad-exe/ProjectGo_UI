@@ -32,6 +32,10 @@
         <li [class.active]="currentView === 'chat'" *ngIf="showGroupChat">
           <i class="fas fa-comments"></i> Group Chat
         </li>
+        <li [class.active]="currentView === 'evaluations'" (click)="setView('evaluations')">
+          <i class="fas fa-clipboard-check"></i> Evaluations
+          <span class="badge" *ngIf="pendingEvaluations > 0">{{ pendingEvaluations }}</span>
+        </li>
         <li (click)="logout()">
           <i class="fas fa-sign-out-alt"></i> Logout
         </li>
@@ -176,6 +180,103 @@
             [groupId]="selectedGroupForChat.id" 
             [groupName]="selectedGroupForChat.name">
           </app-group-chat>
+        </div>
+      </div>
+      
+      <!-- Evaluations View -->
+      <div *ngIf="currentView === 'evaluations'">
+        <h2>My Evaluations</h2>
+        
+        <div class="loading-spinner" *ngIf="isLoading">
+          <i class="fas fa-spinner fa-spin"></i> Loading evaluations...
+        </div>
+        
+        <div class="no-data" *ngIf="!isLoading && panelEvaluations.length === 0">
+          <i class="fas fa-clipboard-list"></i>
+          <p>You don't have any assigned evaluations yet.</p>
+        </div>
+        
+        <!-- Pending Evaluations Section -->
+        <div class="evaluation-section" *ngIf="!isLoading && upcomingEvaluations.length > 0">
+          <h3>
+            <i class="fas fa-hourglass-half me-2"></i>
+            Pending Evaluations 
+            <span class="badge bg-warning ms-2">{{ pendingEvaluations }}</span>
+          </h3>
+          
+          <div class="evaluation-cards">
+            <div class="evaluation-card" *ngFor="let evaluation of upcomingEvaluations">
+              <div class="card-header">
+                <h4>{{ evaluation.eventName }}</h4>
+                <span class="scheduled-date">
+                  <i class="far fa-calendar-alt"></i>
+                  Scheduled: {{ evaluation.scheduledDate | date:'medium' }}
+                </span>
+              </div>
+              
+              <div class="card-body">
+                <div class="group-info">
+                  <h5>Group: {{ evaluation.groupName }}</h5>
+                  <p>Panel: {{ evaluation.panelName }}</p>
+                </div>
+                
+                <div class="student-list" *ngIf="evaluation.studentEvaluations">
+                  <h6>Students to Evaluate:</h6>
+                  <ul>
+                    <li *ngFor="let student of evaluation.studentEvaluations">
+                      <div class="student-info">
+                        <span class="name">{{ student.studentName }}</span>
+                        <span class="status" [ngClass]="student.isCompleted ? 'completed' : 'pending'">
+                          {{ student.isCompleted ? 'Evaluated' : 'Pending' }}
+                        </span>
+                      </div>
+                      <button 
+                        class="btn-evaluate" 
+                        [disabled]="student.isCompleted"
+                        (click)="conductEvaluation(evaluation, student.studentId)">
+                        <i class="fas" [ngClass]="student.isCompleted ? 'fa-check-circle' : 'fa-clipboard-check'"></i>
+                        {{ student.isCompleted ? 'View Evaluation' : 'Evaluate' }}
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Completed Evaluations Section -->
+        <div class="evaluation-section" *ngIf="!isLoading && completedEvaluations.length > 0">
+          <h3>
+            <i class="fas fa-check-circle me-2"></i>
+            Completed Evaluations
+          </h3>
+          
+          <div class="evaluation-cards">
+            <div class="evaluation-card completed" *ngFor="let evaluation of completedEvaluations">
+              <div class="card-header">
+                <h4>{{ evaluation.eventName }}</h4>
+                <span class="completed-date">
+                  <i class="far fa-calendar-check"></i>
+                  Completed: {{ evaluation.completedDate | date:'medium' }}
+                </span>
+              </div>
+              
+              <div class="card-body">
+                <div class="group-info">
+                  <h5>Group: {{ evaluation.groupName }}</h5>
+                  <p>Panel: {{ evaluation.panelName }}</p>
+                </div>
+                
+                <div class="student-summary">
+                  <h6>Evaluated Students: {{ evaluation.studentEvaluations.length }}</h6>
+                  <button class="btn-view-details" (click)="viewEvaluationDetails(evaluation)">
+                    <i class="fas fa-eye"></i> View Details
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       

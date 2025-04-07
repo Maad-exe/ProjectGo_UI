@@ -172,4 +172,9 @@ export class EvaluationService {
       }
     ]).pipe(delay(600));
   }
+
+  // Add this method to your EvaluationService class if it doesn't exist
+  submitEvaluation(evaluationData: any): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/submit`, evaluationData);
+  }
 }

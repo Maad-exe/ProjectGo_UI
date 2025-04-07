@@ -1,9 +1,15 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, catchError, tap } from 'rxjs/operators';
 import { environment } from '../../env/env';
 import { Panel, CreatePanelDto, UpdatePanelDto, AssignPanelDto, GroupEvaluation } from '../models/panel.model';
+
+// Define an interface for the API response that might contain a data property
+interface ApiResponse<T> {
+  data?: T;
+  [key: string]: any;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -28,11 +34,12 @@ export class PanelService {
   }
   
   getPanelsByEventId(eventId: number): Observable<Panel[]> {
-    // Based on available endpoints, we need to implement a way to get panels by event ID
-    // Since there's no direct endpoint, we might need to get all panels and filter them
-    // or modify the backend to add this endpoint
-    return this.getAllPanels().pipe(
-      map(panels => panels.filter(panel => panel.eventId === eventId))
+    return this.http.get<Panel[]>(`${this.baseUrl}/byEvent/${eventId}`).pipe(
+      tap(response => console.log('Raw panel response:', response)),
+      catchError(error => {
+        console.error('Error fetching panels:', error);
+        return throwError(() => error);
+      })
     );
   }
   
@@ -46,17 +53,14 @@ export class PanelService {
   
   // Group evaluation assignments
   assignPanelToGroup(assign: AssignPanelDto): Observable<GroupEvaluation> {
-    // This matches your Swagger endpoint
     return this.http.post<GroupEvaluation>(`${this.evaluationUrl}/assign-panel`, assign);
   }
   
   getGroupEvaluationsByEventId(eventId: number): Observable<GroupEvaluation[]> {
-    // This matches your Swagger endpoint
     return this.http.get<GroupEvaluation[]>(`${this.evaluationUrl}/events/${eventId}/evaluations`);
   }
   
   getGroupEvaluationsByPanelId(panelId: number): Observable<GroupEvaluation[]> {
-    // This matches your Swagger endpoint - fix the URL
     return this.http.get<GroupEvaluation[]>(`${this.evaluationUrl}/panels/${panelId}/evaluations`);
   }
   
@@ -64,12 +68,45 @@ export class PanelService {
     return this.http.post<any>(`${this.baseUrl}/${panelId}/groups/${groupId}/events/${eventId}`, {});
   }
 
-  // Add this method to your existing PanelService
   getGroupEvaluationById(eventId: number, groupId: number): Observable<any[]> {
     return this.http.get<any[]>(`${this.evaluationUrl}/events/${eventId}/groups/${groupId}/evaluations`);
   }
 
-  // Add this method to mock data when backend is being developed
+  getTeacherPanels(teacherId?: number): Observable<Panel[]> {
+    // Change the API endpoint to match your backend controller
+    return this.http.get<Panel[]>(`${environment.apiBaseUrl}/teacher/evaluations/panels`).pipe(
+      catchError(error => {
+        console.error('Error fetching teacher panels:', error);
+        // Return mock data for now
+        if (teacherId) {
+          return of(this.getMockPanels().filter(p => 
+            p.members.some(m => m.teacherId === teacherId)
+          ));
+        } else {
+          return of(this.getMockPanels());
+        }
+      })
+    );
+  }
+
+  getAllGroupEvaluations(): Observable<GroupEvaluation[]> {
+    return this.http.get<GroupEvaluation[]>(`${this.evaluationUrl}/all`).pipe(
+      catchError(error => {
+        console.error('Error fetching all evaluations:', error);
+        return of(this.getMockGroupEvaluations());
+      })
+    );
+  }
+
+  getTeacherPanelAssignments(): Observable<GroupEvaluation[]> {
+    return this.http.get<GroupEvaluation[]>(`${environment.apiBaseUrl}/teacher/evaluations/panel-assignments`).pipe(
+      catchError(error => {
+        console.error('Error fetching teacher panel assignments:', error);
+        return of(this.getMockGroupEvaluations());
+      })
+    );
+  }
+
   getMockPanels(): Panel[] {
     return [
       {

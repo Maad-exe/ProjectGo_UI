@@ -57,11 +57,15 @@ export class EventDetailsComponent implements OnInit {
   }
 
   loadPanels(): void {
-    this.panelService.getPanelsByEventId(this.eventId).subscribe({
+    this.panelService.getAllPanels().subscribe({
       next: (panels) => {
-        this.panels = panels;
+        console.log("API response panels:", panels);
+        
+        // Store all panels (later when API supports filtering by event, you can filter here)
+        this.panels = panels || [];
+        
         this.loading = false;
-        console.log("Successfully loaded panels:", panels);
+        console.log("Processed panels:", this.panels);
       },
       error: (error) => {
         console.error("Error loading panels:", error);
@@ -69,8 +73,7 @@ export class EventDetailsComponent implements OnInit {
         this.loading = false;
         
         // Optionally, use mock data while developing
-        this.panels = this.panelService.getMockPanels()
-          .filter(p => p.eventId === this.eventId || !p.eventId);
+        this.panels = this.panelService.getMockPanels();
       }
     });
   }
@@ -108,13 +111,24 @@ export class EventDetailsComponent implements OnInit {
     });
   }
 
-  openAssignGroupDialog(): void {
+  // Combined method that handles both with and without panelId
+  openAssignGroupDialog(panelId?: number): void {
+    const dialogData = {
+      eventId: this.eventId,
+      assignedGroups: this.assignedGroups
+    };
+
+    // If panelId is provided, add it to the dialog data
+    if (panelId !== undefined) {
+      Object.assign(dialogData, { panelId });
+    } else {
+      // If no panelId, add the panels list
+      Object.assign(dialogData, { panels: this.panels });
+    }
+
     const dialogRef = this.dialog.open(AssignGroupDialogComponent, {
       width: '600px',
-      data: { 
-        eventId: this.eventId,
-        panels: this.panels
-      }
+      data: dialogData
     });
 
     dialogRef.afterClosed().subscribe(result => {

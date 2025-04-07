@@ -10,25 +10,58 @@
     
     <div class="modal-body">
       <form [formGroup]="assignForm" (ngSubmit)="onSubmit()">
+        <!-- Panel Selection (only when no panel is pre-selected) -->
+        <div class="mb-3" *ngIf="!data.panelId && data.panels && data.panels.length > 0">
+          <label for="panelId" class="form-label">Select Panel *</label>
+          <select 
+            class="form-select" 
+            id="panelId" 
+            formControlName="panelId"
+            [class.is-invalid]="assignForm.get('panelId')?.invalid && assignForm.get('panelId')?.touched">
+            <option value="" disabled>-- Select a panel --</option>
+            <option *ngFor="let panel of data.panels" [value]="panel.id">
+              {{ panel.name }} ({{ panel.members?.length || 0 }} members)
+            </option>
+          </select>
+          <div class="invalid-feedback" *ngIf="assignForm.get('panelId')?.invalid && assignForm.get('panelId')?.touched">
+            Please select a panel
+          </div>
+        </div>
+        
+        <!-- Selected Panel Info (when panel is pre-selected) -->
+        <div class="mb-3" *ngIf="data.panelId">
+          <label class="form-label">Assigning to Panel:</label>
+          <div class="alert alert-info">
+            <strong>{{ selectedPanel?.name || 'Selected Panel' }}</strong>
+          </div>
+        </div>
+        
+        <!-- Group Selection -->
         <div class="mb-3">
-          <label for="groupId" class="form-label">Select Group</label>
+          <label for="groupId" class="form-label">Select Group *</label>
           <select 
             class="form-select" 
             id="groupId" 
             formControlName="groupId"
             [class.is-invalid]="assignForm.get('groupId')?.invalid && assignForm.get('groupId')?.touched">
             <option value="" disabled>-- Select a group --</option>
-            <option *ngFor="let group of groups" [value]="group.id">
+            <option *ngFor="let group of availableGroups" [value]="group.id">
               {{ group.name }} (Supervised by: {{ group.teacherName || 'Unknown' }})
             </option>
           </select>
           <div class="invalid-feedback" *ngIf="assignForm.get('groupId')?.invalid && assignForm.get('groupId')?.touched">
             Please select a group
           </div>
+          
+          <div *ngIf="availableGroups.length === 0 && !loading" class="alert alert-info mt-2">
+            <i class="fas fa-info-circle me-2"></i>
+            All supervised groups are already assigned to panels for this event.
+          </div>
         </div>
         
+        <!-- Scheduled Date -->
         <div class="mb-3">
-          <label for="scheduledDate" class="form-label">Scheduled Date</label>
+          <label for="scheduledDate" class="form-label">Scheduled Date *</label>
           <input 
             type="datetime-local" 
             class="form-control" 
@@ -50,7 +83,7 @@
         type="button" 
         class="btn btn-success" 
         (click)="onSubmit()"
-        [disabled]="assignForm.invalid || loading">
+        [disabled]="assignForm.invalid || loading || availableGroups.length === 0">
         <i class="fas" [ngClass]="{'fa-calendar-check': !loading, 'fa-spinner fa-spin': loading}"></i>
         <span class="ms-1">{{ loading ? 'Assigning...' : 'Assign Group' }}</span>
       </button>

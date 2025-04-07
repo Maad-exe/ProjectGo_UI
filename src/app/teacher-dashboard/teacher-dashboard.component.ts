@@ -9,6 +9,9 @@ import { GroupDetails } from '../services/group.service';
 import { GroupChatComponent } from '../group-chat/group-chat.component';
 import { ChatService } from '../services/chat.service';
 import { Subscription } from 'rxjs';
+import { PanelService } from '../services/panel.service';
+import { EvaluationService } from '../services/evaluation.service';
+import { EventService } from '../services/event.service';
 
 interface TeacherInfo {
   fullName: string;
@@ -45,51 +48,31 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
   // Add new properties
   private subscriptions: Subscription[] = [];
   unreadMessagesByGroup: { [groupId: number]: number } = {};
+  assignedPanels: any[] = [];
+  panelEvaluations: any[] = [];
+  pendingEvaluations: number = 0;
+  upcomingEvaluations: any[] = [];
+  completedEvaluations: any[] = [];
   
   constructor(
     private authService: AuthService,
     private router: Router,
     private supervisionService: SupervisionService,
     private notificationService: NotificationService,
-    private chatService: ChatService  // Add ChatService
+    private chatService: ChatService,  // Add ChatService
+    private panelService: PanelService,
+    private evaluationService: EvaluationService,
+    private eventService: EventService
   ) {}
 
   ngOnInit() {
-    if (!this.authService.isLoggedIn()) {
-      this.router.navigate(['/login']);
-      return;
-    }
-    
-    if (!this.authService.isTeacher()) {
-      this.notificationService.showError('Access denied: Teacher role required');
-      this.router.navigate(['/login']);
-      return;
-    }
-    
     this.loadTeacherInfo();
-    //this.setView('dashboard');
-
-    // Subscribe to unread messages updates
-    this.subscriptions.push(
-      this.chatService.unreadMessages$.subscribe({
-        next: () => this.updateUnreadCounts(),
-        error: err => console.error('Error in unread messages subscription:', err)
-      })
-    );
-
-    // Initial update of unread counts
-    this.updateUnreadCounts();
-
-    // Set up periodic refresh
-    const refreshInterval = setInterval(() => {
-      if (this.authService.isLoggedIn()) {
-        this.updateUnreadCounts();
-      }
-    }, 30000);
-
-    this.subscriptions.push({
-      unsubscribe: () => clearInterval(refreshInterval)
-    } as Subscription);
+    this.loadSupervisionRequests();
+    this.loadTeacherGroups();
+    this.loadTeacherPanels(); // Add this new method call
+    
+    // Set up chat subscriptions
+    this.setupChatSubscriptions();
   }
 
   loadTeacherInfo() {
@@ -211,5 +194,90 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
+  // Update loadTeacherPanels method
+  loadTeacherPanels() {
+    this.isLoading = true;
+  
+    // Get the teacher ID if needed, but make the call without it since the API doesn't require it
+    // The server will identify the teacher from the auth token
+    const teacherId = this.authService.getUserId();
+    
+    this.panelService.getTeacherPanels().subscribe({
+      next: (panels) => {
+        this.assignedPanels = panels;
+        console.log('Teacher panels loaded:', panels);
+        
+        // Load evaluations for each panel
+        if (this.assignedPanels.length > 0) {
+          this.loadPanelEvaluations();
+        } else {
+          this.isLoading = false;
+        }
+      },
+      error: (error) => {
+        console.error('Error loading panels:', error);
+        this.notificationService.showError('Failed to load your evaluation panels');
+        this.isLoading = false;
+      }
+    });
+  }
+
+  // Change this in loadPanelEvaluations method
+  loadPanelEvaluations() {
+    this.isLoading = true;
+  
+    // Use the panel-assignments endpoint from your TeacherEvaluationController
+    this.panelService.getTeacherPanelAssignments().subscribe({
+      next: (evaluations) => {
+        this.panelEvaluations = evaluations;
+        console.log('Panel evaluations loaded:', this.panelEvaluations);
+        
+        // Sort evaluations by status and date
+        this.upcomingEvaluations = this.panelEvaluations.filter(e => !e.isCompleted)
+          .sort((a, b) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime());
+        
+        this.completedEvaluations = this.panelEvaluations.filter(e => e.isCompleted);
+        
+        this.pendingEvaluations = this.upcomingEvaluations.length;
+        
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading evaluations:', error);
+        this.notificationService.showError('Failed to load evaluations');
+        this.isLoading = false;
+      }
+    });
+  }
+
+  conductEvaluation(evaluation: any, studentId: number) {
+    this.router.navigate([
+      '/teacher-dashboard/evaluate',
+      evaluation.eventId,
+      evaluation.groupId,
+      studentId
+    ]);
+  }
+
+  // Add the viewEvaluationDetails method
+  viewEvaluationDetails(evaluation: any) {
+    // You could navigate to a details page or open a modal
+    this.router.navigate([
+      '/teacher-dashboard/evaluation-details',
+      evaluation.id
+    ]);
+  }
+
+  // Add this method to your TeacherDashboardComponent class
+  private setupChatSubscriptions() {
+    // Subscribe to unread messages updates
+    const unreadSubscription = this.chatService.getUnreadMessagesByGroup().subscribe(
+      counts => {
+        this.unreadMessagesByGroup = counts;
+      }
+    );
+    this.subscriptions.push(unreadSubscription);
   }
 }
