@@ -220,12 +220,14 @@
                   <p>Panel: {{ evaluation.panelName }}</p>
                 </div>
                 
-                <div class="student-list" *ngIf="evaluation.studentEvaluations">
+                <!-- Student list - Check if it exists and has items -->
+                <div class="student-list" *ngIf="evaluation.students && evaluation.students.length > 0">
                   <h6>Students to Evaluate:</h6>
                   <ul>
-                    <li *ngFor="let student of evaluation.studentEvaluations">
+                    <li *ngFor="let student of evaluation.students">
                       <div class="student-info">
-                        <span class="name">{{ student.studentName }}</span>
+                        <span class="name">{{ student.fullName }}</span>
+                        <span class="enrollment">{{ student.enrollmentNumber }}</span>
                         <span class="status" [ngClass]="student.isCompleted ? 'completed' : 'pending'">
                           {{ student.isCompleted ? 'Evaluated' : 'Pending' }}
                         </span>
@@ -233,12 +235,30 @@
                       <button 
                         class="btn-evaluate" 
                         [disabled]="student.isCompleted"
-                        (click)="conductEvaluation(evaluation, student.studentId)">
+                        (click)="conductEvaluation(evaluation, student.id)">
                         <i class="fas" [ngClass]="student.isCompleted ? 'fa-check-circle' : 'fa-clipboard-check'"></i>
                         {{ student.isCompleted ? 'View Evaluation' : 'Evaluate' }}
                       </button>
                     </li>
                   </ul>
+                </div>
+                
+                <!-- Fallback if no students are in the list -->
+                <div class="no-students" *ngIf="!evaluation.students || evaluation.students.length === 0">
+                  <div *ngIf="!evaluation.loadError; else loadError">
+                    <button class="btn-refresh" (click)="loadStudentsForEvaluation(evaluation.id)">
+                      <i class="fas fa-sync-alt"></i> Load Students
+                    </button>
+                  </div>
+                  <ng-template #loadError>
+                    <div class="load-error">
+                      <i class="fas fa-exclamation-triangle"></i>
+                      <p>Failed to load students</p>
+                      <button class="btn-retry" (click)="loadStudentsForEvaluation(evaluation.id)">
+                        <i class="fas fa-redo"></i> Retry
+                      </button>
+                    </div>
+                  </ng-template>
                 </div>
               </div>
             </div>
@@ -269,7 +289,7 @@
                 </div>
                 
                 <div class="student-summary">
-                  <h6>Evaluated Students: {{ evaluation.studentEvaluations.length }}</h6>
+                  <h6>Evaluated Students: {{ evaluation.students?.length || 0 }}</h6>
                   <button class="btn-view-details" (click)="viewEvaluationDetails(evaluation)">
                     <i class="fas fa-eye"></i> View Details
                   </button>

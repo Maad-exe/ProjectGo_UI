@@ -830,3 +830,161 @@
     }
   }
 }
+
+// Add these styles to your component's stylesheet
+
+.student-list {
+  margin-top: 1rem;
+  
+  h6 {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+    color: #555;
+  }
+  
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    
+    li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #eee;
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      .student-info {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        
+        .name {
+          font-weight: 500;
+          color: #333;
+        }
+        
+        .enrollment {
+          font-size: 0.8rem;
+          color: #777;
+          margin-top: 0.25rem;
+        }
+        
+        .status {
+          font-size: 0.8rem;
+          padding: 0.2rem 0.5rem;
+          border-radius: 4px;
+          display: inline-block;
+          margin-top: 0.25rem;
+          width: fit-content;
+          
+          &.pending {
+            background: #fff3cd;
+            color: #856404;
+          }
+          
+          &.completed {
+            background: #d4edda;
+            color: #155724;
+          }
+        }
+      }
+      
+      .btn-evaluate {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background 0.2s;
+        display: flex;
+        align-items: center;
+        
+        i {
+          margin-right: 0.5rem;
+        }
+        
+        &:hover {
+          background: #0069d9;
+        }
+        
+        &:disabled {
+          background: #6c757d;
+          cursor: not-allowed;
+        }
+      }
+    }
+  }
+}
+
+.no-students {
+  display: flex;
+  justify-content: center;
+  padding: 1rem 0;
+  
+  .btn-refresh {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    
+    i {
+      margin-right: 0.5rem;
+    }
+    
+    &:hover {
+      background: #5a6268;
+    }
+  }
+  
+  .load-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+    color: #dc3545;
+    
+    i {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    p {
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+    }
+    
+    .btn-retry {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      margin-top: 0.5rem;
+      
+      i {
+        margin-right: 0.5rem;
+        font-size: 0.9rem;
+        margin-bottom: 0;
+      }
+      
+      &:hover {
+        background: #c82333;
+      }
+    }
+  }
+}

@@ -242,6 +242,11 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
         
         this.pendingEvaluations = this.upcomingEvaluations.length;
         
+        // Load students for each upcoming evaluation
+        this.upcomingEvaluations.forEach(evaluation => {
+          this.loadStudentsForEvaluation(evaluation.id);
+        });
+        
         this.isLoading = false;
       },
       error: (error) => {
@@ -253,6 +258,7 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
   }
 
   conductEvaluation(evaluation: any, studentId: number) {
+    console.log(`Navigating to evaluation for student ${studentId} in event ${evaluation.eventId}, group ${evaluation.groupId}`);
     this.router.navigate([
       '/teacher-dashboard/evaluate',
       evaluation.eventId,
@@ -279,5 +285,32 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
       }
     );
     this.subscriptions.push(unreadSubscription);
+  }
+
+  // Add these methods to your TeacherDashboardComponent class
+
+  loadStudentsForEvaluation(evaluationId: number) {
+    this.panelService.getStudentsForEvaluation(evaluationId).subscribe({
+      next: (students) => {
+        // Find the evaluation and update its students
+        const evaluation = this.upcomingEvaluations.find(e => e.id === evaluationId);
+        if (evaluation) {
+          evaluation.students = students;
+          // Force change detection
+          this.upcomingEvaluations = [...this.upcomingEvaluations];
+        }
+      },
+      error: (error) => {
+        console.error('Error loading students for evaluation:', error);
+        this.notificationService.showError('Failed to load students for this evaluation');
+        
+        // Update the UI to show the error state for this evaluation
+        const evaluation = this.upcomingEvaluations.find(e => e.id === evaluationId);
+        if (evaluation) {
+          evaluation.loadError = true;
+          this.upcomingEvaluations = [...this.upcomingEvaluations];
+        }
+      }
+    });
   }
 }

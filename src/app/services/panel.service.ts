@@ -72,19 +72,13 @@ export class PanelService {
     return this.http.get<any[]>(`${this.evaluationUrl}/events/${eventId}/groups/${groupId}/evaluations`);
   }
 
-  getTeacherPanels(teacherId?: number): Observable<Panel[]> {
+  getTeacherPanels(): Observable<Panel[]> {
     // Change the API endpoint to match your backend controller
     return this.http.get<Panel[]>(`${environment.apiBaseUrl}/teacher/evaluations/panels`).pipe(
       catchError(error => {
         console.error('Error fetching teacher panels:', error);
-        // Return mock data for now
-        if (teacherId) {
-          return of(this.getMockPanels().filter(p => 
-            p.members.some(m => m.teacherId === teacherId)
-          ));
-        } else {
-          return of(this.getMockPanels());
-        }
+        // Don't use mock data anymore
+        return throwError(() => new Error('Failed to load teacher panels'));
       })
     );
   }
@@ -102,7 +96,18 @@ export class PanelService {
     return this.http.get<GroupEvaluation[]>(`${environment.apiBaseUrl}/teacher/evaluations/panel-assignments`).pipe(
       catchError(error => {
         console.error('Error fetching teacher panel assignments:', error);
-        return of(this.getMockGroupEvaluations());
+        // Don't use mock data anymore
+        return throwError(() => new Error('Failed to load panel assignments'));
+      })
+    );
+  }
+
+  getStudentsForEvaluation(evaluationId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${environment.apiBaseUrl}/teacher/evaluations/group-evaluations/${evaluationId}/students`).pipe(
+      catchError(error => {
+        console.error('Error fetching students for evaluation:', error);
+        // Don't use mock data anymore
+        return throwError(() => new Error('Failed to load students for this evaluation'));
       })
     );
   }
@@ -159,6 +164,32 @@ export class PanelService {
         isCompleted: false,
         comments: '',
         studentEvaluations: []
+      }
+    ];
+  }
+
+  private getMockEvaluationStudents(): any[] {
+    return [
+      {
+        id: 101,
+        fullName: 'Ayesha Khan',
+        enrollmentNumber: 'FA20-BCS-012',
+        department: 'Computer Science',
+        isCompleted: false
+      },
+      {
+        id: 102,
+        fullName: 'Ali Hassan',
+        enrollmentNumber: 'FA20-BCS-024',
+        department: 'Computer Science',
+        isCompleted: false
+      },
+      {
+        id: 103,
+        fullName: 'Sara Ahmed',
+        enrollmentNumber: 'FA20-BCS-045',
+        department: 'Computer Science',
+        isCompleted: true
       }
     ];
   }
