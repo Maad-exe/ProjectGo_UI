@@ -1,144 +1,186 @@
 <div class="evaluation-container">
   <div class="evaluation-header">
     <h2>Student Evaluation</h2>
-    <button class="btn btn-secondary" (click)="navigateBack()">Back to Dashboard</button>
+    <button class="btn btn-secondary" (click)="navigateBack()">
+      <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </button>
   </div>
 
+  <!-- Loading State -->
   <div *ngIf="loading" class="loading-indicator">
-    <div class="spinner-border text-primary" role="status">
+    <div class="spinner-border" role="status">
       <span class="visually-hidden">Loading...</span>
     </div>
-    <p class="mt-2">Loading evaluation data...</p>
+    <p>Loading evaluation data...</p>
   </div>
 
+  <!-- Content Area -->
   <div *ngIf="!loading" class="evaluation-content">
+    <!-- Status Indicator -->
+    <div class="evaluation-status" [ngClass]="existingEvaluation?.id ? (existingEvaluation?.isComplete ? 'completed' : 'pending') : 'new'">
+      <i class="fas" [ngClass]="existingEvaluation?.id ? (existingEvaluation?.isComplete ? 'fa-check-circle' : 'fa-clock') : 'fa-plus-circle'"></i>
+      {{ existingEvaluation?.id ? (existingEvaluation?.isComplete ? 'Completed' : 'In Progress') : 'New Evaluation' }}
+    </div>
+
     <!-- Student Information Card -->
-    <div class="student-info-card">
-      <div class="card">
-        <div class="card-header">
-          <h3>Student Information</h3>
-        </div>
-        <div class="card-body" *ngIf="studentInfo">
-          <div class="row">
-            <div class="col-md-6">
-              <p><strong>Name:</strong> {{ studentInfo.fullName }}</p>
-              <p><strong>Email:</strong> {{ studentInfo.email }}</p>
-            </div>
-            <div class="col-md-6">
-              <p><strong>ID:</strong> {{ studentInfo.id }}</p>
-              <p><strong>Department:</strong> {{ studentInfo.department }}</p>
-              <p *ngIf="studentInfo.enrollmentNumber"><strong>Enrollment:</strong> {{ studentInfo.enrollmentNumber }}</p>
-            </div>
+    <div class="student-info-card card card-hover-effect">
+      <div class="card-header">
+        <h3><i class="fas fa-user-graduate mr-2"></i> Student Information</h3>
+      </div>
+      <div class="card-body" *ngIf="studentInfo">
+        <div class="row">
+          <div class="col-md-6">
+            <p><strong>Name:</strong> {{ studentInfo.fullName }}</p>
+            <p><strong>Email:</strong> {{ studentInfo.email }}</p>
+          </div>
+          <div class="col-md-6">
+            <p><strong>ID:</strong> {{ studentInfo.id }}</p>
+            <p><strong>Department:</strong> {{ studentInfo.department }}</p>
+            <p *ngIf="studentInfo.enrollmentNumber"><strong>Enrollment:</strong> {{ studentInfo.enrollmentNumber }}</p>
           </div>
         </div>
-        <div class="card-body" *ngIf="!studentInfo">
-          <p class="text-danger">Unable to load student information</p>
-        </div>
+      </div>
+      <div class="card-body" *ngIf="!studentInfo">
+        <p class="text-danger">Unable to load student information</p>
       </div>
     </div>
 
     <!-- Event Information -->
-    <div class="event-info-card mt-3">
-      <div class="card">
-        <div class="card-header">
-          <h3>Evaluation Event: {{ eventDetails?.name }}</h3>
-        </div>
-        <div class="card-body">
-          <p><strong>Total Marks:</strong> {{ totalMarks }}</p>
-          <p><strong>Evaluation Type:</strong> {{ isRubricEvaluation ? 'Rubric-based' : 'Simple' }}</p>
-          <p *ngIf="isRubricEvaluation && rubric"><strong>Rubric:</strong> {{ rubric.name }}</p>
-        </div>
+    <div class="event-info-card card card-hover-effect mt-3">
+      <div class="card-header">
+        <h3><i class="fas fa-calendar-alt mr-2"></i> Evaluation Event: {{ eventDetails?.name }}</h3>
+      </div>
+      <div class="card-body">
+        <p><strong>Total Marks:</strong> <span class="badge bg-primary">{{ totalMarks }}</span></p>
+        <p>
+          <strong>Evaluation Type:</strong> 
+          <span class="badge" [ngClass]="isRubricEvaluation ? 'bg-info' : 'bg-secondary'">
+            {{ isRubricEvaluation ? 'Rubric-based' : 'Simple' }}
+          </span>
+        </p>
+        <p *ngIf="isRubricEvaluation && rubric">
+          <strong>Rubric:</strong> {{ rubric.name }}
+          <!-- <span class="badge bg-light text-dark" *ngIf="rubric.description">{{ rubric.description }}</span> -->
+        </p>
       </div>
     </div>
 
     <!-- Evaluation Form -->
     <form [formGroup]="evaluationForm" (ngSubmit)="onSubmit()" class="mt-4">
       <!-- Simple Evaluation -->
-      <div *ngIf="!isRubricEvaluation" class="card mb-3">
+      <div *ngIf="!isRubricEvaluation" class="card card-hover-effect mb-3">
         <div class="card-header">
-          <h3>Simple Evaluation</h3>
+          <h3><i class="fas fa-star-half-alt mr-2"></i> Simple Evaluation</h3>
         </div>
         <div class="card-body">
           <div class="form-group mb-3">
-            <label for="obtainedMarks" class="form-label">Obtained Marks (out of {{ totalMarks }})</label>
-            <input 
-              type="number" 
-              id="obtainedMarks" 
-              formControlName="obtainedMarks" 
-              class="form-control"
-              [min]="0"
-              [max]="totalMarks">
-            <div class="invalid-feedback" *ngIf="evaluationForm.get('obtainedMarks')?.invalid && evaluationForm.get('obtainedMarks')?.touched">
-              <span *ngIf="evaluationForm.get('obtainedMarks')?.errors?.['required']">Score is required</span>
-              <span *ngIf="evaluationForm.get('obtainedMarks')?.errors?.['min']">Score must be at least 0</span>
-              <span *ngIf="evaluationForm.get('obtainedMarks')?.errors?.['max']">Score cannot exceed {{ totalMarks }}</span>
+            <label for="obtainedMarks" class="form-label">
+              Obtained Marks <span class="text-muted">(out of {{ totalMarks }})</span>
+            </label>
+            <div class="input-group">
+              <input 
+                type="number" 
+                id="obtainedMarks" 
+                formControlName="obtainedMarks" 
+                class="form-control"
+                [min]="0"
+                [max]="totalMarks"
+                [ngClass]="{'is-invalid': evaluationForm.get('obtainedMarks')?.invalid && evaluationForm.get('obtainedMarks')?.touched}">
+              <span class="input-group-text">/{{ totalMarks }}</span>
+            </div>
+            <div class="text-danger" *ngIf="evaluationForm.get('obtainedMarks')?.invalid && evaluationForm.get('obtainedMarks')?.touched">
+              <small *ngIf="evaluationForm.get('obtainedMarks')?.errors?.['required']">Score is required</small>
+              <small *ngIf="evaluationForm.get('obtainedMarks')?.errors?.['min']">Score must be at least 0</small>
+              <small *ngIf="evaluationForm.get('obtainedMarks')?.errors?.['max']">Score cannot exceed {{ totalMarks }}</small>
+            </div>
+            
+            <!-- Progress visualization -->
+            <div class="score-bar mt-2" *ngIf="evaluationForm.get('obtainedMarks')?.valid && evaluationForm.get('obtainedMarks')?.value">
+              <div class="score-progress" [style.width.%]="(evaluationForm.get('obtainedMarks')?.value / totalMarks) * 100"></div>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Rubric-based Evaluation -->
-      <div *ngIf="isRubricEvaluation && rubric" class="card mb-3">
+      <div *ngIf="isRubricEvaluation && rubric" class="card card-hover-effect mb-3">
         <div class="card-header">
-          <h3>Rubric: {{ rubric.name }}</h3>
+          <h3><i class="fas fa-clipboard-list mr-2"></i> Rubric: {{ rubric.name }}</h3>
           <p *ngIf="rubric.description" class="mb-0 text-muted">{{ rubric.description }}</p>
         </div>
         <div class="card-body">
-          <table class="table table-bordered">
-            <thead class="table-light">
-              <tr>
-                <th>Category</th>
-                <th>Description</th>
-                <th>Weight</th>
-                <th>Max Score</th>
-                <th>Your Score</th>
-                <th>Feedback</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let category of rubric.categories">
-                <td>{{ category.name }}</td>
-                <td>{{ category.description }}</td>
-                <td>{{ category.weight }}%</td>
-                <td>{{ category.maxScore }}</td>
-                <td>
-                  <input 
-                    type="number" 
-                    [formControlName]="'category_' + category.id"
-                    class="form-control"
-                    [min]="0"
-                    [max]="category.maxScore">
-                  <div class="text-danger" *ngIf="evaluationForm.get('category_' + category.id)?.invalid && 
-                      (evaluationForm.get('category_' + category.id)?.dirty || 
-                      evaluationForm.get('category_' + category.id)?.touched)">
-                    <small *ngIf="evaluationForm.get('category_' + category.id)?.errors?.['required']">Required</small>
-                    <small *ngIf="evaluationForm.get('category_' + category.id)?.errors?.['min']">Min: 0</small>
-                    <small *ngIf="evaluationForm.get('category_' + category.id)?.errors?.['max']">Max: {{ category.maxScore }}</small>
-                  </div>
-                </td>
-                <td>
-                  <input 
-                    type="text" 
-                    [formControlName]="'feedback_' + category.id"
-                    class="form-control"
-                    placeholder="Optional feedback">
-                </td>
-              </tr>
-            </tbody>
-            <tfoot>
-              <tr>
-                <td colspan="4"><strong>Calculated Total Score:</strong></td>
-                <td colspan="2"><strong>{{ calculateTotalScore() }} / {{ calculateMaxScore() }}</strong></td>
-              </tr>
-            </tfoot>
-          </table>
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Description</th>
+                  <th>Weight</th>
+                  <th>Max Score</th>
+                  <th>Your Score</th>
+                  <th>Feedback</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let category of rubric.categories">
+                  <td>{{ category.name }}</td>
+                  <td>{{ category.description }}</td>
+                  <td>{{ category.weight }}%</td>
+                  <td>{{ category.maxScore }}</td>
+                  <td>
+                    <input 
+                      type="number" 
+                      [formControlName]="'category_' + category.id"
+                      class="form-control"
+                      [min]="0"
+                      [max]="category.maxScore"
+                      [ngClass]="{'is-invalid': evaluationForm.get('category_' + category.id)?.invalid && 
+                        (evaluationForm.get('category_' + category.id)?.dirty || 
+                        evaluationForm.get('category_' + category.id)?.touched)}">
+                    <div class="text-danger" *ngIf="evaluationForm.get('category_' + category.id)?.invalid && 
+                        (evaluationForm.get('category_' + category.id)?.dirty || 
+                        evaluationForm.get('category_' + category.id)?.touched)">
+                      <small *ngIf="evaluationForm.get('category_' + category.id)?.errors?.['required']">Required</small>
+                      <small *ngIf="evaluationForm.get('category_' + category.id)?.errors?.['min']">Min: 0</small>
+                      <small *ngIf="evaluationForm.get('category_' + category.id)?.errors?.['max']">Max: {{ category.maxScore }}</small>
+                    </div>
+                    
+                    <!-- Score visualization -->
+                    <div class="score-bar" *ngIf="evaluationForm.get('category_' + category.id)?.valid && 
+                      evaluationForm.get('category_' + category.id)?.value">
+                      <div class="score-progress" 
+                        [style.width.%]="(evaluationForm.get('category_' + category.id)?.value / category.maxScore) * 100">
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <input 
+                      type="text" 
+                      [formControlName]="'feedback_' + category.id"
+                      class="form-control"
+                      placeholder="Optional feedback">
+                  </td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="4"><strong>Calculated Total Score:</strong></td>
+                  <td colspan="2">
+                    <span class="calculated-score">
+                      {{ calculateTotalScore() }} / {{ calculateMaxScore() }}
+                    </span>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         </div>
       </div>
 
       <!-- Common Feedback Section -->
-      <div class="card mb-3">
+      <div class="card card-hover-effect mb-3">
         <div class="card-header">
-          <h3>Overall Feedback</h3>
+          <h3><i class="fas fa-comment mr-2"></i> Overall Feedback</h3>
         </div>
         <div class="card-body">
           <div class="form-group">
@@ -148,25 +190,36 @@
               formControlName="feedback" 
               class="form-control" 
               rows="4"
-              placeholder="Provide overall feedback for the student">
+              placeholder="Provide overall feedback for the student"
+              [ngClass]="{'is-invalid': evaluationForm.get('feedback')?.invalid && 
+                (evaluationForm.get('feedback')?.dirty || evaluationForm.get('feedback')?.touched)}">
             </textarea>
-            <div class="text-danger" *ngIf="evaluationForm.get('feedback')?.invalid && (evaluationForm.get('feedback')?.dirty || evaluationForm.get('feedback')?.touched)">
-              <div *ngIf="evaluationForm.get('feedback')?.errors?.['required']">Feedback is required</div>
+            <div class="text-danger" *ngIf="evaluationForm.get('feedback')?.invalid && 
+                (evaluationForm.get('feedback')?.dirty || evaluationForm.get('feedback')?.touched)">
+              <small *ngIf="evaluationForm.get('feedback')?.errors?.['required']">Feedback is required</small>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Submit Button -->
-      <div class="mt-3 text-end">
-        <button type="button" class="btn btn-secondary me-2" (click)="navigateBack()">Cancel</button>
+      <div class="mt-4 text-end">
+        <button type="button" class="btn btn-secondary me-2" (click)="navigateBack()">
+          <i class="fas fa-times"></i> Cancel
+        </button>
         <button 
           type="submit" 
           class="btn btn-primary" 
           [disabled]="evaluationForm.invalid || submitting">
-          <span *ngIf="submitting" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-          {{ existingEvaluation?.id ? 'Update Evaluation' : 'Submit Evaluation' }}
+          <i class="fas" [ngClass]="submitting ? 'fa-spinner fa-spin' : (existingEvaluation?.id ? 'fa-save' : 'fa-check')"></i>
+          {{ submitting ? 'Submitting...' : (existingEvaluation?.id ? 'Update Evaluation' : 'Submit Evaluation') }}
         </button>
+      </div>
+      
+      <!-- Submission feedback (show after successful submit) -->
+      <div class="submission-feedback" *ngIf="false"><!-- Toggle this with a success flag -->
+        <i class="fas fa-check-circle"></i>
+        <p>Evaluation successfully submitted!</p>
       </div>
     </form>
   </div>
