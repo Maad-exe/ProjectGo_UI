@@ -6,8 +6,9 @@
 
 .evaluation-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
   
   h2 {
     margin: 0 0 0 20px;
@@ -110,7 +111,7 @@
   }
   
   .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
     
     label {
       display: block;
@@ -120,7 +121,7 @@
     }
     
     input[type="number"] {
-      width: 100px;
+      width: 80px;
       padding: 8px 12px;
       border: 1px solid #ddd;
       border-radius: 4px;
@@ -272,5 +273,61 @@
         }
       }
     }
+  }
+}
+
+.evaluation-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.loading-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+}
+
+.student-info-card {
+  margin-bottom: 20px;
+}
+
+input.ng-invalid.ng-touched, 
+textarea.ng-invalid.ng-touched {
+  border-color: #dc3545;
+}
+
+.card {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.card-header {
+  background-color: #f8f9fa;
+}
+
+table {
+  width: 100%;
+}
+
+th {
+  background-color: #f8f9fa;
+}
+
+@media (max-width: 768px) {
+  .evaluation-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .evaluation-header button {
+    margin-top: 10px;
+  }
+  
+  table {
+    display: block;
+    overflow-x: auto;
   }
 }

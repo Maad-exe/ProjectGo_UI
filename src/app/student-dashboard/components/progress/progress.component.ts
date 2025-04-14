@@ -36,9 +36,9 @@ export class ProgressComponent implements OnInit {
       return;
     }
     
-    // Remove the studentId parameter since the method doesn't expect it
+    // Use the getStudentEvaluations method we added to the service
     this.evaluationService.getStudentEvaluations().subscribe({
-      next: (evaluations) => {
+      next: (evaluations: any[]) => {
         this.evaluations = evaluations;
         this.calculateFinalGrade();
         this.loading = false;

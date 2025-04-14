@@ -228,16 +228,15 @@
                       <div class="student-info">
                         <span class="name">{{ student.fullName }}</span>
                         <span class="enrollment">{{ student.enrollmentNumber }}</span>
-                        <span class="status" [ngClass]="student.isCompleted ? 'completed' : 'pending'">
-                          {{ student.isCompleted ? 'Evaluated' : 'Pending' }}
+                        <span class="status" [ngClass]="student.isEvaluated ? 'completed' : 'pending'">
+                          {{ student.isEvaluated ? 'Evaluated' : 'Pending' }}
                         </span>
                       </div>
                       <button 
                         class="btn-evaluate" 
-                        [disabled]="student.isCompleted"
                         (click)="conductEvaluation(evaluation, student.id)">
-                        <i class="fas" [ngClass]="student.isCompleted ? 'fa-check-circle' : 'fa-clipboard-check'"></i>
-                        {{ student.isCompleted ? 'View Evaluation' : 'Evaluate' }}
+                        <i class="fas" [ngClass]="student.isEvaluated ? 'fa-edit' : 'fa-clipboard-check'"></i>
+                        {{ student.isEvaluated ? 'Update Evaluation' : 'Evaluate' }}
                       </button>
                     </li>
                   </ul>

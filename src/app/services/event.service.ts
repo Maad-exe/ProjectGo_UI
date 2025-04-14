@@ -1,40 +1,41 @@
 // services/event.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { environment } from '../../env/env';
-import { EvaluationEvent, EventType, CreateEventDto, UpdateEventDto } from '../models/event.model';
+// Import from models
+import { EvaluationEvent as EventModel, EventType, CreateEventDto, UpdateEventDto } from '../models/event.model';
 
+// Don't define EvaluationEvent here to avoid conflict
 @Injectable({
   providedIn: 'root'
 })
 export class EventService {
+  private apiUrl = `${environment.apiBaseUrl}`;
   
-  private baseUrl = `${environment.apiBaseUrl}/admin/evaluations/events`;
-
   constructor(private http: HttpClient) { }
 
-  getAllEvents(): Observable<EvaluationEvent[]> {
-    return this.http.get<EvaluationEvent[]>(this.baseUrl);
+  getAllEvents(): Observable<EventModel[]> {
+    return this.http.get<EventModel[]>(`${this.apiUrl}/admin/evaluations/events`);
   }
 
-  getEventById(id: number): Observable<EvaluationEvent> {
-    return this.http.get<EvaluationEvent>(`${this.baseUrl}/${id}`);
+  getEventById(id: number): Observable<EventModel> {
+    return this.http.get<EventModel>(`${this.apiUrl}/admin/evaluations/events/${id}`);
   }
 
-  createEvent(event: CreateEventDto): Observable<EvaluationEvent> {
-    return this.http.post<EvaluationEvent>(this.baseUrl, event);
+  createEvent(event: CreateEventDto): Observable<EventModel> {
+    return this.http.post<EventModel>(`${this.apiUrl}/admin/evaluations/events`, event);
   }
 
-  updateEvent(id: number, event: UpdateEventDto): Observable<EvaluationEvent> {
-    return this.http.put<EvaluationEvent>(`${this.baseUrl}/${id}`, event);
+  updateEvent(id: number, event: UpdateEventDto): Observable<EventModel> {
+    return this.http.put<EventModel>(`${this.apiUrl}/admin/evaluations/events/${id}`, event);
   }
 
   deleteEvent(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/${id}`);
+    return this.http.delete<void>(`${this.apiUrl}/admin/evaluations/events/${id}`);
   }
 
   getEvaluationsByEventId(eventId: number): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/${eventId}/evaluations`);
+    return this.http.get<any[]>(`${this.apiUrl}/admin/evaluations/events/${eventId}/evaluations`);
   }
 }

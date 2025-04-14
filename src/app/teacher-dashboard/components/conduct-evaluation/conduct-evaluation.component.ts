@@ -2,28 +2,22 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { EvaluationService } from '../../../services/evaluation.service';
+import { 
+  EvaluationService, 
+  EventEvaluationTypeDto,
+  EvaluateStudentDto,
+  CategoryScoreDto,
+  RubricCategory,
+  EvaluationRubric,
+  StudentEvaluationDto,
+  EnhancedStudentEvaluationDto,
+  StudentDto
+} from '../../../services/evaluation.service';
 import { EventService } from '../../../services/event.service';
 import { RubricService } from '../../../services/rubric.service';
 import { NotificationService } from '../../../services/notifications.service';
 import { StudentService } from '../../../services/student.service';
 import { AuthService } from '../../../services/auth.service';
-
-// Define interfaces locally to match what we need in this component
-interface RubricCriterion {
-  id: number;
-  name: string;
-  description: string;
-  maxScore: number;
-  weight: number;
-}
-
-interface LocalRubric {
-  id: number;
-  name: string;
-  description: string;
-  categories: RubricCriterion[];
-}
 
 @Component({
   selector: 'app-conduct-evaluation',
@@ -33,163 +27,224 @@ interface LocalRubric {
   styleUrls: ['./conduct-evaluation.component.scss']
 })
 export class ConductEvaluationComponent implements OnInit {
-  eventId: number;
-  groupId: number;
-  studentId: number;
-  teacherId: number;
+  eventId!: number;
+  groupId!: number;
+  studentId!: number;
+  teacherId!: number;
+  groupEvaluationId!: number; // Add this new property
   
-  event: any = null;
-  rubric: LocalRubric | null = null;
+  eventDetails: any = null;
+  rubric: EvaluationRubric | null = null;
   studentInfo: any = null;
-  existingEvaluation: any = null;
+  existingEvaluation: StudentEvaluationDto | null = null;
   
-  evaluationForm: FormGroup;
-  isSimpleEvaluation: boolean = true;
+  isRubricEvaluation: boolean = false;
+  totalMarks: number = 100;
   
-  loading = true;
-  submitting = false;
+  evaluationForm!: FormGroup;
+  loading: boolean = true;
+  submitting: boolean = false;
   
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
+    private evaluationService: EvaluationService,
     private eventService: EventService,
     private rubricService: RubricService,
-    private evaluationService: EvaluationService,
     private studentService: StudentService,
     private notificationService: NotificationService,
     private authService: AuthService
   ) {
+    // Initialize the form with basic fields
+    this.evaluationForm = this.fb.group({
+      obtainedMarks: [null, [Validators.required, Validators.min(0)]],
+      feedback: ['', Validators.required]
+    });
+    
+    // Get all parameters from the route
     this.eventId = +this.route.snapshot.paramMap.get('eventId')!;
     this.groupId = +this.route.snapshot.paramMap.get('groupId')!;
     this.studentId = +this.route.snapshot.paramMap.get('studentId')!;
+    this.groupEvaluationId = +this.route.snapshot.paramMap.get('groupEvaluationId')!;
     this.teacherId = this.authService.getUserId() || 0;
-
-    this.evaluationForm = this.fb.group({
-      score: [null, [Validators.required, Validators.min(0), Validators.max(100)]],
-      comments: ['', Validators.maxLength(1000)]
-    });
-  }
-
-  ngOnInit(): void {
-    this.loadEventDetails();
   }
   
-  loadEventDetails(): void {
-    this.loading = true;
-    this.eventService.getEventById(this.eventId).subscribe({
-      next: (event) => {
-        this.event = event;
-        
-        // If the event uses a rubric, load it
-        if (event.rubricId) {
-          this.isSimpleEvaluation = false;
-          this.loadRubric(event.rubricId);
-        } else {
-          // Simple evaluation, no need for rubric
-          this.loadStudentAndExistingEvaluation();
+  ngOnInit(): void {
+    this.route.params.subscribe(params => {
+      this.eventId = +params['eventId'];
+      this.groupId = +params['groupId'];
+      this.studentId = +params['studentId'];
+      this.groupEvaluationId = +params['groupEvaluationId']; // Get the new parameter
+      
+      // Use the groupEvaluationId for the API call instead of groupId
+      this.evaluationService.getEventEvaluationType(this.groupEvaluationId).subscribe({
+        next: (typeData) => {
+          this.eventDetails = {
+            id: typeData.eventId,
+            name: typeData.eventName,
+            totalMarks: typeData.totalMarks
+          };
+          
+          this.totalMarks = typeData.totalMarks;
+          this.isRubricEvaluation = typeData.hasRubric;
+          
+          // Update validators for obtainedMarks
+          if (!this.isRubricEvaluation) {
+            this.evaluationForm.get('obtainedMarks')?.setValidators([
+              Validators.required, 
+              Validators.min(0), 
+              Validators.max(this.totalMarks)
+            ]);
+            this.evaluationForm.get('obtainedMarks')?.updateValueAndValidity();
+          }
+          
+          // If it has a rubric, load it
+          if (this.isRubricEvaluation && typeData.rubricId) {
+            this.loadRubric(typeData.rubricId);
+          } else {
+            this.loadStudentDetails();
+          }
+        },
+        error: (error) => {
+          console.error('Error loading evaluation type:', error);
+          this.notificationService.showError('Failed to load evaluation configuration');
+          this.loading = false;
         }
-      },
-      error: (error: any) => {
-        console.error('Error loading event details:', error);
-        this.notificationService.showError('Failed to load evaluation details');
-        this.loading = false;
-      }
+      });
     });
   }
   
   loadRubric(rubricId: number): void {
     this.rubricService.getRubricById(rubricId).subscribe({
       next: (rubric) => {
-        // Map the rubric to our local structure, ensuring description is present
+        // Transform the rubric to match the EvaluationRubric interface
         this.rubric = {
           id: rubric.id,
           name: rubric.name,
           description: rubric.description,
-          categories: rubric.categories.map(cat => ({
-            id: cat.id,
-            name: cat.name,
-            weight: cat.weight,
-            maxScore: cat.maxScore,
-            // Check if description exists on the category object, otherwise provide an empty string
-            description: (cat as any).description || '' // Type assertion to avoid compile-time errors
+          isActive: rubric.isActive || false,
+          categories: rubric.categories.map(category => ({
+            id: category.id,
+            name: category.name,
+            description:  '',  // Provide empty string if missing
+            maxScore: category.maxScore,
+            weight: category.weight
           }))
         };
         
-        // Add form controls for each criterion
-        if (this.rubric.categories && this.rubric.categories.length > 0) {
-          const criteriaControls: any = {};
-          
-          this.rubric.categories.forEach((criterion: any) => {
-            criteriaControls[`criterion_${criterion.id}`] = [null, [
-              Validators.required, 
-              Validators.min(0), 
-              Validators.max(criterion.maxScore)
+        console.log("Loaded rubric:", this.rubric);
+        
+        // Create dynamic form fields for each category
+        const formConfig: any = {
+          feedback: ['', Validators.required]
+        };
+        
+        // Add form controls for each rubric category
+        if (this.rubric && this.rubric.categories) {
+          this.rubric.categories.forEach((category: RubricCategory) => {
+            formConfig[`category_${category.id}`] = [null, [
+              Validators.required,
+              Validators.min(0),
+              Validators.max(category.maxScore)
             ]];
-          });
-          
-          // Add criteria controls to form
-          Object.keys(criteriaControls).forEach(key => {
-            this.evaluationForm.addControl(key, criteriaControls[key]);
+            formConfig[`feedback_${category.id}`] = [''];
           });
         }
         
-        this.loadStudentAndExistingEvaluation();
+        this.evaluationForm = this.fb.group(formConfig);
+        this.loadStudentDetails();
       },
-      error: (error: any) => {
+      error: (error) => {
         console.error('Error loading rubric:', error);
         this.notificationService.showError('Failed to load evaluation rubric');
+        this.isRubricEvaluation = false;
+        
+        // Fallback to simple evaluation
+        this.evaluationForm = this.fb.group({
+          obtainedMarks: [null, [Validators.required, Validators.min(0), Validators.max(this.totalMarks)]],
+          feedback: ['', Validators.required]
+        });
+        
+        this.loadStudentDetails();
+      }
+    });
+  }
+  
+  loadStudentDetails(): void {
+    // Load student details - use groupEvaluationId instead of groupId
+    this.evaluationService.getStudentsForGroupEvaluation(this.groupEvaluationId).subscribe({
+      next: (students) => {
+        const student = students.find(s => s.id === this.studentId);
+        if (student) {
+          this.studentInfo = {
+            id: student.id,
+            fullName: student.fullName,
+            email: student.email,
+            department: student.department || 'Not specified',
+            enrollmentNumber: student.enrollmentNumber || 'Not available'
+          };
+          
+          // Try to load existing evaluation
+          this.loadExistingEvaluation();
+        } else {
+          this.notificationService.showWarning('Student not found in this group');
+          this.loading = false;
+        }
+      },
+      error: (error) => {
+        console.error('Error loading student details:', error);
+        this.notificationService.showError('Failed to load student information');
         this.loading = false;
       }
     });
   }
   
-  loadStudentAndExistingEvaluation(): void {
-    // Load student details
-    this.studentService.getStudentById(this.studentId).subscribe({
-      next: (student) => {
-        this.studentInfo = student;
+  loadExistingEvaluation(): void {
+    this.evaluationService.getStudentEvaluation(this.groupEvaluationId, this.studentId).subscribe({
+      next: (evaluation) => {
+        this.existingEvaluation = evaluation;
         
-        // Check if there's an existing evaluation
-        this.evaluationService.getStudentEvaluation(
-          this.eventId, 
-          this.studentId,
-          this.teacherId
-        ).subscribe({
-          next: (evaluation: any) => {
-            this.existingEvaluation = evaluation;
-            
-            // Populate form with existing evaluation data
-            if (this.isSimpleEvaluation) {
+        if (evaluation && evaluation.id) {
+          // Check if the evaluation is complete and should not be editable
+          if (evaluation.isComplete) {
+            // Make form read-only if evaluation is complete
+            this.evaluationForm.disable();
+            this.notificationService.showInfo('This evaluation is complete and cannot be modified');
+          } else {
+            // Populate the form with the existing evaluation data
+            if (!this.isRubricEvaluation) {
               this.evaluationForm.patchValue({
-                score: evaluation.score,
-                comments: evaluation.comments
+                obtainedMarks: evaluation.obtainedMarks,
+                feedback: evaluation.feedback
               });
-            } else if (this.rubric) {
-              // Populate rubric criteria scores
-              evaluation.criteriaScores?.forEach((criteriaScore: any) => {
-                this.evaluationForm.patchValue({
-                  [`criterion_${criteriaScore.criterionId}`]: criteriaScore.score
+            } else if (this.rubric && (evaluation as EnhancedStudentEvaluationDto).categoryScores) {
+              // Handle rubric evaluation if the response includes category scores
+              const enhancedEval = evaluation as EnhancedStudentEvaluationDto;
+              if (enhancedEval.categoryScores) {
+                enhancedEval.categoryScores.forEach(score => {
+                  this.evaluationForm.patchValue({
+                    [`category_${score.categoryId}`]: score.score,
+                    [`feedback_${score.categoryId}`]: score.feedback || ''
+                  });
                 });
-              });
+              }
               
               this.evaluationForm.patchValue({
-                comments: evaluation.comments
+                feedback: evaluation.feedback
               });
             }
-            
-            this.loading = false;
-          },
-          error: (error: any) => {
-            console.error('No existing evaluation found:', error);
-            // This is not a critical error - just means no previous evaluation exists
-            this.loading = false;
+            this.notificationService.showInfo(evaluation.isComplete ? 'Viewing completed evaluation' : 'Updating existing evaluation');
           }
-        });
+          this.loading = false;
+        } else {
+          this.notificationService.showInfo('Starting new evaluation');
+          this.loading = false;
+        }
       },
-      error: (error: any) => {
-        console.error('Error loading student details:', error);
-        this.notificationService.showError('Failed to load student details');
+      error: (error) => {
+        console.error('Error loading existing evaluation:', error);
+        this.notificationService.showInfo('Starting new evaluation');
         this.loading = false;
       }
     });
@@ -197,51 +252,109 @@ export class ConductEvaluationComponent implements OnInit {
   
   onSubmit(): void {
     if (this.evaluationForm.invalid) {
-      this.notificationService.showWarning('Please complete all required fields');
+      // Show specific validation errors
+      let errorMessage = 'Please fix the following issues:';
+      if (this.evaluationForm.get('feedback')?.invalid) {
+        errorMessage += '\n- Feedback is required';
+      }
+      
+      if (!this.isRubricEvaluation && this.evaluationForm.get('obtainedMarks')?.invalid) {
+        errorMessage += '\n- Valid score is required';
+      }
+      
+      if (this.isRubricEvaluation && this.rubric) {
+        let missingCategories: string[] = [];
+        
+        this.rubric.categories.forEach((category: RubricCategory) => {
+          if (this.evaluationForm.get(`category_${category.id}`)?.invalid) {
+            missingCategories.push(category.name);
+          }
+        });
+        
+        if (missingCategories.length > 0) {
+          errorMessage += `\n- Missing scores for: ${missingCategories.join(', ')}`;
+        }
+      }
+      
+      this.notificationService.showWarning(errorMessage);
       return;
     }
     
     this.submitting = true;
     
-    // Prepare evaluation data
-    let evaluationData: any = {
-      eventId: this.eventId,
-      groupId: this.groupId,
+    // Prepare evaluation data based on evaluation type
+    const evaluationDto: EvaluateStudentDto = {
+      groupEvaluationId: this.groupEvaluationId, // Use groupEvaluationId instead of groupId
       studentId: this.studentId,
-      teacherId: this.teacherId,
-      comments: this.evaluationForm.value.comments || ''
+      feedback: this.evaluationForm.value.feedback
     };
     
-    if (this.isSimpleEvaluation) {
-      // Simple score-based evaluation
-      evaluationData.score = this.evaluationForm.value.score;
-    } else if (this.rubric) {
-      // Rubric-based evaluation
-      const criteriaScores: any[] = [];
+    if (this.isRubricEvaluation && this.rubric) {
+      // For rubric-based evaluation, collect category scores
+      evaluationDto.categoryScores = this.prepareCategoryScores();
       
-      this.rubric.categories.forEach((criterion: any) => {
-        criteriaScores.push({
-          criterionId: criterion.id,
-          score: this.evaluationForm.value[`criterion_${criterion.id}`]
-        });
+      console.log("Submitting rubric evaluation:", evaluationDto);
+      
+      this.evaluationService.submitRubricEvaluation(evaluationDto).subscribe({
+        next: (result) => {
+          console.log("Rubric evaluation submitted successfully:", result);
+          this.notificationService.showSuccess('Evaluation submitted successfully');
+          this.submitting = false;
+          this.navigateBack();
+        },
+        error: (error) => {
+          console.error('Error submitting evaluation:', error);
+          
+          let errorMessage = 'Failed to submit evaluation';
+          if (error.error && typeof error.error === 'string') {
+            errorMessage += `: ${error.error}`;
+          } else if (error.status === 404) {
+            errorMessage += ': API endpoint not found';
+          }
+          
+          this.notificationService.showError(errorMessage);
+          this.submitting = false;
+        }
       });
+    } else {
+      // For simple evaluation, just use the obtainedMarks
+      evaluationDto.obtainedMarks = this.evaluationForm.value.obtainedMarks;
       
-      evaluationData.criteriaScores = criteriaScores;
+      console.log("Submitting simple evaluation:", evaluationDto);
+      
+      this.evaluationService.submitEvaluation(evaluationDto).subscribe({
+        next: (result) => {
+          console.log("Evaluation submitted successfully:", result);
+          this.notificationService.showSuccess('Evaluation submitted successfully');
+          this.submitting = false;
+          this.navigateBack();
+        },
+        error: (error) => {
+          console.error('Error submitting evaluation:', error);
+          
+          let errorMessage = 'Failed to submit evaluation';
+          if (error.error && typeof error.error === 'string') {
+            errorMessage += `: ${error.error}`;
+          } else if (error.status === 404) {
+            errorMessage += ': API endpoint not found';
+          }
+          
+          this.notificationService.showError(errorMessage);
+          this.submitting = false;
+        }
+      });
     }
+  }
+  
+  // Prepare category scores from form values
+  private prepareCategoryScores(): CategoryScoreDto[] {
+    if (!this.rubric || !this.rubric.categories) return [];
     
-    // Submit the evaluation
-    this.evaluationService.submitEvaluation(evaluationData).subscribe({
-      next: (result: any) => {
-        this.notificationService.showSuccess('Evaluation submitted successfully');
-        this.submitting = false;
-        this.navigateBack();
-      },
-      error: (error: any) => {
-        console.error('Error creating evaluation:', error);
-        this.notificationService.showError('Failed to submit evaluation');
-        this.submitting = false;
-      }
-    });
+    return this.rubric.categories.map((category: RubricCategory) => ({
+      categoryId: category.id,
+      score: this.evaluationForm.value[`category_${category.id}`],
+      feedback: this.evaluationForm.value[`feedback_${category.id}`] || ''
+    }));
   }
   
   navigateBack(): void {
@@ -249,33 +362,39 @@ export class ConductEvaluationComponent implements OnInit {
   }
   
   calculateTotalScore(): number {
-    if (this.isSimpleEvaluation) {
-      return this.evaluationForm.value.score || 0;
+    if (!this.isRubricEvaluation) {
+      return this.evaluationForm.value.obtainedMarks || 0;
     }
     
-    if (!this.rubric) return 0;
+    if (!this.rubric || !this.rubric.categories) return 0;
     
-    let total = 0;
-    this.rubric.categories.forEach((criterion: any) => {
-      const score = this.evaluationForm.value[`criterion_${criterion.id}`] || 0;
-      total += score;
+    let totalScore = 0;
+    let totalWeight = 0;
+    
+    this.rubric.categories.forEach((category: RubricCategory) => {
+      const score = this.evaluationForm.value[`category_${category.id}`];
+      if (score !== null && score !== undefined) {
+        const percentage = (score / category.maxScore) * 100;
+        totalScore += (percentage * category.weight) / 100;
+        totalWeight += category.weight;
+      }
     });
     
-    return total;
+    // Normalize if weights don't add up to 100%
+    if (totalWeight > 0 && totalWeight !== 100) {
+      totalScore = (totalScore * 100) / totalWeight;
+    }
+    
+    return Math.round((totalScore / 100) * this.totalMarks);
   }
   
   calculateMaxScore(): number {
-    if (this.isSimpleEvaluation) {
-      return 100;
+    if (!this.isRubricEvaluation) {
+      return this.totalMarks;
     }
     
     if (!this.rubric) return 0;
     
-    let max = 0;
-    this.rubric.categories.forEach((criterion: any) => {
-      max += criterion.maxScore;
-    });
-    
-    return max;
+    return this.totalMarks;
   }
 }

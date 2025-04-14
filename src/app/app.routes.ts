@@ -99,9 +99,9 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   { 
-    path: 'teacher-dashboard/evaluate/:eventId/:groupId/:studentId', 
+    path: 'teacher-dashboard/evaluate/:eventId/:groupId/:studentId/:groupEvaluationId', 
     component: ConductEvaluationComponent,
-    canActivate: [authGuard] // You can add teacherGuard if needed
+    canActivate: [authGuard]
   },
   { path: 'group-chat/:groupId', component: GroupChatComponent },
   { path: '**', redirectTo: '/login' } 

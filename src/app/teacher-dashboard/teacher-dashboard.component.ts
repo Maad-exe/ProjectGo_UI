@@ -258,13 +258,24 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
   }
 
   conductEvaluation(evaluation: any, studentId: number) {
-    console.log(`Navigating to evaluation for student ${studentId} in event ${evaluation.eventId}, group ${evaluation.groupId}`);
-    this.router.navigate([
-      '/teacher-dashboard/evaluate',
-      evaluation.eventId,
-      evaluation.groupId,
-      studentId
-    ]);
+    console.log(`Finding evaluation for student ${studentId} in event ${evaluation.eventId}, group ${evaluation.groupId}`);
+    
+    this.evaluationService.getGroupEvaluationId(evaluation.eventId, evaluation.groupId).subscribe({
+      next: (groupEvaluationId) => {
+        console.log(`Found group evaluation ID: ${groupEvaluationId}`);
+        this.router.navigate([
+          '/teacher-dashboard/evaluate',
+          evaluation.eventId,
+          evaluation.groupId,
+          studentId,
+          groupEvaluationId
+        ]);
+      },
+      error: (error) => {
+        console.error('Error finding group evaluation ID:', error);
+        this.notificationService.showError('Could not find evaluation for this group');
+      }
+    });
   }
 
   // Add the viewEvaluationDetails method
@@ -295,7 +306,13 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
         // Find the evaluation and update its students
         const evaluation = this.upcomingEvaluations.find(e => e.id === evaluationId);
         if (evaluation) {
-          evaluation.students = students;
+          // Make sure to properly mark students as evaluated based on their evaluation status
+          evaluation.students = students.map(student => ({
+            ...student,
+            // Set isCompleted properly based on the data from the API
+            isEvaluated: student.isEvaluated // Make sure your API returns this field
+          }));
+          
           // Force change detection
           this.upcomingEvaluations = [...this.upcomingEvaluations];
         }

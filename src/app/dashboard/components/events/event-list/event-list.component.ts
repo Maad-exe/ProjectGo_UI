@@ -161,6 +161,7 @@ export class EventListComponent implements OnInit {
     this.searchSubject.next('');
   }
 
+  // Fix the sortData method to handle possible undefined values
   sortData(column: SortableColumn) {
     if (this.currentSort.column === column) {
       this.currentSort.direction = this.currentSort.direction === 'asc' ? 'desc' : 'asc';
@@ -174,15 +175,23 @@ export class EventListComponent implements OnInit {
       const valueB = b[column];
 
       if (column === 'date') {
-        return (new Date(valueA).getTime() - new Date(valueB).getTime()) * direction;
+        // Handle possible undefined values
+        const dateA = valueA ? new Date(valueA).getTime() : 0;
+        const dateB = valueB ? new Date(valueB).getTime() : 0;
+        return (dateA - dateB) * direction;
       }
 
+      // Handle string comparison with null checks
       if (typeof valueA === 'string' && typeof valueB === 'string') {
         return valueA.localeCompare(valueB) * direction;
       }
 
-      if (valueA < valueB) return -1 * direction;
-      if (valueA > valueB) return 1 * direction;
+      // Handle numeric or undefined values
+      const numA = valueA !== undefined ? valueA : 0;
+      const numB = valueB !== undefined ? valueB : 0;
+      
+      if (numA < numB) return -1 * direction;
+      if (numA > numB) return 1 * direction;
       return 0;
     });
 
@@ -205,7 +214,7 @@ export class EventListComponent implements OnInit {
     return this.getEventTypeString(type).toLowerCase();
   }
 
-  // New method for filtering
+  // Fix the filterEvents method to handle undefined description
   private filterEvents(searchTerm: string): void {
     if (!searchTerm) {
       this.filteredEvents = [...this.originalEvents];
@@ -213,7 +222,7 @@ export class EventListComponent implements OnInit {
       searchTerm = searchTerm.toLowerCase();
       this.filteredEvents = this.originalEvents.filter(item => 
         item.name.toLowerCase().includes(searchTerm) ||
-        item.description.toLowerCase().includes(searchTerm) ||
+        (item.description?.toLowerCase() || '').includes(searchTerm) ||
         this.getEventTypeString(item.type).toLowerCase().includes(searchTerm)
       );
     }

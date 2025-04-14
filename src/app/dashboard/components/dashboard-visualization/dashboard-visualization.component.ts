@@ -109,15 +109,15 @@ export class DashboardVisualizationComponent implements OnInit, AfterViewInit {
 
         // Process group data
         this.metrics.groupMetrics.totalGroups = data.groups.length;
-        this.metrics.groupMetrics.pendingGroups = data.groups.filter((g: any) => g.supervisionStatus === 'Pending').length;
-        this.metrics.groupMetrics.approvedGroups = data.groups.filter((g: any) => g.supervisionStatus === 'Approved').length;
+        this.metrics.groupMetrics.pendingGroups = data.groups.filter((g: any) => g.status === 'Pending').length;
+        this.metrics.groupMetrics.approvedGroups = data.groups.filter((g: any) => g.status === 'Approved').length;
         this.metrics.groupMetrics.rejectedGroups = data.groups.filter((g: any) => g.supervisionStatus === 'Rejected').length;
 
         // Process evaluation data
         const now = new Date();
         this.metrics.evaluationMetrics.totalEvents = data.evaluations.length;
-        this.metrics.evaluationMetrics.completedEvents = data.evaluations.filter(e => new Date(e.date) < now).length;
-        this.metrics.evaluationMetrics.upcomingEvents = data.evaluations.filter(e => new Date(e.date) >= now).length;
+        this.metrics.evaluationMetrics.completedEvents = data.evaluations.filter((e: any) => new Date(e.date) < now).length;
+        this.metrics.evaluationMetrics.upcomingEvents = data.evaluations.filter((e: any) => new Date(e.date) >= now).length;
         
         const completedEvals = data.evaluations.filter((e: any) => e.isCompleted);
         if (completedEvals.length > 0) {

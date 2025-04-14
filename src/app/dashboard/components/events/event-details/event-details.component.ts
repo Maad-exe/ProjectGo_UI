@@ -44,8 +44,22 @@ export class EventDetailsComponent implements OnInit {
   loadEventDetails(): void {
     this.loading = true;
     this.eventService.getEventById(this.eventId).subscribe({
-      next: (event) => {
-        this.event = event;
+      next: (eventData) => {
+        // Convert the API response to match our expected EvaluationEvent model type
+        this.event = {
+          id: eventData.id,
+          name: eventData.name,
+          description: eventData.description || '', // Ensure description is never undefined
+          date: eventData.date,
+          totalMarks: eventData.totalMarks,
+          isActive: eventData.isActive,
+          createdAt: eventData.createdAt,
+          weight: eventData.weight,
+          type: eventData.type,
+          rubricId: eventData.rubricId,
+          rubricName: eventData.rubricName,
+          evaluationMethod: eventData.evaluationMethod
+        };
         this.loadPanels();
         this.loadAssignedGroups();
       },

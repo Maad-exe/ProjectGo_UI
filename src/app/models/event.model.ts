@@ -1,9 +1,9 @@
 // models/event.model.ts
 
 export enum EventType {
-  Proposal = 0,
-  Midterm = 1,
-  Final = 2
+  Proposal,
+  Midterm,
+  Final
 }
 
 // Add this helper function
@@ -14,35 +14,35 @@ export function getEventTypeString(type: EventType): string {
 export interface EvaluationEvent {
   id: number;
   name: string;
-  description: string;
-  date: string; // ISO format
+  type: number;
+  date: string;
   totalMarks: number;
-  isActive: boolean;
-  createdAt: string; // ISO format
-  weight: number;
-  type: EventType;
   rubricId?: number;
+  description?: string; // Make description optional here too
+  isActive: boolean;
+  createdAt: string;
+  weight: number;
   rubricName?: string;
   evaluationMethod?: 'simple' | 'rubric';
 }
 
 export interface CreateEventDto {
   name: string;
-  description: string;
+  type: number;
   date: string; // ISO format
   totalMarks: number;
-  weight: number;
-  type: EventType;
+  description: string;
   rubricId?: number;
+  weight: number;
 }
 
 export interface UpdateEventDto {
-  name: string;
-  description: string;
-  date: string; // ISO format
-  totalMarks: number;
-  isActive: boolean;
-  type: EventType;
-  weight: number;
+  name?: string;
+  type?: number;
+  date?: string; // ISO format
+  totalMarks?: number;
+  description?: string;
   rubricId?: number;
+  weight?: number;
+  isActive?: boolean;
 }
