@@ -111,11 +111,17 @@ export class TeacherListComponent implements OnInit {
       return;
     }
     
+    // Validate that message is not empty
+    if (!this.supervisionMessage.trim()) {
+      this.notificationService.showError('Please enter a message for the teacher');
+      return;
+    }
+    
     this.isRequestingSupervision = true;
     const request: SupervisionRequestDto = {
       groupId: this.selectedGroupId,
       teacherId: teacherId,
-      message: this.requestMessage || 'Please supervise our group project'
+      message: this.supervisionMessage.trim()
     };
     
     // Find the teacher object to get the name
@@ -135,8 +141,15 @@ export class TeacherListComponent implements OnInit {
           selectedGroup.supervisionStatus = 'Requested';
         }
         
+        // Close the message dialog
+        this.showMessageInputForTeacher = null;
+        this.supervisionMessage = '';
+        
         // Reload groups to update status
         this.loadStudentGroups();
+
+        this.showMessageInputForTeacher = null;
+        this.supervisionMessage = '';
       },
       error: (error: any) => {
         console.error('Error requesting supervision:', error);

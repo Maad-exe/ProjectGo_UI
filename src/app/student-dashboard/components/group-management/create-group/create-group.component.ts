@@ -14,7 +14,7 @@ import { AuthService } from '../../../../services/auth.service';
 })
 export class CreateGroupComponent implements OnInit {
   @Input() hasApprovedGroup: boolean = false;
-  @Input() hasAnyGroups: boolean = false; // New input property
+  @Input() hasAnyGroups: boolean = false;
   @Output() groupCreated = new EventEmitter<void>();
   
   createGroupForm: FormGroup;
@@ -26,7 +26,7 @@ export class CreateGroupComponent implements OnInit {
   groupCreationError: string | null = null;
   searchErrors: { [email: string]: string } = {};
   
-  // Add properties for success state
+  // Success state properties
   groupCreationSuccess = false;
   createdGroupName: string = '';
 
@@ -138,6 +138,11 @@ export class CreateGroupComponent implements OnInit {
       clearTimeout(this.searchTimers[index]);
     }
     
+    // Important: Clear the error whenever the user types
+    if (email in this.searchErrors) {
+      delete this.searchErrors[email];
+    }
+    
     if (!email || !email.trim() || !this.emailPattern.test(email)) {
       return;
     }
@@ -161,34 +166,75 @@ export class CreateGroupComponent implements OnInit {
   
     this.isSearchingStudent = true;
     this.isSearchingMember[index] = true;
-    this.searchErrors[email] = '';
+    
+    // Clear previous errors for this email
+    delete this.searchErrors[email];
     
     try {
+      console.log(`Searching for student with email: ${email}`);
       const student = await this.groupService.searchStudentByEmail(email).toPromise();
+      console.log(`Search result for ${email}:`, student);
       
-      // If student is found, check if they're already in a supervised group
       if (student) {
-        const isInSupervisedGroup = await this.checkIfStudentInSupervisedGroup(student.id);
+        // FIX: Clear the student result first to avoid race conditions
+        this.studentSearchResults[email] = null;
         
-        if (isInSupervisedGroup) {
+        // FIX: Log each step of supervision check for debugging
+        console.log(`Checking if student ${student.id} is in a supervised group...`);
+        try {
+          const isInSupervisedGroup = await this.checkIfStudentInSupervisedGroup(student.id);
+          console.log(`Student ${student.id} supervision status:`, isInSupervisedGroup);
+          
+          if (isInSupervisedGroup) {
+            // FIX: Keep studentSearchResults null when student is in a supervised group
+            this.studentSearchResults[email] = null;
+            this.searchErrors[email] = `${student.fullName} is already part of an approved group and cannot join your group.`;
+            console.log(`Set error for ${email} (supervised):`, this.searchErrors[email]);
+          } else {
+            // Student is valid - set the data and clear any errors
+            this.studentSearchResults[email] = student;
+            delete this.searchErrors[email];
+            console.log(`Student ${student.id} is valid and not in any supervised group`);
+          }
+        } catch (supervisionError) {
+          // FIX: Handle supervision check errors better
+          console.error(`Error checking supervision for student ${student.id}:`, supervisionError);
+          // Assume they might be in a supervised group if we can't verify
           this.studentSearchResults[email] = null;
-          this.searchErrors[email] = `${student.fullName} is already part of an approved group and cannot join your group.`;
-          return;
+          this.searchErrors[email] = `Could not verify if ${student.fullName} is in an approved group. Please try again.`;
         }
-      }
-      
-      this.studentSearchResults[email] = student || null;
-      
-      if (!student) {
+      } else {
+        this.studentSearchResults[email] = null;
         this.searchErrors[email] = 'Student not found with this email address.';
+        console.log(`No student found with email: ${email}`);
       }
     } catch (error: any) {
+      // Handle API errors
+      console.error('Error searching student:', error);
       this.studentSearchResults[email] = null;
-      this.searchErrors[email] = error.error?.message || 'Student not found. Please check the email and try again.';
+      
+      // FIX: Better error handling
+      if (error.error?.message) {
+        if (typeof error.error.message === 'string' && 
+            (error.error.message.toLowerCase().includes('supervised group') || 
+             error.error.message.toLowerCase().includes('approved group'))) {
+          this.searchErrors[email] = `This student is already part of an approved group and cannot join your group.`;
+          console.log(`Student ${email} is in supervised group (from error):`, error.error.message);
+        } else {
+          this.searchErrors[email] = error.error.message;
+        }
+      } else {
+        this.searchErrors[email] = 'Student not found. Please check the email and try again.';
+      }
     } finally {
       this.isSearchingStudent = false;
       this.isSearchingMember[index] = false;
     }
+  }
+
+  // Clear the error for a specific email
+  clearErrorForEmail(email: string): void {
+    delete this.searchErrors[email];
   }
 
   hasSearchErrors(): boolean {
@@ -199,9 +245,97 @@ export class CreateGroupComponent implements OnInit {
     return this.isSearchingMember.some(status => status === true);
   }
 
+  // Improved method to check if a student is in a supervised group
+  async checkIfStudentInSupervisedGroup(studentId: number): Promise<boolean> {
+    console.log(`Checking if student ${studentId} is in a supervised group...`);
+    try {
+      const response = await this.groupService.checkStudentSupervisionStatus(studentId).toPromise();
+      console.log(`Supervision check response for student ${studentId}:`, response);
+      
+      // Explicit check for supervised status
+      if (response && response.isInSupervisedGroup === true) {
+        console.log(`Student ${studentId} is in supervised group: ${response.groupName || 'Unknown group'}`);
+        return true;
+      }
+      
+      // Even if the API returns false, let's do an additional check using the getStudentGroups API
+      // This helps us overcome the 403 issue with the supervision status endpoint
+      try {
+        const groups = await this.groupService.getStudentGroups(studentId).toPromise();
+        
+        // Check if any of the student's groups is approved
+        // Fix: Only call .some() if groups is defined and is an array
+        const hasApprovedGroup = groups && Array.isArray(groups) && groups.some(group => 
+          group.supervisionStatus === 'Approved' && group.teacherId != null
+        );
+        
+        if (hasApprovedGroup) {
+          console.log(`Student ${studentId} has an approved group based on groups check`);
+          return true;
+        }
+      } catch (groupError) {
+        console.error(`Cannot check student ${studentId} groups:`, groupError);
+        // If we can't check groups, we'll rely on the original response
+      }
+      
+      console.log(`Student ${studentId} is NOT in any supervised group`);
+      return false;
+    } catch (error: unknown) {
+      console.error(`Error checking if student ${studentId} is in supervised group:`, error);
+      
+      // If we get a 403 error, we need to use an alternative approach
+      if (typeof error === 'object' && error !== null) {
+        const err = error as any;
+        
+        // Check for 403 Forbidden status
+        if (err.status === 403) {
+          console.log(`Got 403 when checking student ${studentId}, trying alternative approach...`);
+          
+          try {
+            // Try to get the student's groups directly, which might have different permissions
+            const groups = await this.groupService.getStudentGroups(studentId).toPromise();
+            
+            // Check if any of the groups is already approved
+            // Fix: Only call .some() if groups is defined and is an array
+            const hasApprovedGroup = groups && Array.isArray(groups) && groups.some(group => 
+              group.supervisionStatus === 'Approved' && group.teacherId != null
+            );
+            
+            if (hasApprovedGroup) {
+              console.log(`Student ${studentId} has an approved group (alt check)`);
+              return true;
+            }
+            
+            console.log(`Student ${studentId} does not have an approved group (alt check)`);
+            return false;
+          } catch (altError) {
+            console.error(`Alternative check failed for student ${studentId}:`, altError);
+            // We couldn't determine either way, assume not in supervised group
+            return false;
+          }
+        }
+        
+        // Check error messages for clues
+        const errorMessage = err.message || (err.error && err.error.message);
+        
+        if (typeof errorMessage === 'string' && 
+           (errorMessage.toLowerCase().includes('already in a supervised group') || 
+            errorMessage.toLowerCase().includes('already has an approved group'))) {
+          console.log(`Student ${studentId} appears to be in a supervised group based on error message`);
+          return true; // Treat specific error messages as confirmation of supervised status
+        }
+      }
+      
+      // If we can't determine the status from the error, assume not in a supervised group
+      // This will allow group creation, and the backend will provide the final validation
+      return false;
+    }
+  }
+
   async createGroup() {
     // Reset form-level errors
     this.formErrors = [];
+    this.groupCreationError = null;
     
     if (this.createGroupForm.valid) {
       // Get valid member emails
@@ -209,10 +343,9 @@ export class CreateGroupComponent implements OnInit {
         email !== null && email.trim() !== ''
       );
       
-      // Check if all members have been verified
-      const unverifiedMembers = memberEmails.filter(email => 
-        !this.studentSearchResults[email]
-      );
+      console.log('Starting group creation with members:', memberEmails);
+      console.log('Current student search results:', this.studentSearchResults);
+      console.log('Current search errors:', this.searchErrors);
       
       // Check for duplicate emails
       const uniqueEmails = new Set(memberEmails);
@@ -221,36 +354,113 @@ export class CreateGroupComponent implements OnInit {
         return;
       }
       
-      // Auto-search any unverified members
+      // Check if all members have been verified
+      const unverifiedMembers = memberEmails.filter(email => 
+        !this.studentSearchResults[email] && !this.searchErrors[email]
+      );
+      
+      // Force verification of any unverified members
       if (unverifiedMembers.length > 0) {
         this.formErrors.push('Some members have not been verified. Please wait for verification to complete.');
         
         // Trigger search for unverified members
-        unverifiedMembers.forEach((email, arrayIndex) => {
+        for (let i = 0; i < unverifiedMembers.length; i++) {
+          const email = unverifiedMembers[i];
           const controlIndex = memberEmails.findIndex(e => e === email);
-          if (controlIndex >= 0 && !this.isSearchingMember[controlIndex]) {
-            this.searchStudent(email, controlIndex);
+          if (controlIndex >= 0) {
+            await this.searchStudent(email, controlIndex);
+          }
+        }
+        
+        return;
+      }
+      
+      // FIX: More thorough check for members with errors or in supervised groups
+      const invalidMembers = memberEmails.filter(email => 
+        !this.studentSearchResults[email] || this.searchErrors[email]
+      );
+      
+      if (invalidMembers.length > 0) {
+        console.log('Invalid members found:', invalidMembers);
+        console.log('Student search results for invalid members:', 
+          invalidMembers.map(email => ({ email, result: this.studentSearchResults[email] })));
+        console.log('Search errors for invalid members:', 
+          invalidMembers.map(email => ({ email, error: this.searchErrors[email] })));
+        
+        for (const email of invalidMembers) {
+          if (this.searchErrors[email]) {
+            this.formErrors.push(this.searchErrors[email]);
+          } else {
+            this.formErrors.push(`Verification failed for ${email}`);
+          }
+        }
+        return;
+      }
+      
+      // FIX: Re-verify all students immediately before creating the group
+      console.log('Re-checking supervised status for all members before creating group...');
+      try {
+        // Use Promise.all but with better error handling
+        const supervisionCheckPromises = memberEmails.map(async (email) => {
+          const student = this.studentSearchResults[email];
+          if (!student) {
+            // This shouldn't happen at this point, but just in case
+            return { email, error: 'Student data not found' };
+          }
+          
+          try {
+            const isInSupervisedGroup = await this.checkIfStudentInSupervisedGroup(student.id);
+            return { 
+              email, 
+              studentId: student.id,
+              name: student.fullName,
+              isInSupervisedGroup 
+            };
+          } catch (error) {
+            return { 
+              email, 
+              studentId: student.id,
+              name: student.fullName,
+              error 
+            };
           }
         });
         
-        return;
-      }
-      
-      // Check for members with errors
-      const membersWithErrors = memberEmails.filter(email => this.searchErrors[email]);
-      
-      if (membersWithErrors.length > 0) {
-        // Create a more detailed error message
-        membersWithErrors.forEach(email => {
-          const error = this.searchErrors[email];
-          this.formErrors.push(error);
-        });
+        const supervisionResults = await Promise.all(supervisionCheckPromises);
+        console.log('Final supervision check results:', supervisionResults);
         
+        // Check for students in supervised groups or errors
+        const problematicStudents = supervisionResults.filter(result => 
+          result.isInSupervisedGroup === true || result.error
+        );
+        
+        if (problematicStudents.length > 0) {
+          console.log('Found problematic students during final check:', problematicStudents);
+          
+          // Update search results and errors based on re-verification
+          for (const result of problematicStudents) {
+            if (result.isInSupervisedGroup) {
+              this.studentSearchResults[result.email] = null;
+              this.searchErrors[result.email] = `${result.name} is already part of an approved group and cannot join your group.`;
+              this.formErrors.push(this.searchErrors[result.email]);
+            } else if (result.error) {
+              this.studentSearchResults[result.email] = null;
+              this.searchErrors[result.email] = `Could not verify if ${result.name} is in another group. Please try again.`;
+              this.formErrors.push(this.searchErrors[result.email]);
+            }
+          }
+          
+          return; // Stop the group creation
+        }
+      } catch (error) {
+        console.error('Error in final supervision check:', error);
+        this.formErrors.push('Error verifying student supervision status. Please try again.');
         return;
       }
       
+      // If we get here, all members have been verified and are not in supervised groups
+      console.log('All members verified successfully, creating group...');
       this.isCreatingGroup = true;
-      this.groupCreationError = null;
   
       const createGroupRequest: CreateGroupRequest = {
         groupName: this.createGroupForm.value.groupName || '',
@@ -261,10 +471,10 @@ export class CreateGroupComponent implements OnInit {
         const createdGroup = await this.groupService.createGroup(createGroupRequest).toPromise();
         console.log('Group created successfully:', createdGroup);
         
-        // Set success state instead of hiding form immediately
+        // Set success state
         this.groupCreationSuccess = true;
         this.createdGroupName = createGroupRequest.groupName;
-        this.hasAnyGroups = true; // Important - set this to true now
+        this.hasAnyGroups = true;
         
         // Allow time for the success message to be shown
         setTimeout(() => {
@@ -276,40 +486,60 @@ export class CreateGroupComponent implements OnInit {
         
         this.notificationService.showSuccess('Group created successfully');
       } catch (error: any) {
+        // Handle API errors
         console.error('Group creation failed:', error);
-        this.groupCreationError = error.error?.message || 'Failed to create group';
         
-        // If there are validation errors in the response
+        // FIX: Better error extraction and handling
+        if (error.error?.message) {
+          const errorMessage = error.error.message.toLowerCase();
+          
+          // Check for supervised group errors
+          if (errorMessage.includes('supervised group') || 
+              errorMessage.includes('approved group')) {
+            
+            this.groupCreationError = 'One or more students are already in approved groups and cannot join this group.';
+            
+            // Try to extract student information from the error
+            const emailMatch = error.error.message.match(/email:\s*([^\s]+@[^\s]+)/i);
+            if (emailMatch && emailMatch[1]) {
+              const email = emailMatch[1];
+              if (memberEmails.includes(email)) {
+                this.studentSearchResults[email] = null;
+                this.searchErrors[email] = 'This student is already part of an approved group.';
+                this.formErrors.push(this.searchErrors[email]);
+              }
+            }
+          } else {
+            this.groupCreationError = error.error.message;
+          }
+        } else {
+          this.groupCreationError = 'Failed to create group. Please try again.';
+        }
+        
+        // Handle validation errors
         if (error.error?.errors) {
           const errorDetails = error.error.errors;
           if (Array.isArray(errorDetails)) {
             this.formErrors = errorDetails;
           } else {
-            // Create a flattened array without using flat()
             this.formErrors = [];
-            const values = Object.values(errorDetails);
-            for (const item of values) {
+            Object.values(errorDetails).forEach(item => {
               if (Array.isArray(item)) {
                 this.formErrors.push(...item);
-              } else {
+              } else if (item) {
                 this.formErrors.push(String(item));
               }
-            }
+            });
           }
         }
       } finally {
         this.isCreatingGroup = false;
       }
     } else {
-      // Handle validation errors
-      Object.keys(this.createGroupForm.controls).forEach(key => {
-        const control = this.createGroupForm.get(key);
-        if (control?.invalid) {
-          if (key === 'groupName' && control.errors?.['required']) {
-            this.formErrors.push('Group name is required');
-          }
-        }
-      });
+      // Handle form validation errors
+      if (!this.createGroupForm.get('groupName')?.valid) {
+        this.formErrors.push('Group name is required');
+      }
       
       // Check member email validation
       this.memberEmails.controls.forEach((control, i) => {
@@ -324,16 +554,6 @@ export class CreateGroupComponent implements OnInit {
       
       // Mark all fields as touched to trigger validation visuals
       this.createGroupForm.markAllAsTouched();
-    }
-  }
-
-  async checkIfStudentInSupervisedGroup(studentId: number): Promise<boolean> {
-    try {
-      const response = await this.groupService.checkStudentSupervisionStatus(studentId).toPromise();
-      return response?.isInSupervisedGroup ?? false; // Use nullish coalescing
-    } catch (error) {
-      console.error('Error checking if student is in supervised group:', error);
-      return false; // Assume not in a supervised group if there's an error
     }
   }
 

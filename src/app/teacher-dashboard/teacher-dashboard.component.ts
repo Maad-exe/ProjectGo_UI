@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../services/auth.service';
 import { NotificationService } from '../services/notifications.service';
 import { SupervisionService, SupervisionRequest, SupervisionResponseDto } from '../services/supervision.service';
-import { GroupDetails } from '../services/group.service';
+import { GroupService, GroupDetails } from '../services/group.service'; // Make sure to import GroupService
 import { GroupChatComponent } from '../group-chat/group-chat.component';
 import { ChatService } from '../services/chat.service';
 import { Subscription } from 'rxjs';
@@ -62,7 +62,8 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     private chatService: ChatService,  // Add ChatService
     private panelService: PanelService,
     private evaluationService: EvaluationService,
-    private eventService: EventService
+    private eventService: EventService,
+    private groupService: GroupService // Add this line
   ) {}
 
   ngOnInit() {
@@ -156,6 +157,9 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
         // If approved, update the teacher's groups
         if (isApproved) {
           this.loadTeacherGroups();
+          
+          // Force a refresh of all groups data
+          this.groupService.refreshGroups(); // Make sure this method exists in GroupService
           
           // Show a special notification about group cleanup
           this.notificationService.showInfo('All other groups for these students have been automatically cleaned up');

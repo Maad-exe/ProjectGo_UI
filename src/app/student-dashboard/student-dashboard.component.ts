@@ -125,7 +125,10 @@ export class StudentDashboardComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Load everything in parallel with proper typing
+    // CRITICAL FIX: Immediately check for groups to enable chat button at startup
+    this.loadGroupsAndEnableChat();
+
+    // Then load everything else in parallel with proper typing
     const sources: DashboardDataSources = {
       studentInfo: this.loadStudentInfo(),
       groupStatus: this.loadInitialGroupStatus(),
@@ -143,8 +146,12 @@ export class StudentDashboardComponent implements OnInit, OnDestroy {
         
         // Enable chat if user has approved group
         if (this.hasApprovedGroup) {
-          // Use public method instead of private
           this.initializeChat();
+          
+          // If the current view is chat, show chat component
+          if (this.currentView === 'chat') {
+            this.showGroupChat = true;
+          }
         }
       },
       error: (error) => {
@@ -156,10 +163,44 @@ export class StudentDashboardComponent implements OnInit, OnDestroy {
     this.setupUnreadMessagesRefresh();
   }
 
-  // Add a new method to handle chat initialization
-  private initializeChat(): void {
-    // Call the public method from ChatService that will handle initialization
-    this.chatService.ensureChatConnection();
+  // Add this new method to explicitly load groups and set approved status
+  private loadGroupsAndEnableChat(): void {
+    const userId = this.authService.getUserId();
+    if (!userId) return;
+
+    console.log('Explicitly loading groups to enable chat...');
+    
+    // This is the critical call that will eventually set approvedGroup in the service
+    this.groupService.getStudentGroups(userId).subscribe({
+      next: (groups) => {
+        console.log('Groups loaded for chat button initialization:', groups.length);
+        
+        // Find any approved group
+        const approvedGroup = groups.find(g => 
+          g.supervisionStatus === 'Approved' && g.teacherId !== null
+        );
+        
+        if (approvedGroup) {
+          console.log('Found approved group during initialization:', approvedGroup.name);
+          
+          // This local state is important for the template
+          this.hasApprovedGroup = true;
+          
+          // Initialize chat since we have an approved group
+          this.showGroupChat = this.currentView === 'chat';
+          this.initializeChat();
+        } else {
+          console.log('No approved group found during initialization');
+          this.hasApprovedGroup = false;
+        }
+        
+        // Store all groups
+        this.groups = groups;
+      },
+      error: (error) => {
+        console.error('Error loading groups for chat initialization:', error);
+      }
+    });
   }
 
   private loadInitialGroupStatus(): Observable<{hasApprovedGroup: boolean}> {
@@ -241,6 +282,8 @@ export class StudentDashboardComponent implements OnInit, OnDestroy {
     const previousView = this.currentView;
     this.currentView = view;
     
+    console.log(`View changed from ${previousView} to ${view}, hasApprovedGroup:`, this.hasApprovedGroup);
+    
     // Update teacher list visibility logic
     if (view === 'teachers') {
       this.showTeachersList = true;
@@ -253,27 +296,34 @@ export class StudentDashboardComponent implements OnInit, OnDestroy {
       this.selectedGroupId = null;
     }
 
+    // Handle chat view
     if (view === 'chat') {
-      const approvedGroup = this.groupService.getApprovedGroup();
-      if (!approvedGroup) {
-        this.notificationService.showInfo('You need to have an approved group to access the chat feature.');
+      if (this.hasApprovedGroup) {
+        const groupId = this.getApprovedGroupId();
+        if (groupId) {
+          console.log('Opening chat for approved group ID:', groupId);
+          this.showGroupChat = true;
+          
+          // Ensure chat connection is established
+          this.chatService.ensureChatConnection();
+        } else {
+          console.error('No approved group ID found for chat');
+          this.notificationService.showError('Cannot find your group for chat');
+          this.currentView = previousView;
+          this.showGroupChat = false;
+        }
+      } else {
+        this.notificationService.showInfo('You need an approved group to access the chat');
         this.currentView = previousView;
-        return;
-      }
-      this.showGroupChat = true;
-      
-      // Mark messages as read when opening chat
-      if (approvedGroup.id) {
-        this.chatService.markMessagesAsRead(approvedGroup.id).subscribe({
-          next: () => {
-            console.log(`Marked messages as read for group ${approvedGroup.id}`);
-            this.chatService.updateUnreadCount();
-          },
-          error: (err) => console.error('Error marking messages as read:', err)
-        });
+        this.showGroupChat = false;
       }
     } else {
       this.showGroupChat = false;
+    }
+
+    // Check specifically for progress view
+    if (view === 'progress') {
+      console.log('Loading progress view...');
     }
   }
 
@@ -333,5 +383,29 @@ export class StudentDashboardComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     // Clean up subscriptions
     this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
+  // Make sure you have this method to initialize chat
+  private initializeChat(): void {
+    console.log('Initializing chat...');
+    
+    // Initialize chat connection
+    this.chatService.ensureChatConnection();
+    
+    // Get the approved group ID for chat
+    const approvedGroup = this.groupService.getApprovedGroup();
+    if (approvedGroup && approvedGroup.id) {
+      console.log('Joining chat group:', approvedGroup.id);
+      
+      // Join the chat group
+      this.chatService.joinGroup(approvedGroup.id).subscribe({
+        next: (success) => {
+          console.log('Joined chat group:', success);
+        },
+        error: (err) => {
+          console.error('Failed to join chat group:', err);
+        }
+      });
+    }
   }
 }

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { environment } from '../../env/env';
 import { TeacherDetails } from './teacher.service';
 import { StudentDetails, GroupDetails } from './group.service';
@@ -38,8 +39,14 @@ export class SupervisionService {
 
   // Student functions
   requestSupervision(request: SupervisionRequestDto): Observable<any> {
-    console.log('SupervisionService sending request:', request);
-    return this.http.post(`${this.apiUrlTeachers}/request-supervision`, request);
+    console.log('Sending supervision request with message:', request.message);
+    
+    return this.http.post(`${environment.apiBaseUrl}/api/supervision/request`, request).pipe(
+      catchError(error => {
+        console.error('Error in supervision request:', error);
+        throw error;
+      })
+    );
   }
 
   // Teacher functions

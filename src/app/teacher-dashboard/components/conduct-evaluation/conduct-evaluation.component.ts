@@ -284,14 +284,22 @@ export class ConductEvaluationComponent implements OnInit {
     
     // Prepare evaluation data based on evaluation type
     const evaluationDto: EvaluateStudentDto = {
-      groupEvaluationId: this.groupEvaluationId, // Use groupEvaluationId instead of groupId
+      groupEvaluationId: this.groupEvaluationId,
       studentId: this.studentId,
       feedback: this.evaluationForm.value.feedback
     };
     
+    // Add the existing evaluation ID if we're updating
+    if (this.existingEvaluation && this.existingEvaluation.id) {
+      evaluationDto.evaluationId = this.existingEvaluation.id;
+    }
+    
     if (this.isRubricEvaluation && this.rubric) {
       // For rubric-based evaluation, collect category scores
       evaluationDto.categoryScores = this.prepareCategoryScores();
+      
+      // Calculate and add the total marks - THIS IS THE KEY ADDITION
+      evaluationDto.obtainedMarks = this.calculateTotalScore();
       
       console.log("Submitting rubric evaluation:", evaluationDto);
       

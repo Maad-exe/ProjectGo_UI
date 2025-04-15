@@ -34,6 +34,7 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   noMoreMessages: boolean = false;
   oldestMessageTimestamp: Date | null = null;
   messagesPerPage: number = 20;
+  hasLoadedInitialMessages: boolean = false;
   
   private subscriptions: Subscription[] = [];
   private typingSubject = new BehaviorSubject<string>('');
@@ -49,11 +50,27 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   ) {}
   
   ngOnInit(): void {
+    this.userId = this.authService.getUserId();
+    
+    this.chatService.connected$.subscribe(connected => {
+      this.isConnected = connected;
+      
+      if (connected && this.groupId && !this.hasLoadedInitialMessages) {
+        this.loadMessages();
+        this.hasLoadedInitialMessages = true;
+      }
+    });
+    
+    this.chatService.ensureChatConnection();
+    
+    if (this.groupId) {
+      this.loadMessages();
+    }
+    
     this.loadUserInfo();
     
     console.log('Chat component initialized, connecting to chat service...');
     
-    // Replace the timeout chaining with a more reliable approach
     this.chatService.connected$.pipe(
       filter(connected => connected === true),
       take(1),
@@ -69,13 +86,11 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       }
     });
     
-    // Trigger a single reconnection attempt
     this.chatService.reconnect();
     
-    // Setup typing notification throttling
     this.subscriptions.push(
       this.typingSubject.pipe(
-        debounceTime(1000), // Only emit if there's a 1s pause
+        debounceTime(1000),
         distinctUntilChanged()
       ).subscribe(message => {
         if (message && this.groupId) {
@@ -86,7 +101,6 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
   
   ngAfterViewChecked(): void {
-    // Only scroll if explicitly marked as pending
     if (this.scrollToBottomPending && this.messages.length > 0) {
       this.scrollToBottom();
       this.scrollToBottomPending = false;
@@ -105,19 +119,16 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   setupChatService(): void {
     if (!this.groupId) return;
     
-    // Subscribe to connection status changes
     this.subscriptions.push(
       this.chatService.connected$.subscribe((connected: boolean) => {
         this.isConnected = connected;
         
-        // When connected, join the group
         if (connected && this.groupId) {
           this.chatService.joinGroup(this.groupId);
         }
       })
     );
     
-    // Subscribe to new messages
     this.subscriptions.push(
       this.chatService.messageReceived$.subscribe((message: ChatMessage) => {
         if (message.groupId === this.groupId) {
@@ -126,7 +137,6 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       })
     );
     
-    // Subscribe to typing notifications
     this.subscriptions.push(
       this.chatService.userTyping$.subscribe((typingInfo: UserTypingInfo) => {
         if (typingInfo.groupId === this.groupId && typingInfo.userId !== this.userId) {
@@ -135,7 +145,6 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       })
     );
     
-    // Subscribe to messages read notifications
     this.subscriptions.push(
       this.chatService.messageRead$.subscribe((info: {userId: number, groupId: number}) => {
         if (info.groupId === this.groupId) {
@@ -144,10 +153,8 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       })
     );
     
-    // Load initial messages
     this.loadMessages();
     
-    // Mark messages as read when opening chat
     this.markMessagesAsRead();
   }
   
@@ -161,16 +168,13 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       this.isLoading = true;
     }
     
-    // Clear errors
     this.error = null;
     
-    // Prepare parameters for loading messages
     let before: Date | undefined = undefined;
     if (loadEarlier && this.oldestMessageTimestamp) {
       before = new Date(this.oldestMessageTimestamp);
     }
     
-    // Add logging to debug the issue
     console.log(`Loading messages for group ${this.groupId}, before:`, before);
     
     this.chatService.getGroupMessages(this.groupId, this.messagesPerPage, before).subscribe({
@@ -180,7 +184,6 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         if (loadEarlier) {
           this.handleEarlierMessages(messages);
         } else {
-          // Remove any temporary messages if they exist
           this.messages = messages.filter(msg => msg.id > 0);
           
           if (messages.length > 0) {
@@ -209,73 +212,57 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
     
     if (messages.length > 0) {
-      // Update oldest timestamp for pagination
       this.oldestMessageTimestamp = new Date(messages[0].timestamp);
-      
-      // Prepend messages to the beginning of the array
       this.messages = [...messages, ...this.messages];
     }
   }
   
   addMessage(message: ChatMessage): void {
-    // Make sure readBy is never undefined
     if (!message.readBy) {
       message.readBy = [];
     }
     
-    // Check if this is a message from the current user that would replace a temp message
     if (message.senderId === this.userId) {
-      // Look for temporary messages with the same content and approximately the same time
       const tempIndex = this.messages.findIndex(m => 
         m.id < 0 && 
         m.senderId === this.userId && 
         m.content === message.content &&
-        Math.abs(new Date(m.timestamp).getTime() - new Date(message.timestamp).getTime()) < 30000 // Within 30 seconds
+        Math.abs(new Date(m.timestamp).getTime() - new Date(message.timestamp).getTime()) < 30000
       );
       
       if (tempIndex >= 0) {
-        // Replace the temporary message with the real one
         this.messages[tempIndex] = message;
         return;
       }
     }
     
-    // For non-replacement cases, proceed as normal:
-    // Check if the message is already in the list to avoid duplicates
-    const existingMessage = this.messages.find(m => m.id === message.id && m.id > 0); // Only check positive IDs
+    const existingMessage = this.messages.find(m => m.id === message.id && m.id > 0);
     if (existingMessage) return;
     
     this.messages.push(message);
     
-    // Mark our own messages as read when they are added
     if (message.senderId === this.userId) {
       message.isRead = true;
     } else {
-      // Mark other people's messages as read since we just received them
       this.markMessagesAsRead();
     }
     
-    // Check if user was near bottom before receiving the message
     if (this.chatMessagesContainer) {
       const element = this.chatMessagesContainer.nativeElement;
       const atBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 100;
       
-      // For immediate receiving of messages (not during initial load)
-      // Always set scroll pending for new messages, but scroll immediately if at bottom
       this.scrollToBottomPending = true;
       if (atBottom) {
-        this.scrollToBottom(); // Scroll immediately if user was at bottom
+        this.scrollToBottom();
       }
     }
   }
   
-  // Fix the undefined username issue in the getReadStatus method
   getReadStatus(message: ChatMessage): string {
     if (!message || message.senderId !== this.userId) {
-      return ''; // Don't show read status for other's messages
+      return '';
     }
   
-    // Initialize readBy if it's undefined
     if (!message.readBy) {
       message.readBy = [];
     }
@@ -284,10 +271,9 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       return 'Sent';
     }
   
-    // Filter out the sender from readers, and ensure we have valid usernames
     const readers = message.readBy
       .filter(r => r.userId !== message.senderId && r.userName)
-      .map(r => r.userName || `User ${r.userId}`); // Fallback name if undefined
+      .map(r => r.userName || `User ${r.userId}`);
   
     if (readers.length === 0) {
       return 'Sent';
@@ -302,7 +288,6 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
   }
   
-  // Enhance the markMessagesAsRead method to update UI and handle undefined names
   markMessagesAsRead(): void {
     if (!this.groupId) return;
     
@@ -310,18 +295,15 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       next: () => {
         console.log('Messages marked as read');
         
-        // Update local UI to show messages as read
         this.messages.forEach(message => {
           if (message.senderId !== this.userId) {
             message.isRead = true;
             message.isReadByCurrentUser = true;
             
-            // Add current user to readBy if not already there
             if (!message.readBy?.some(r => r.userId === this.userId)) {
               message.readBy = message.readBy || [];
               
-              // Get current user's full name from local storage or any message they've sent
-              let currentUserName = 'You'; // Default
+              let currentUserName = 'You';
               const ownMessage = this.messages.find(m => m.senderId === this.userId);
               if (ownMessage && ownMessage.senderName) {
                 currentUserName = ownMessage.senderName;
@@ -341,34 +323,29 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     });
   }
   
-  // Update the updateMessagesReadStatus method to handle undefined usernames
   updateMessagesReadStatus(userId: number, userName?: string): void {
-    // If userName is undefined, try to find it from other messages
     let resolvedUserName = userName;
     
     if (!resolvedUserName) {
-      // Look for this user's name in other messages where they were the sender
       const userMessage = this.messages.find(m => m.senderId === userId);
       if (userMessage && userMessage.senderName) {
         resolvedUserName = userMessage.senderName;
       } else {
-        resolvedUserName = `User ${userId}`; // Fallback
+        resolvedUserName = `User ${userId}`;
       }
     }
     
     this.messages.forEach(message => {
       if (message.senderId === this.userId) {
-        // Update the readBy array
         const existingReader = message.readBy?.find(r => r.userId === userId);
         if (!existingReader && message.readBy) {
           message.readBy.push({
             userId: userId,
-            userName: resolvedUserName, // Use resolved name
+            userName: resolvedUserName,
             readAt: new Date().toISOString()
           });
           message.totalReadCount = message.readBy.length;
         } else if (existingReader && !existingReader.userName && resolvedUserName) {
-          // Update the name if it was previously undefined
           existingReader.userName = resolvedUserName;
         }
       }
@@ -376,20 +353,17 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
   
   handleUserTyping(typingInfo: UserTypingInfo): void {
-    if (typingInfo.userId === this.userId) return; // Don't show own typing indicator
+    if (typingInfo.userId === this.userId) return;
     
-    // Clear existing timeout for this user if any
     if (this.typingTimeouts.has(typingInfo.userId)) {
       clearTimeout(this.typingTimeouts.get(typingInfo.userId));
     }
 
-    // Add/Update typing user
     this.typingUsers.set(typingInfo.userId, {
       name: typingInfo.userName,
       timestamp: new Date()
     });
 
-    // Set timeout to remove typing indicator
     const timeout = setTimeout(() => {
       this.typingUsers.delete(typingInfo.userId);
       this.typingTimeouts.delete(typingInfo.userId);
@@ -400,7 +374,6 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.updateTypingIndicator();
   }
   
-  // Update the updateTypingIndicator method for more personalized messages
   updateTypingIndicator(): void {
     if (this.typingUsers.size === 0) {
       this.showTypingIndicator = false;
@@ -410,7 +383,7 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
     this.showTypingIndicator = true;
     const typingUserNames = Array.from(this.typingUsers.values())
-      .map(user => user.name.split(' ')[0]) // Only use first name for cleaner display
+      .map(user => user.name.split(' ')[0])
       .sort();
 
     if (typingUserNames.length === 1) {
@@ -427,23 +400,18 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   notifyTyping(): void {
     if (!this.groupId) return;
     
-    // Call the notifyTyping method we added to ChatService
     this.chatService.notifyTyping(this.groupId);
   }
   
-  // Update to properly handle typing notifications
   notifyUserTyping(message: string): void {
     if (!this.groupId || !message) return;
     
-    // Clear existing timeout for this user
     if (this.typingTimeout) {
       clearTimeout(this.typingTimeout);
     }
 
-    // Send typing notification
     this.chatService.notifyTyping(this.groupId);
     
-    // Set new timeout
     this.typingTimeout = setTimeout(() => {
       this.chatService.stopTypingNotification(this.groupId);
       this.typingTimeout = null;
@@ -454,11 +422,10 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (!this.groupId || !this.newMessage.trim()) return;
     
     const messageContent = this.newMessage.trim();
-    this.newMessage = ''; // Clear input immediately for better UX
+    this.newMessage = '';
     
-    // Create a temporary message to show immediately
     const tempMessage: ChatMessage = {
-      id: -new Date().getTime(), // Temporary negative ID
+      id: -new Date().getTime(),
       groupId: this.groupId,
       senderId: this.userId!,
       senderName: 'You',
@@ -466,19 +433,17 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       content: messageContent,
       timestamp: new Date().toISOString(),
       isRead: false,
-      readBy: [], // Initialize empty array
-      totalReadCount: 0, // Add missing property
-      isReadByCurrentUser: true // Add missing property - true since it's our message
+      readBy: [],
+      totalReadCount: 0,
+      isReadByCurrentUser: true
     };
     
-    // Add the temporary message to the UI
     this.messages.push(tempMessage);
     this.scrollToBottomPending = true;
     
     this.chatService.sendMessage(this.groupId, messageContent).subscribe({
       next: () => {
         console.log('Message sent successfully');
-        // The actual message with server ID will come through the SignalR connection
         if (this.messageInput) {
           this.messageInput.nativeElement.focus();
         }
@@ -486,21 +451,17 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       error: (error: Error) => {
         console.error('Error sending message:', error);
         
-        // Remove the temporary message since sending failed
         this.messages = this.messages.filter(m => m.id !== tempMessage.id);
         
-        // Keep the message content in the input field
         this.newMessage = messageContent;
         this.notificationService.showError('Failed to send message. Please try again.');
       }
     });
   }
   
-  // Improve scrollToBottom method to be more reliable
   scrollToBottom(): void {
     try {
       if (this.chatMessagesContainer) {
-        // Use requestAnimationFrame for smoother scrolling that happens after DOM rendering
         requestAnimationFrame(() => {
           const element = this.chatMessagesContainer.nativeElement;
           element.scrollTop = element.scrollHeight;
@@ -512,10 +473,8 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
   
   ngOnDestroy(): void {
-    // Clear all subscriptions
     this.subscriptions.forEach(sub => sub.unsubscribe());
     
-    // Leave the chat group
     if (this.groupId) {
       this.chatService.leaveGroup(this.groupId).subscribe({
         next: (success) => console.log('Left chat group successfully:', success),
@@ -530,9 +489,7 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     return !laterMessages.some(msg => msg.senderId === userId);
   }
 
-  // Fix the detailed read status method too
   getDetailedReadStatus(message: ChatMessage): string {
-    // Initialize readBy if it's undefined
     if (!message.readBy) {
       message.readBy = [];
     }
@@ -541,7 +498,6 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       return 'Not read by anyone yet';
     }
 
-    // Filter out sender and invalid usernames, sort by read time
     const readers = message.readBy
       .filter(r => r.userId !== message.senderId && r.userName)
       .sort((a, b) => new Date(a.readAt).getTime() - new Date(b.readAt).getTime())

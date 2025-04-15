@@ -22,7 +22,7 @@ export class ApprovedGroupComponent implements OnInit {
     this.updateGroupData();
 
     // Subscribe to changes
-    this.groupService.approvedGroupChanged.subscribe(group => {
+    this.groupService.approvedGroup$.subscribe((group: GroupDetails | null) => {
       this.approvedGroup = group;
       this.hasApprovedGroup = !!group;
     });

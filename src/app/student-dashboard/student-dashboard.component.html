@@ -44,11 +44,17 @@
       </div>
 
       <!-- Group Chat View -->
-      <div class="chat-view-container" *ngIf="currentView === 'chat' && showGroupChat">
+      <div class="chat-view-container" *ngIf="currentView === 'chat' && hasApprovedGroup">
         <app-group-chat 
+          *ngIf="showGroupChat"
           [groupId]="getApprovedGroupId()" 
           [groupName]="getApprovedGroupName()">
         </app-group-chat>
+        
+        <div *ngIf="!showGroupChat" class="chat-loading">
+          <i class="fas fa-spinner fa-spin"></i> 
+          Connecting to chat...
+        </div>
       </div>
 
       <!-- Progress/Evaluations View -->

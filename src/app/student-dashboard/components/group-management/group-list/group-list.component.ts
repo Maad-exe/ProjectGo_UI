@@ -8,6 +8,7 @@ import { NotificationService } from '../../../../services/notifications.service'
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ApprovedGroupComponent } from '../approved-group/approved-group.component';
 import { GroupCleanupInfoDialogComponent } from '../../../../shared/group-cleanup-info-dialog/group-cleanup-info-dialog.component';
+
 @Component({
   selector: 'app-group-list',
   standalone: true,
@@ -15,7 +16,7 @@ import { GroupCleanupInfoDialogComponent } from '../../../../shared/group-cleanu
     CommonModule,
     MatDialogModule,
     ApprovedGroupComponent,
-   // GroupCleanupInfoDialogComponent
+    GroupCleanupInfoDialogComponent
   ],
   templateUrl: './group-list.component.html',
   styleUrls: ['./group-list.component.scss']
@@ -181,6 +182,19 @@ export class GroupListComponent implements OnInit {
     // Store approved group in service
     if (this.approvedGroup) {
       this.groupService.setApprovedGroup(this.approvedGroup);
+      
+      // If there are other groups, clean them up
+      if (groups.length > 1 && this.approvedGroup.id) { // Add this check
+        console.log('Found multiple groups when there should only be one approved group');
+        this.groupService.cleanupOtherGroups(this.approvedGroup.id).subscribe({
+          next: () => {
+            console.log('Cleanup successful');
+            // Refresh groups after cleanup
+            this.refreshGroups();
+          },
+          error: (err) => console.error('Failed to clean up other groups:', err)
+        });
+      }
     }
     
     // Emit the change to parent components
@@ -260,6 +274,17 @@ export class GroupListComponent implements OnInit {
     return false;
   }
 
+  isMemberOfGroup(group: GroupDetails): boolean {
+    const token = localStorage.getItem('token');
+    if (token) {
+      const payload = this.authService.decodeToken(token);
+      const studentEmail = payload.email || payload.sub;
+      
+      return group.members.some(member => member.email === studentEmail);
+    }
+    return false;
+  }
+
   loadSupervisorDetails(teacherId: number) {
     console.log('Loading supervisor details for ID:', teacherId);
     this.teacherService.getTeacherById(teacherId).subscribe({
@@ -319,6 +344,9 @@ export class GroupListComponent implements OnInit {
   }
 
   refreshGroups() {
+    // Clear the current groups array before loading
+    this.groups = [];
+    // Then reload
     this.loadStudentGroups();
   }
 

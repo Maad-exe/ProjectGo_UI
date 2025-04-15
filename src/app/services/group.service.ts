@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, Subject, of } from 'rxjs';
+import { Observable, Subject, of, BehaviorSubject } from 'rxjs';
 import { environment } from '../../env/env';
 import { map, catchError, tap, delay } from 'rxjs/operators';
-import { TeacherDetails } from './teacher.service';
+import { TeacherService, TeacherDetails } from './teacher.service'; // Fixed import
 
 export interface StudentDetails {
   id: number;
@@ -53,35 +53,49 @@ export class GroupService {
   private apiUrl = `${environment.apiBaseUrl}/groups`;
   
   // State management
-  private approvedGroup: GroupDetails | null = null;
+  private _approvedGroup: GroupDetails | null = null;
   private groupSupervisor: TeacherDetails | null = null;
   
   // Subjects for state changes
-  private approvedGroupSubject = new Subject<GroupDetails | null>();
+  private approvedGroupSubject = new BehaviorSubject<GroupDetails | null>(null);
   private supervisorSubject = new Subject<TeacherDetails | null>();
   
   // Observable streams
-  approvedGroupChanged = this.approvedGroupSubject.asObservable();
+  approvedGroup$ = this.approvedGroupSubject.asObservable();
   supervisorChanged = this.supervisorSubject.asObservable();
 
   // Add this property and method
   private groupsRefreshSubject = new Subject<void>();
   groupsRefresh$ = this.groupsRefreshSubject.asObservable();
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private teacherService: TeacherService) {}
 
   // State management methods
   getApprovedGroup(): GroupDetails | null {
-    return this.approvedGroup;
+    return this._approvedGroup;
   }
 
   setApprovedGroup(group: GroupDetails | null): void {
-    this.approvedGroup = group;
+    console.log('Setting approved group in service:', group?.name || 'null');
+    this._approvedGroup = group;
+    // This triggers the sidebar component to enable the chat button
     this.approvedGroupSubject.next(group);
     
     // If group is cleared, also clear supervisor
     if (!group) {
       this.setSupervisor(null);
+    } else if (group.teacherId) {
+      // Load supervisor details if teacher ID exists but supervisor isn't set
+      this.loadSupervisorIfNeeded(group.teacherId);
+    }
+  }
+
+  private loadSupervisorIfNeeded(teacherId: number): void {
+    if (!this.groupSupervisor || this.groupSupervisor.id !== teacherId) {
+      this.teacherService.getTeacherById(teacherId).subscribe({
+        next: (teacher: TeacherDetails) => this.setSupervisor(teacher),
+        error: (err: any) => console.error('Failed to load supervisor:', err)
+      });
     }
   }
 
@@ -98,12 +112,16 @@ export class GroupService {
   getStudentGroups(studentId: number): Observable<GroupDetails[]> {
     return this.http.get<GroupDetails[]>(`${this.apiUrl}/student/${studentId}`).pipe(
       map(groups => {
+        // Find approved group automatically
         const approvedGroup = groups.find(g => 
           g.supervisionStatus === 'Approved' && g.teacherId != null
         );
+        
         if (approvedGroup) {
+          console.log('Found approved group in getStudentGroups:', approvedGroup.name);
           this.setApprovedGroup(approvedGroup);
         }
+        
         return groups;
       }),
       catchError(error => {
@@ -134,7 +152,7 @@ export class GroupService {
     return this.http.post<any>(`${this.apiUrl}/cleanup/${acceptedGroupId}`, {}).pipe(
       tap(() => {
         // Refresh groups after cleanup
-        this.getStudentGroups(this.approvedGroup?.members[0]?.id || 0).subscribe();
+        this.groupsRefreshSubject.next(); // Trigger refresh across components
       }),
       catchError(error => {
         console.error('Error cleaning up groups:', error);
