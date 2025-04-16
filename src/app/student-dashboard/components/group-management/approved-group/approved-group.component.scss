@@ -1,152 +1,163 @@
 :host {
   display: block;
   width: 100%;
-  margin-bottom: 16px;
-  position: relative;
+  margin-bottom: 1.5rem;
 }
 
-// Approved Group Display
+// Approved Group Display - Clean modern design
 .approved-group {
   background: white;
-  border: 1px solid #e2e8f0;
-  border-left: 3px solid #0284c7;
   border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   width: 100%;
-  padding: 16px;
-  transition: all 0.2s ease;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid #e5e7eb;
+  border-top: 4px solid #3b82f6; // Using the specified blue accent
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
   }
 
   .group-details {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    
+    // Group header styling
     .group-header {
       display: flex;
       flex-direction: column;
-      margin-bottom: 16px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid #f1f5f9;
+      padding: 1.5rem;
+      background: linear-gradient(to right, #f0f9ff, #f8fafc);
+      border-bottom: 1px solid #e5e7eb;
 
       .header-content {
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: 0.75rem;
 
         .approved-badge {
-          align-self: flex-start;
           display: inline-flex;
           align-items: center;
-          gap: 4px;
-          background: #f0f9ff;
-          color: #0284c7;
-          padding: 4px 10px;
-          border-radius: 12px;
-          font-size: 0.8rem;
-          font-weight: 500;
-          margin-bottom: 8px;
-
+          gap: 0.5rem;
+          background: #3b82f6; // Using the specified blue
+          color: white;
+          padding: 0.35rem 0.75rem;
+          border-radius: 20px;
+          font-size: 0.75rem;
+          font-weight: 500; // Reduced from 600
+          align-self: flex-start;
+          box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2); // Updated shadow color
+          
           i {
-            color: #0284c7;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
           }
         }
 
         h3 {
-          font-size: 1.1rem;
+          font-size: 1.25rem;
+          font-weight: 500; // Reduced from 600
           color: #1e293b;
-          margin: 0 0 4px 0;
+          margin: 0;
         }
 
         .created-date {
           display: flex;
           align-items: center;
-          gap: 4px;
+          gap: 0.5rem;
           color: #64748b;
           font-size: 0.8rem;
 
           i {
-            color: #94a3b8;
-            font-size: 0.8rem;
+            color: #3b82f6; // Using the specified blue
           }
         }
       }
     }
 
+    // Supervisor information section
     .supervisor-info {
-      background: #f8fafc;
-      border-radius: 8px;
-      padding: 14px;
-      margin-bottom: 16px;
+      padding: 1.5rem;
+      border-bottom: 1px solid #e5e7eb;
 
       h4 {
-        font-size: 0.9rem;
-        color: #475569;
-        margin: 0 0 12px 0;
-        font-weight: 600;
+        font-size: 1rem;
+        font-weight: 500; // Reduced from 600
+        color: #1e293b;
+        margin: 0 0 1rem 0;
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 0.5rem;
 
         i {
-          color: #0284c7;
-          font-size: 0.9rem;
+          color: #3b82f6; // Using the specified blue
         }
       }
 
       .info-cards {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 10px;
-
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1rem;
+        margin: 0 -0.5rem; // Negative margin to counter the padding
+        
         .info-card {
           display: flex;
           align-items: center;
-          background: white;
-          border-radius: 6px;
-          padding: 10px;
+          padding: 1rem;
+          background: #f8fafc;
+          border-radius: 8px;
+          border: 1px solid #e5e7eb;
           transition: all 0.2s ease;
-          border: 1px solid #e2e8f0;
-          animation: fadeIn 0.3s ease-out forwards;
+          margin: 0.5rem;
+          flex: 1;
+          min-width: 0; // Allow shrinking below min-content
 
           &:hover {
-            border-color: #0284c7;
             background: #f0f9ff;
-
-            .card-icon i {
-              transform: scale(1.1);
+            border-color: #3b82f6; // Using the specified blue
+            
+            .card-icon {
+              background: #3b82f6; // Using the specified blue
+              
+              i {
+                color: white;
+              }
             }
           }
 
           .card-icon {
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
+            flex: 0 0 36px; // Fix width to prevent shrinking
+            border-radius: 8px;
             background: #e0f2fe;
-            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-right: 10px;
+            margin-right: 0.75rem;
+            transition: background-color 0.2s ease;
 
             i {
-              color: #0284c7;
+              color: #3b82f6; // Using the specified blue
               font-size: 1rem;
-              transition: transform 0.2s ease;
+              transition: color 0.2s ease;
             }
           }
 
           .card-content {
             flex: 1;
-            min-width: 0;
-
+            min-width: 0; // Allow text truncation
+            overflow: hidden;
+            
             .label {
               display: block;
               color: #64748b;
               font-size: 0.7rem;
-              margin-bottom: 2px;
+              margin-bottom: 0.25rem;
               text-transform: uppercase;
               letter-spacing: 0.5px;
             }
@@ -154,8 +165,8 @@
             .value {
               display: block;
               color: #1e293b;
-              font-weight: 500;
-              font-size: 0.85rem;
+              font-weight: 400; // Reduced from 500
+              font-size: 0.9rem;
               white-space: nowrap;
               overflow: hidden;
               text-overflow: ellipsis;
@@ -165,85 +176,77 @@
       }
     }
 
+    // Members section styling
     .members-section {
-      background: white;
-      border-radius: 8px;
-      overflow: hidden;
-      border: 1px solid #e2e8f0;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+      padding: 1.5rem;
 
       h4 {
-        font-size: 0.9rem;
+        font-size: 1rem;
+        font-weight: 500; // Reduced from 600
         color: #1e293b;
-        margin: 0;
-        padding: 12px 14px;
-        background: #f8fafc;
-        font-weight: 600;
+        margin: 0 0 1rem 0;
         display: flex;
         align-items: center;
-        gap: 6px;
-        border-bottom: 1px solid #e2e8f0;
+        gap: 0.5rem;
 
         i {
-          color: #0284c7;
-          font-size: 0.9rem;
+          color: #3b82f6; // Using the specified blue
         }
       }
 
       .member-list {
-        list-style: none;
-        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
         margin: 0;
-        display: grid;
-        gap: 1px;
-        background: #f1f5f9;
+        padding: 0;
+        list-style: none;
 
         li {
-          padding: 10px 14px;
-          background: white;
+          padding: 0.75rem;
+          background: #f8fafc;
+          border-radius: 8px;
+          border: 1px solid #e5e7eb;
           transition: all 0.2s ease;
-          animation: fadeIn 0.3s ease-out forwards;
-          animation-delay: calc(var(--index, 0) * 0.05s);
 
           &:hover {
-            background: #f8fafc;
+            background: #f0f9ff;
+            border-color: #3b82f6; // Using the specified blue
           }
 
           .member-details {
             display: flex;
             align-items: center;
-            gap: 10px;
             flex-wrap: wrap;
+            gap: 0.75rem;
 
             .member-name {
-              font-weight: 500;
+              font-weight: 400; // Reduced from 500
               color: #1e293b;
-              font-size: 0.9rem;
-              flex: 1;
+              font-size: 0.95rem;
               min-width: 140px;
+              flex: 1;
             }
 
             .member-email {
               color: #64748b;
-              font-size: 0.8rem;
+              font-size: 0.85rem;
               flex: 2;
             }
 
             .badge.creator {
-              background: #f0f7ff;
-              color: #2563eb;
-              padding: 3px 8px;
-              border-radius: 12px;
-              font-size: 0.7rem;
-              font-weight: 500;
+              background: #eef2ff; // Lighter blue background
+              color: #3b82f6; // Using the specified blue
+              padding: 0.25rem 0.5rem;
+              border-radius: 4px;
+              font-size: 0.75rem;
+              font-weight: 400; // Reduced from 500
               display: flex;
               align-items: center;
-              gap: 4px;
-              border: 1px solid #bfdbfe;
-
+              gap: 0.3rem;
+              
               i {
-                font-size: 0.7rem;
-                color: #2563eb;
+                color: #3b82f6; // Using the specified blue
               }
             }
           }
@@ -253,316 +256,67 @@
   }
 }
 
+// Empty state styling
 .no-approved-group {
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 100%;
-  min-height: 120px;
-  text-align: center;
-  font-size: 0.95rem;
-  color: #64748b;
   background-color: #f8fafc;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  border: 1px dashed #cbd5e1;
   
   p {
-    padding: 0;
+    color: #64748b;
     margin: 0;
+    font-size: 0.95rem;
   }
 }
 
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
-  100% {
-    transform: scale(1);
-  }
+// Animations
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 // Responsive adjustments
-@media (max-width: 768px) {
-  :host {
-    padding: 0 0.75rem;
-  }
-
+@media (max-width: 1024px) {
   .approved-group {
-    padding: 14px;
-    
     .group-details {
-      .group-header {
-        flex-direction: column;
-        gap: 1rem;
-      }
-      
-      .supervisor-info {
-        .info-cards {
-          grid-template-columns: 1fr;
-        }
+      .supervisor-info .info-cards {
+        grid-template-columns: repeat(2, 1fr);
       }
     }
   }
 }
 
-// Add smooth animations
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+@media (max-width: 768px) {
+  .approved-group {
+    .group-details {
+      .supervisor-info .info-cards {
+        grid-template-columns: 1fr;
+      }
+    }
   }
 }
 
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-// Add responsive adjustments for member list
-@media (max-width: 640px) {
-  .approved-group .group-details .members-section {
-    .member-list li {
-      .member-details {
+@media (max-width: 576px) {
+  .approved-group {
+    .group-details {
+      .members-section .member-list li .member-details {
         flex-direction: column;
         align-items: flex-start;
-        gap: 0.5rem;
-
+        
         .member-name, .member-email {
           width: 100%;
         }
-
+        
         .badge.creator {
           align-self: flex-start;
+          margin-top: 0.25rem;
         }
       }
     }
   }
-}
-
-// Add container styles to handle the white space
-.group-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  min-height: min-content;
-  display: flex;
-  flex-direction: column;
-}
-
-// Adjust media queries
-@media (max-width: 1024px) {
-  :host {
-    padding: 0 1rem;
-  }
-
-  .approved-group {
-    max-width: 100%;
-  }
-}
-
-// Responsive Breakpoints
-@media screen and (max-width: 1400px) {
-  :host {
-    width: 95%;
-    margin-left: -100px;
-  }
-
-  .approved-group {
-    max-width: 1000px;
-  }
-}
-
-@media screen and (max-width: 1200px) {
-  :host {
-    width: 80%;
-    margin-left: -20px;
-  }
-
-  .approved-group {
-    .group-details {
-      .supervisor-info {
-        .info-cards {
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        }
-      }
-    }
-  }
-}
-
-@media screen and (max-width: 992px) {
-  :host {
-    width: 80%;
-    margin-left: -10px;
-    
-  }
-
-  .approved-group {
-    padding: 1.25rem;
-
-    .group-details {
-      .group-header {
-        .header-content {
-          gap: 0.75rem;
-        }
-      }
-
-      .supervisor-info {
-        .info-cards {
-          grid-template-columns: repeat(2, 1fr);
-          gap: 0.75rem;
-        }
-      }
-    }
-  }
-}
-
-@media screen and (max-width: 768px) {
-  :host {
-    width: 85%;
-    margin-left: -10px;
-    padding: 0 0.75rem;
-  }
-
-  .approved-group {
-    padding: 1rem;
-
-    .group-details {
-      .group-header {
-        .header-content {
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 0.5rem;
-        }
-      }
-
-      .supervisor-info {
-        padding: 1rem;
-        
-        .info-cards {
-          grid-template-columns: 1fr;
-        }
-      }
-    }
-  }
-}
-
-@media screen and (max-width: 576px) {
-  :host {
-    width: 80%;
-    margin-left: -20px;
-    padding: 0 0.5rem;
-  }
-
-  .approved-group {
-    padding: 12px;
-
-    .group-details {
-      .group-header {
-        padding-bottom: 1rem;
-        margin-bottom: 1rem;
-
-        h3 {
-          font-size: 1.125rem;
-        }
-      }
-
-      .supervisor-info {
-        .info-cards {
-          .info-card {
-            padding: 0.875rem;
-
-            .card-icon {
-              width: 26px;
-              height: 26px;
-
-              i {
-                font-size: 1rem;
-              }
-            }
-          }
-        }
-      }
-
-      .members-section {
-        .member-list li {
-          .member-details {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 0.375rem;
-
-            .member-name {
-              min-width: unset;
-              width: 100%;
-            }
-
-            .member-email {
-              width: 100%;
-            }
-
-            .badge.creator {
-              margin-top: 0.25rem;
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-@media screen and (max-width: 400px) {
-  :host {
-    margin-left: -40px;
-  }
-
-  .approved-group {
-    padding: 0.875rem;
-
-    .approved-badge {
-      font-size: 0.75rem;
-      padding: 0.375rem 0.75rem;
-    }
-  }
-}
-
-.approved-group {
-  width: 100%;
-  max-width: 100%;
-  margin-bottom: 30px;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-}
-
-.group-details {
-  width: 100%;
-  padding: 20px;
-}
-
-.info-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 15px;
-  width: 100%;
-}
-
-.member-list {
-  padding-left: 0;
-  list-style-type: none;
-  width: 100%;
 }

@@ -2,12 +2,12 @@
   <!-- Use the dedicated approved group component -->
   <app-approved-group></app-approved-group>
 
-  <!-- Other Groups Section -->
-  <div class="other-groups" *ngIf="hasAnyGroups">
+  <!-- Other Groups Section - Only show if student has groups AND doesn't have an approved group -->
+  <div class="other-groups" *ngIf="hasAnyGroups && !hasApprovedGroup">
     <div class="section-header">
       <h4 class="section-title">
         <i class="fas fa-layer-group"></i>
-        {{hasApprovedGroup ? 'Other Groups' : 'My Groups'}}
+        My Groups
       </h4>
     </div>
     
@@ -28,6 +28,7 @@
             </div>
           </div>
           
+          <!-- Rest of the card content remains the same -->
           <div class="card-content">
             <div class="creation-date">
               <i class="far fa-calendar-alt"></i>

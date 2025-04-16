@@ -2,7 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { TeacherService, TeacherSupervisionRequestDetails, SupervisionResponse } from '../../services/teacher.service';
+import { TeacherService } from '../../services/teacher.service';
+import { SupervisionService, SupervisionRequest, SupervisionResponseDto } from '../../services/supervision.service';
 import { NotificationService } from '../../services/notifications.service';
 
 @Component({
@@ -17,7 +18,7 @@ import { NotificationService } from '../../services/notifications.service';
   styleUrls: ['./supervision-requests.component.scss']
 })
 export class SupervisionRequestsComponent implements OnInit {
-  requests: TeacherSupervisionRequestDetails[] = [];
+  requests: SupervisionRequest[] = [];
   isLoading = false;
   error: string | null = null;
   respondingToRequestId: number | null = null;
@@ -25,6 +26,7 @@ export class SupervisionRequestsComponent implements OnInit {
 
   constructor(
     private teacherService: TeacherService,
+    private supervisionService: SupervisionService,
     private notificationService: NotificationService,
     private router: Router
   ) {}
@@ -37,12 +39,12 @@ export class SupervisionRequestsComponent implements OnInit {
     this.isLoading = true;
     this.error = null;
     
-    this.teacherService.getSupervisionRequests().subscribe({
-      next: (data) => {
+    this.supervisionService.getSupervisionRequests().subscribe({
+      next: (data: SupervisionRequest[]) => {
         this.requests = data;
         this.isLoading = false;
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error loading supervision requests:', error);
         this.error = 'Failed to load supervision requests';
         this.isLoading = false;
@@ -53,13 +55,13 @@ export class SupervisionRequestsComponent implements OnInit {
   respondToRequest(requestId: number, groupId: number, approve: boolean): void {
     this.respondingToRequestId = requestId;
     
-    const response: SupervisionResponse = {
+    const response: SupervisionResponseDto = {
       groupId: groupId,
       isApproved: approve,
       message: this.responseMessage || (approve ? 'Request approved' : 'Request declined')
     };
     
-    this.teacherService.respondToSupervisionRequest(response).subscribe({
+    this.supervisionService.respondToRequest(response).subscribe({
       next: () => {
         this.notificationService.showSuccess(`Request ${approve ? 'approved' : 'declined'} successfully`);
         this.respondingToRequestId = null;
@@ -67,7 +69,7 @@ export class SupervisionRequestsComponent implements OnInit {
         // Refresh requests list
         this.loadRequests();
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error responding to request:', error);
         this.notificationService.showError(`Failed to ${approve ? 'approve' : 'decline'} request`);
         this.respondingToRequestId = null;
