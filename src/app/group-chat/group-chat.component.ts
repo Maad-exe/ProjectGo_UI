@@ -74,7 +74,7 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.chatService.connected$.pipe(
       filter(connected => connected === true),
       take(1),
-      timeout(10000) // 10 seconds timeout
+      timeout(30000) // 3 seconds timeout
     ).subscribe({
       next: () => {
         console.log('Connection established, setting up chat service');
@@ -145,16 +145,17 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       })
     );
     
+    // Fix the messageRead$ subscription to properly update the UI
     this.subscriptions.push(
-      this.chatService.messageRead$.subscribe((info: {userId: number, groupId: number}) => {
+      this.chatService.messageRead$.subscribe((info: {userId: number, userName?: string, groupId: number}) => {
         if (info.groupId === this.groupId) {
-          this.updateMessagesReadStatus(info.userId);
+          console.log(`User ${info.userName || 'Unknown'} (ID: ${info.userId}) read messages in group ${info.groupId}`);
+          this.updateMessagesReadStatus(info.userId, info.userName);
         }
       })
     );
     
     this.loadMessages();
-    
     this.markMessagesAsRead();
   }
   
@@ -335,21 +336,48 @@ export class GroupChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       }
     }
     
-    this.messages.forEach(message => {
+    let messagesUpdated = false;
+    
+    // Create a new array to force change detection
+    const updatedMessages = this.messages.map(message => {
+      // Only update messages sent by the current user
       if (message.senderId === this.userId) {
         const existingReader = message.readBy?.find(r => r.userId === userId);
         if (!existingReader && message.readBy) {
-          message.readBy.push({
-            userId: userId,
-            userName: resolvedUserName,
-            readAt: new Date().toISOString()
+          // Create a new message object with the updated readBy array
+          const newMessage = { ...message };
+          newMessage.readBy = [
+            ...message.readBy,
+            {
+              userId: userId,
+              userName: resolvedUserName,
+              readAt: new Date().toISOString()
+            }
+          ];
+          newMessage.totalReadCount = newMessage.readBy.length;
+          messagesUpdated = true;
+          return newMessage;
+        } else if (existingReader && (!existingReader.userName || existingReader.userName === `User ${userId}`) && resolvedUserName) {
+          // Create a new message object with the updated reader name
+          const newMessage = { ...message };
+          newMessage.readBy = message.readBy.map(reader => {
+            if (reader.userId === userId) {
+              return { ...reader, userName: resolvedUserName };
+            }
+            return reader;
           });
-          message.totalReadCount = message.readBy.length;
-        } else if (existingReader && !existingReader.userName && resolvedUserName) {
-          existingReader.userName = resolvedUserName;
+          messagesUpdated = true;
+          return newMessage;
         }
       }
+      return message;
     });
+    
+    // If we updated messages, set the new array
+    if (messagesUpdated) {
+      console.log('Messages updated with new read receipts');
+      this.messages = updatedMessages;
+    }
   }
   
   handleUserTyping(typingInfo: UserTypingInfo): void {

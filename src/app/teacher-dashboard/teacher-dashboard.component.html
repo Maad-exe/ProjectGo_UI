@@ -167,7 +167,7 @@
       </div>
       
       <!-- Group Chat View -->
-      <div *ngIf="currentView === 'chat' && showGroupChat && selectedGroupForChat">
+      <div *ngIf="currentView === 'chat' && showGroupChat && selectedGroupForChat" class="chat-view-container">
         <div class="chat-header">
           <h2>{{ selectedGroupForChat.name }} - Group Chat</h2>
           <button class="back-btn" (click)="setView('groups')">

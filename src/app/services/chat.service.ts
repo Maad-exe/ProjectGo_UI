@@ -209,12 +209,11 @@ export class ChatService {
   }
   
   // Fix for chat.service.ts - initConnection method
-// Fix for chat.service.ts - initConnection method
 private initConnection(forceReinit: boolean = false): void {
   console.log('Initializing chat connection, forceReinit:', forceReinit);
   
   // Prevent multiple simultaneous connection attempts
-  if (this._isConnecting) {
+  if (this._isConnecting && !forceReinit) {
     console.log('Connection attempt already in progress, skipping');
     return;
   }
@@ -231,7 +230,9 @@ private initConnection(forceReinit: boolean = false): void {
   // Check if user changed or force reinit
   const needsNewConnection = forceReinit || 
                            currentUserId !== this.lastLoggedInUserId || 
-                           !this.hubConnection;
+                           !this.hubConnection ||
+                           (this.hubConnection.state !== signalR.HubConnectionState.Connected && 
+                            this.hubConnection.state !== signalR.HubConnectionState.Connecting);
 
   if (needsNewConnection) {
     console.log(`User changed or force reinit: ${this.lastLoggedInUserId} -> ${currentUserId}`);
@@ -257,7 +258,7 @@ private initConnection(forceReinit: boolean = false): void {
                   signalR.HttpTransportType.LongPolling,
         skipNegotiation: false
       })
-      .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+      .withAutomaticReconnect([0, 1000, 5000, 10000, 20000, 30000, 60000]) // More aggressive reconnect strategy
       .configureLogging(signalR.LogLevel.Information)
       .build();
         
@@ -322,9 +323,9 @@ private async startConnection(): Promise<void> {
         clearTimeout(this.reconnectTimeout);
       }
       
+      this._isConnecting = false;
       return new Promise<void>((resolve, reject) => {
         this.reconnectTimeout = setTimeout(() => {
-          this._isConnecting = false;
           this.startConnection()
             .then(resolve)
             .catch(reject);
@@ -337,7 +338,7 @@ private async startConnection(): Promise<void> {
         setTimeout(() => {
           this.initConnection(true);
           resolve(); // Resolve anyway to prevent hanging promises
-        }, 60000);
+        }, 10000); // Shorter timeout for the final attempt
       });
     }
   }
@@ -414,52 +415,51 @@ private async startConnection(): Promise<void> {
       }
     });
     
-    // Handle messages read notifications
+    // Improved MessagesRead handler
     this.hubConnection.on('MessagesRead', (userId: number, userName: string, groupId: number) => {
       console.log(`MessagesRead event: User ${userId} (${userName || 'unknown'}) read messages in group ${groupId}`);
       
-      // Make sure we have a valid userName
-      let resolvedUserName = userName;
-      if (!resolvedUserName) {
-        // Try to find user's name from message cache
-        const messages = this.messageCache.get(groupId) || [];
-        const userMessage = messages.find(m => m.senderId === userId);
-        if (userMessage && userMessage.senderName) {
-          resolvedUserName = userMessage.senderName;
-        } else {
-          resolvedUserName = `User ${userId}`;
-        }
-      }
-      
+      // Emit with full info for UI updates
       this.messageReadSubject.next({ 
         userId, 
-        userName: resolvedUserName, 
+        userName: userName || `User ${userId}`, 
         groupId 
       });
       
-      // Update local cache to mark messages as read
+      // Update local message cache with read receipt
       const messages = this.messageCache.get(groupId);
       if (messages) {
         let updated = false;
-        messages.forEach(msg => {
-          if (msg.senderId === this.getCurrentUserId() && !msg.isRead) {
-            msg.isRead = true;
+        const updatedMessages = messages.map(msg => {
+          // Only update messages sent by the current user that the other user has read
+          if (msg.senderId === this.getCurrentUserId() && 
+              (!msg.readBy || !msg.readBy.some(r => r.userId === userId))) {
             
-            // Add this user to readBy array if they're not already there
-            if (!msg.readBy) msg.readBy = [];
-            if (!msg.readBy.some(r => r.userId === userId)) {
-              msg.readBy.push({
-                userId: userId,
-                userName: resolvedUserName,
-                readAt: new Date().toISOString()
-              });
+            const updatedMsg = { ...msg };
+            updatedMsg.readBy = updatedMsg.readBy || [];
+            
+            // Add this user to readBy array if not already there
+            if (!updatedMsg.readBy.some(r => r.userId === userId)) {
+              updatedMsg.readBy = [
+                ...updatedMsg.readBy,
+                {
+                  userId: userId,
+                  userName: userName || `User ${userId}`,
+                  readAt: new Date().toISOString()
+                }
+              ];
+              updatedMsg.totalReadCount = updatedMsg.readBy.length;
+              updated = true;
             }
-            updated = true;
+            
+            return updatedMsg;
           }
+          return msg;
         });
         
+        // Update cache if changes were made
         if (updated) {
-          this.messageCache.set(groupId, [...messages]);
+          this.messageCache.set(groupId, updatedMessages);
         }
       }
     });

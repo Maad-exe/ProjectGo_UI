@@ -119,6 +119,15 @@
   background-color: #f1f5f9;
   display: flex;
   flex-direction: column;
+  height: 100vh;
+  overflow-y: auto;
+  position: relative;
+  padding: 20px;
+  
+  &:has(.chat-view-container) {
+    padding: 0;
+    overflow: hidden;
+  }
 }
 
 .header {
@@ -605,23 +614,33 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
+  padding: 10px 15px;
+  background-color: #f5f7fa;
+  border-bottom: 1px solid #e1e4e8;
+  z-index: 10;
   
   h2 {
     margin: 0;
+    font-size: 1.25rem;
   }
   
   .back-btn {
-    background: none;
-    border: 1px solid #d1d5db;
-    padding: 8px 16px;
-    border-radius: 6px;
     display: flex;
     align-items: center;
     gap: 6px;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    background-color: #e1e4e8;
     cursor: pointer;
+    transition: background-color 0.2s;
     
     &:hover {
-      background-color: #f9fafb;
+      background-color: #d1d5da;
+    }
+    
+    i {
+      font-size: 0.875rem;
     }
   }
 }
@@ -633,15 +652,26 @@
   overflow: hidden;
   background: white;
   margin-bottom: 20px;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
   
   app-group-chat {
     display: block;
     height: 100%;
     width: 100%;
+    overflow: hidden;
   }
 }
 
 // Add these styles to your component's SCSS file
+
+.chat-view-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 80px); // Adjust this value based on your header height
+  overflow: hidden;
+}
 
 .evaluation-section {
   margin-bottom: 2rem;
