@@ -138,10 +138,8 @@ export class CreateGroupComponent implements OnInit {
       clearTimeout(this.searchTimers[index]);
     }
     
-    // Important: Clear the error whenever the user types
-    if (email in this.searchErrors) {
-      delete this.searchErrors[email];
-    }
+    // Clear errors and search results when user starts typing
+    this.clearErrorsForIndex(index);
     
     if (!email || !email.trim() || !this.emailPattern.test(email)) {
       return;
@@ -153,22 +151,31 @@ export class CreateGroupComponent implements OnInit {
     }, 500);
   }
 
+  // Add new method to clear errors for a specific index
+  private clearErrorsForIndex(index: number): void {
+    const email = this.memberEmails.at(index).value;
+    if (email) {
+      delete this.searchErrors[email];
+      delete this.studentSearchResults[email];
+    }
+  }
+
   async searchStudent(email: string, index: number) {
     if (!email || !email.trim()) {
-      this.searchErrors[email] = 'Please enter an email address';
+      this.clearErrorsForIndex(index);
       return;
     }
     
     if (!this.emailPattern.test(email)) {
-      this.searchErrors[email] = 'Please enter a valid email address';
+      this.clearErrorsForIndex(index);
       return;
     }
-  
+
     this.isSearchingStudent = true;
     this.isSearchingMember[index] = true;
     
     // Clear previous errors for this email
-    delete this.searchErrors[email];
+    this.clearErrorsForIndex(index);
     
     try {
       console.log(`Searching for student with email: ${email}`);
@@ -176,55 +183,31 @@ export class CreateGroupComponent implements OnInit {
       console.log(`Search result for ${email}:`, student);
       
       if (student) {
-        // FIX: Clear the student result first to avoid race conditions
-        this.studentSearchResults[email] = null;
-        
-        // FIX: Log each step of supervision check for debugging
-        console.log(`Checking if student ${student.id} is in a supervised group...`);
         try {
           const isInSupervisedGroup = await this.checkIfStudentInSupervisedGroup(student.id);
-          console.log(`Student ${student.id} supervision status:`, isInSupervisedGroup);
           
           if (isInSupervisedGroup) {
-            // FIX: Keep studentSearchResults null when student is in a supervised group
             this.studentSearchResults[email] = null;
             this.searchErrors[email] = `${student.fullName} is already part of an approved group and cannot join your group.`;
-            console.log(`Set error for ${email} (supervised):`, this.searchErrors[email]);
           } else {
             // Student is valid - set the data and clear any errors
             this.studentSearchResults[email] = student;
             delete this.searchErrors[email];
-            console.log(`Student ${student.id} is valid and not in any supervised group`);
           }
         } catch (supervisionError) {
-          // FIX: Handle supervision check errors better
-          console.error(`Error checking supervision for student ${student.id}:`, supervisionError);
-          // Assume they might be in a supervised group if we can't verify
-          this.studentSearchResults[email] = null;
-          this.searchErrors[email] = `Could not verify if ${student.fullName} is in an approved group. Please try again.`;
+          this.clearErrorsForIndex(index);
+          this.searchErrors[email] = `Could not verify student's group status. Please try again.`;
         }
       } else {
-        this.studentSearchResults[email] = null;
+        this.clearErrorsForIndex(index);
         this.searchErrors[email] = 'Student not found with this email address.';
-        console.log(`No student found with email: ${email}`);
       }
     } catch (error: any) {
-      // Handle API errors
-      console.error('Error searching student:', error);
-      this.studentSearchResults[email] = null;
-      
-      // FIX: Better error handling
+      this.clearErrorsForIndex(index);
       if (error.error?.message) {
-        if (typeof error.error.message === 'string' && 
-            (error.error.message.toLowerCase().includes('supervised group') || 
-             error.error.message.toLowerCase().includes('approved group'))) {
-          this.searchErrors[email] = `This student is already part of an approved group and cannot join your group.`;
-          console.log(`Student ${email} is in supervised group (from error):`, error.error.message);
-        } else {
-          this.searchErrors[email] = error.error.message;
-        }
+        this.searchErrors[email] = error.error.message;
       } else {
-        this.searchErrors[email] = 'Student not found. Please check the email and try again.';
+        this.searchErrors[email] = 'Failed to verify student. Please try again.';
       }
     } finally {
       this.isSearchingStudent = false;
@@ -238,7 +221,9 @@ export class CreateGroupComponent implements OnInit {
   }
 
   hasSearchErrors(): boolean {
-    return Object.keys(this.searchErrors).some(key => this.searchErrors[key]);
+    // Only consider current form values
+    const currentEmails = this.memberEmails.controls.map(control => control.value);
+    return currentEmails.some(email => !!this.searchErrors[email]);
   }
 
   isAnyMemberSearching(): boolean {
