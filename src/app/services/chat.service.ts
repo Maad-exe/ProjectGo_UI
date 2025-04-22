@@ -286,6 +286,50 @@ private async startConnection(): Promise<void> {
   
   try {
     console.log('Starting hub connection...');
+    
+    // Check the connection state before attempting to start
+    if (this.hubConnection.state !== signalR.HubConnectionState.Disconnected) {
+      console.log(`Connection is already in '${this.hubConnection.state}' state, not starting again`);
+      
+      // If the connection is already connected, resolve the promise
+      if (this.hubConnection && this.hubConnection.state === signalR.HubConnectionState.Connected) {
+        this._isConnecting = false;
+        this.connectedSubject.next(true);
+        return Promise.resolve();
+      }
+      
+      // If it's currently connecting, wait a bit
+      if (this.hubConnection.state === signalR.HubConnectionState.Connecting) {
+        this._isConnecting = true;
+        return new Promise((resolve) => {
+          setTimeout(async () => {
+            // Check if we're connected now
+            if (this.hubConnection?.state === signalR.HubConnectionState.Connected) {
+              this._isConnecting = false;
+              this.connectedSubject.next(true);
+              resolve();
+            } else {
+              // Otherwise, close and recreate the connection
+              try {
+                if (this.hubConnection) {
+                  await this.hubConnection.stop();
+                }
+                this.initConnection(true);
+                resolve();
+              } catch (err) {
+                console.error("Error stopping connection:", err);
+                resolve(); // Resolve anyway to prevent hanging
+              }
+            }
+          }, 1000);
+        });
+      }
+      
+      // For other states (Reconnecting, Disconnecting, etc.), stop the connection first
+      await this.hubConnection.stop();
+    }
+    
+    // Now start the connection
     await this.hubConnection.start();
     console.log('Chat connection established for user:', this.getCurrentUserId());
     
