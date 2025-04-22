@@ -252,6 +252,11 @@ export class EvaluationService {
     );
   }
   
+  // Get enhanced student's evaluations for their progress page
+  getEnhancedStudentEvaluations(): Observable<EnhancedStudentEvaluationDto[]> {
+    return this.http.get<EnhancedStudentEvaluationDto[]>(`${this.apiUrl}/student/evaluations/enhanced-progress`);
+  }
+  
   // Get all evaluations (admin)
   getAllEvaluations(): Observable<any[]> {
     return this.http.get<any[]>(`${this.adminEvaluationUrl}/all`).pipe(
@@ -278,6 +283,19 @@ export class EvaluationService {
       catchError(error => {
         console.error('Error fetching performance data:', error);
         return of(this.getMockPerformanceData());
+      })
+    );
+  }
+  
+  // Add this method to your EvaluationService class
+  getFinalGrade(): Observable<number> {
+    return this.http.get<number>(`${this.studentEvaluationUrl}/final-grade`).pipe(
+      catchError(error => {
+        console.error('Error fetching final grade:', error);
+        if (environment.useMockData) {
+          return of(75.5); // Return a mock grade
+        }
+        return throwError(() => error);
       })
     );
   }

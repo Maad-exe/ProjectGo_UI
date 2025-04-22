@@ -83,3 +83,52 @@ export interface StudentPerformanceDashboardDto {
     date: string;
   }[];
 }
+
+export interface EnhancedStudentEvaluationDto {
+  id: number;
+  studentId: number;
+  studentName: string;
+  groupEvaluationId: number;
+  eventId: number;
+  eventName: string;
+  eventDate: string;
+  eventType: string;
+  eventWeight: number;
+  panelId: number;
+  panelName: string;
+  obtainedMarks: number;
+  totalMarks: number;
+  percentageObtained: number;
+  feedback: string;
+  isComplete: boolean;
+  evaluatedAt: string;
+  isRubricBased: boolean;
+  rubricId?: number;
+  rubricName?: string;
+  categoryScores: CategoryScoreDetailDto[];
+  evaluators: EvaluatorDto[];
+}
+
+export interface CategoryScoreDetailDto {
+  categoryId: number;
+  categoryName: string;
+  categoryWeight: number;
+  score: number;
+  maxScore: number;
+  weightedScore: number;
+  feedback: string;
+  evaluatorDetails: CategoryEvaluatorDetailDto[];
+}
+
+export interface CategoryEvaluatorDetailDto {
+  evaluatorId: number;
+  evaluatorName: string;
+  score: number;
+  feedback: string;
+  evaluatedAt: string;
+}
+
+export interface EvaluatorDto {
+  id: number;
+  name: string;
+}

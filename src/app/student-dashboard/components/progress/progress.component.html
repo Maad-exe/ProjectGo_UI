@@ -8,20 +8,20 @@
   </div>
 
   <!-- Loading state -->
-  <div class="loading-state" *ngIf="loading">
+  <div class="loading-state" *ngIf="isLoading">
     <i class="fas fa-spinner fa-spin"></i>
     <p>Loading your evaluations...</p>
   </div>
 
   <!-- Empty state -->
-  <div class="empty-state" *ngIf="!loading && evaluations.length === 0">
+  <div class="empty-state" *ngIf="!isLoading && evaluations.length === 0">
     <i class="fas fa-clipboard-list"></i>
     <h3>No Evaluations Yet</h3>
     <p>You haven't been evaluated in any events yet. Check back later!</p>
   </div>
 
   <!-- Progress content -->
-  <div class="progress-content" *ngIf="!loading && evaluations.length > 0">
+  <div class="progress-content" *ngIf="!isLoading && evaluations.length > 0">
     <!-- Summary card -->
     <div class="summary-card">
       <div class="grade-circle" [ngClass]="getGradeColor(finalGrade)">
@@ -52,40 +52,68 @@
       
       <div class="evaluation-card" *ngFor="let evaluation of evaluations">
         <div class="event-info">
-          <h4>{{ evaluation.event.name }}</h4>
+          <h4>{{ evaluation.eventName }}</h4>
           <div class="event-meta">
-            <span class="event-type">{{ evaluation.event.type }}</span>
-            <span class="event-date">{{ evaluation.event.date | date }}</span>
-            <span class="event-weight">Weight: {{ evaluation.event.weight }}%</span>
+            <span class="event-type">{{ evaluation.eventType || 'Standard' }}</span>
+            <span class="event-date">{{ evaluation.eventDate | date }}</span>
+            <span class="event-weight">Weight: {{ evaluation.eventWeight }}%</span>
           </div>
         </div>
         
-        <div class="evaluation-details">
-          <div class="status-badge" [ngClass]="evaluation.completed ? 'completed' : 'pending'">
-            {{ evaluation.completed ? 'Completed' : 'Pending' }}
+        <div class="evaluation-details" *ngIf="evaluation.isComplete">
+          <div class="score-value" [ngClass]="getGradeColor(evaluation.obtainedMarks)">
+            {{ evaluation.obtainedMarks }}
+            <span class="score-max">/ {{ evaluation.totalMarks }}</span>
           </div>
           
-          <div class="score-section" *ngIf="evaluation.completed">
-            <div class="score-value" [ngClass]="getGradeColor(evaluation.score)">
-              {{ evaluation.score }}
-              <span class="score-max">/ {{ evaluation.event.totalMarks }}</span>
-            </div>
-            
-            <div class="progress-bar-container">
-              <div class="progress-bar" 
-                   [style.width]="getProgressBarWidth(evaluation.score * 100 / evaluation.event.totalMarks)"
-                   [ngClass]="getGradeColor(evaluation.score)">
-              </div>
+          <!-- Simple evaluation display remains the same -->
+          
+          <!-- For rubric-based evaluations, show category details -->
+          <div class="rubric-details" *ngIf="evaluation.categoryScores && evaluation.categoryScores.length > 0">
+            <h5>Evaluation Details by Category</h5>
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th>Weight</th>
+                    <th>Score</th>
+                    <th>Comments</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let category of evaluation.categoryScores">
+                    <td>{{ category.categoryName }}</td>
+                    <td>{{ category.categoryWeight }}%</td>
+                    <td>
+                      <div class="score-pill" [ngClass]="getGradeColor(category.score)">
+                        {{ category.score }}/{{ category.maxScore }}
+                      </div>
+                    </td>
+                    <td>{{ category.feedback }}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
           
-          <div class="pending-message" *ngIf="!evaluation.completed">
-            <i class="fas fa-hourglass-half"></i>
-            Evaluation not yet completed
+          <!-- Show evaluators if available -->
+          <div class="evaluators" *ngIf="evaluation.evaluators && evaluation.evaluators.length > 0">
+            <h5>Evaluated by:</h5>
+            <ul class="evaluator-list">
+              <li *ngFor="let evaluator of evaluation.evaluators">
+                {{ evaluator.name }}
+              </li>
+            </ul>
           </div>
         </div>
         
-        <div class="evaluation-feedback" *ngIf="evaluation.completed && evaluation.feedback">
+        <div class="pending-message" *ngIf="!evaluation.isComplete">
+          <i class="fas fa-hourglass-half"></i>
+          Evaluation not yet completed
+        </div>
+        
+        <div class="evaluation-feedback" *ngIf="evaluation.isComplete && evaluation.feedback">
           <h5>Feedback:</h5>
           <div class="feedback-content">
             <i class="fas fa-quote-left"></i>

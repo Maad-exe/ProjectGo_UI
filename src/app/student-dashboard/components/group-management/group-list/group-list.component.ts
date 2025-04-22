@@ -16,7 +16,7 @@ import { GroupCleanupInfoDialogComponent } from '../../../../shared/group-cleanu
     CommonModule,
     MatDialogModule,
     ApprovedGroupComponent,
-    GroupCleanupInfoDialogComponent
+    // GroupCleanupInfoDialogComponent
   ],
   templateUrl: './group-list.component.html',
   styleUrls: ['./group-list.component.scss']
