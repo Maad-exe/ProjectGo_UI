@@ -19,6 +19,23 @@ import { NotificationService } from '../../../services/notifications.service';
 import { StudentService } from '../../../services/student.service';
 import { AuthService } from '../../../services/auth.service';
 
+interface EnhancedCategoryScore {
+  categoryId: number;
+  categoryName?: string;
+  score: number;
+  maxScore?: number;
+  feedback?: string;
+  evaluatorDetails?: EvaluatorDetail[];
+}
+
+interface EvaluatorDetail {
+  evaluatorId: number;
+  evaluatorName?: string;
+  score: number;
+  feedback?: string;
+  evaluatedAt?: string;
+}
+
 @Component({
   selector: 'app-conduct-evaluation',
   standalone: true,
@@ -37,6 +54,7 @@ export class ConductEvaluationComponent implements OnInit {
   rubric: EvaluationRubric | null = null;
   studentInfo: any = null;
   existingEvaluation: StudentEvaluationDto | null = null;
+  evaluationStatistics: any = null; // Add this new property
   
   isRubricEvaluation: boolean = false;
   totalMarks: number = 100;
@@ -44,6 +62,8 @@ export class ConductEvaluationComponent implements OnInit {
   evaluationForm!: FormGroup;
   loading: boolean = true;
   submitting: boolean = false;
+  hasTeacherEvaluated: boolean = false; // Add this new property
+  hasEvaluated = false; // Add property to track if this is a new or updating evaluation
   
   constructor(
     private fb: FormBuilder,
@@ -200,89 +220,84 @@ export class ConductEvaluationComponent implements OnInit {
     });
   }
   
+  // Update the loadExistingEvaluation method
   loadExistingEvaluation(): void {
-    this.evaluationService.getStudentEvaluation(this.groupEvaluationId, this.studentId).subscribe({
-      next: (evaluation) => {
-        this.existingEvaluation = evaluation;
+    console.log(`Loading evaluation for teacher ${this.teacherId}, student ${this.studentId}, group evaluation ${this.groupEvaluationId}`);
+    
+    // Load statistics first to know the overall status
+    this.evaluationService.getEvaluationStatistics(this.groupEvaluationId, this.studentId).subscribe({
+      next: (statistics) => {
+        this.evaluationStatistics = statistics;
         
-        if (evaluation && evaluation.id) {
-          // Check if the evaluation is complete and should not be editable
-          if (evaluation.isComplete) {
-            // Make form read-only if evaluation is complete
-            this.evaluationForm.disable();
-            this.notificationService.showInfo('This evaluation is complete and cannot be modified');
-          } else {
-            // Populate the form with the existing evaluation data
-            if (!this.isRubricEvaluation) {
-              this.evaluationForm.patchValue({
-                obtainedMarks: evaluation.obtainedMarks,
-                feedback: evaluation.feedback
-              });
-            } else if (this.rubric && (evaluation as EnhancedStudentEvaluationDto).categoryScores) {
-              // Handle rubric evaluation if the response includes category scores
-              const enhancedEval = evaluation as EnhancedStudentEvaluationDto;
-              if (enhancedEval.categoryScores) {
-                enhancedEval.categoryScores.forEach(score => {
+        // Then load this specific teacher's evaluation
+        this.evaluationService.getTeacherEvaluationForStudent(this.groupEvaluationId, this.studentId).subscribe({
+          next: (evaluation) => {
+            console.log('Teacher evaluation data:', evaluation);
+            this.existingEvaluation = evaluation;
+            
+            // Check if this specific teacher has evaluated - look for populated category scores
+            const hasScores = evaluation.categoryScores?.some(
+              cs => cs.score > 0 && cs.evaluatorDetails?.some(ed => ed.evaluatorId === this.teacherId)
+            );
+            this.hasEvaluated = !!hasScores;
+            
+            const hasTeacherEvaluated = evaluation.categoryScores?.some(
+              (cs: any) => (cs.evaluatorDetails || []).some((ed: any) => ed.evaluatorId === this.teacherId)
+            );
+            
+            // Create a new property to track if this teacher specifically has evaluated
+            this.hasTeacherEvaluated = !!hasTeacherEvaluated;
+            
+            if (hasTeacherEvaluated) {
+              // This teacher has already evaluated - populate form with their data
+              if (this.isRubricEvaluation && evaluation.categoryScores) {
+                evaluation.categoryScores.forEach(score => {
+                  // Only use the score from this teacher's evaluation
                   this.evaluationForm.patchValue({
                     [`category_${score.categoryId}`]: score.score,
                     [`feedback_${score.categoryId}`]: score.feedback || ''
                   });
                 });
+                
+                this.evaluationForm.patchValue({
+                  feedback: evaluation.feedback || ''
+                });
+              } else if (!this.isRubricEvaluation) {
+                this.evaluationForm.patchValue({
+                  obtainedMarks: evaluation.obtainedMarks,
+                  feedback: evaluation.feedback || ''
+                });
               }
               
-              this.evaluationForm.patchValue({
-                feedback: evaluation.feedback
-              });
+              // If the overall evaluation is complete, make it read-only
+              if (evaluation.isComplete) {
+                this.evaluationForm.disable();
+                this.notificationService.showInfo('This evaluation is complete and cannot be modified');
+              }
+            } else {
+              // This teacher hasn't evaluated yet - form should be empty/default
+              this.notificationService.showInfo('You are submitting a new evaluation for this student');
             }
-            this.notificationService.showInfo(evaluation.isComplete ? 'Viewing completed evaluation' : 'Updating existing evaluation');
+            
+            this.loading = false;
+          },
+          error: (error) => {
+            console.log('No existing evaluation found for this teacher:', error);
+            this.loading = false;
           }
-          this.loading = false;
-        } else {
-          this.notificationService.showInfo('Starting new evaluation');
-          this.loading = false;
-        }
+        });
       },
       error: (error) => {
-        console.error('Error loading existing evaluation:', error);
-        this.notificationService.showInfo('Starting new evaluation');
+        console.error('Error loading evaluation statistics:', error);
+        this.notificationService.showError('Failed to load evaluation statistics');
         this.loading = false;
       }
     });
   }
   
   onSubmit(): void {
-    if (this.evaluationForm.invalid) {
-      // Show specific validation errors
-      let errorMessage = 'Please fix the following issues:';
-      if (this.evaluationForm.get('feedback')?.invalid) {
-        errorMessage += '\n- Feedback is required';
-      }
-      
-      if (!this.isRubricEvaluation && this.evaluationForm.get('obtainedMarks')?.invalid) {
-        errorMessage += '\n- Valid score is required';
-      }
-      
-      if (this.isRubricEvaluation && this.rubric) {
-        let missingCategories: string[] = [];
-        
-        this.rubric.categories.forEach((category: RubricCategory) => {
-          if (this.evaluationForm.get(`category_${category.id}`)?.invalid) {
-            missingCategories.push(category.name);
-          }
-        });
-        
-        if (missingCategories.length > 0) {
-          errorMessage += `\n- Missing scores for: ${missingCategories.join(', ')}`;
-        }
-      }
-      
-      this.notificationService.showWarning(errorMessage);
-      return;
-    }
-    
     this.submitting = true;
     
-    // Prepare evaluation data based on evaluation type
     const evaluationDto: EvaluateStudentDto = {
       groupEvaluationId: this.groupEvaluationId,
       studentId: this.studentId,
@@ -298,9 +313,6 @@ export class ConductEvaluationComponent implements OnInit {
       // For rubric-based evaluation, collect category scores
       evaluationDto.categoryScores = this.prepareCategoryScores();
       
-      // Calculate and add the total marks - THIS IS THE KEY ADDITION
-      evaluationDto.obtainedMarks = this.calculateTotalScore();
-      
       console.log("Submitting rubric evaluation:", evaluationDto);
       
       this.evaluationService.submitRubricEvaluation(evaluationDto).subscribe({
@@ -313,22 +325,26 @@ export class ConductEvaluationComponent implements OnInit {
         error: (error) => {
           console.error('Error submitting evaluation:', error);
           
-          let errorMessage = 'Failed to submit evaluation';
-          if (error.error && typeof error.error === 'string') {
-            errorMessage += `: ${error.error}`;
-          } else if (error.status === 404) {
-            errorMessage += ': API endpoint not found';
+          // Check if this is a duplicate category error
+          if (error.status === 500 && error.error && 
+              typeof error.error === 'string' && 
+              error.error.includes('duplicate key')) {
+            
+            // This is a duplicate key error - likely this teacher already evaluated this category
+            this.notificationService.showError('You have already evaluated some of these categories. Refreshing the form to update your existing evaluation.');
+            
+            // Reload the existing evaluation
+            this.loadExistingEvaluation();
+          } else {
+            this.notificationService.showError('Failed to submit evaluation. Please try again.');
           }
           
-          this.notificationService.showError(errorMessage);
           this.submitting = false;
         }
       });
     } else {
-      // For simple evaluation, just use the obtainedMarks
+      // Simple evaluation handling remains unchanged
       evaluationDto.obtainedMarks = this.evaluationForm.value.obtainedMarks;
-      
-      console.log("Submitting simple evaluation:", evaluationDto);
       
       this.evaluationService.submitEvaluation(evaluationDto).subscribe({
         next: (result) => {
@@ -356,13 +372,25 @@ export class ConductEvaluationComponent implements OnInit {
   
   // Prepare category scores from form values
   private prepareCategoryScores(): CategoryScoreDto[] {
-    if (!this.rubric || !this.rubric.categories) return [];
+    const scores: CategoryScoreDto[] = [];
     
-    return this.rubric.categories.map((category: RubricCategory) => ({
-      categoryId: category.id,
-      score: this.evaluationForm.value[`category_${category.id}`],
-      feedback: this.evaluationForm.value[`feedback_${category.id}`] || ''
-    }));
+    if (this.rubric) {
+      this.rubric.categories.forEach(category => {
+        const scoreValue = this.evaluationForm.get(`category_${category.id}`)?.value;
+        const feedback = this.evaluationForm.get(`feedback_${category.id}`)?.value || '';
+        
+        // Only include categories that actually have a score
+        if (scoreValue !== null && scoreValue !== undefined) {
+          scores.push({
+            categoryId: category.id,
+            score: parseInt(scoreValue) || 0,
+            feedback: feedback
+          });
+        }
+      });
+    }
+    
+    return scores;
   }
   
   navigateBack(): void {

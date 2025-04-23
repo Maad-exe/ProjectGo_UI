@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, tap } from 'rxjs/operators';
 import { environment } from '../../env/env';
 
 // Basic DTOs for evaluation
@@ -58,6 +58,7 @@ export interface EnhancedStudentEvaluationDto extends StudentEvaluationDto {
     score: number;
     maxScore?: number;
     feedback?: string;
+    evaluatorDetails?: any[]; // Ensure evaluatorDetails is always an array
   }[];
   weightedScore?: number;
 }
@@ -215,25 +216,15 @@ export class EvaluationService {
   
   // Submit rubric-based evaluation - Fix endpoint name and DTO
   submitRubricEvaluation(evaluationDto: EvaluateStudentDto): Observable<EnhancedStudentEvaluationDto> {
+    console.log('Submitting rubric evaluation with data:', evaluationDto);
+    
     return this.http.post<EnhancedStudentEvaluationDto>(
-      `${this.teacherEvaluationUrl}/evaluate-student-with-rubric`, 
+      `${this.apiUrl}/teacher/evaluations/evaluate-student-with-rubric`, 
       evaluationDto
     ).pipe(
+      tap(response => console.log('Evaluation submission successful:', response)),
       catchError(error => {
         console.error('Error submitting rubric evaluation:', error);
-        if (environment.useMockData) {
-          return of({ 
-            id: 1, 
-            studentId: evaluationDto.studentId, 
-            obtainedMarks: 0, 
-            feedback: evaluationDto.feedback || '',
-            categoryScores: evaluationDto.categoryScores?.map(cs => ({
-              categoryId: cs.categoryId,
-              score: cs.score,
-              feedback: cs.feedback || ''
-            })) || []
-          } as EnhancedStudentEvaluationDto);
-        }
         return throwError(() => error);
       })
     );
@@ -287,14 +278,43 @@ export class EvaluationService {
     );
   }
   
-  // Add this method to your EvaluationService class
   getFinalGrade(): Observable<number> {
-    return this.http.get<number>(`${this.studentEvaluationUrl}/final-grade`).pipe(
+    return this.http.get<number>(`${this.apiUrl}/student/evaluations/final-grade`).pipe(
       catchError(error => {
         console.error('Error fetching final grade:', error);
-        if (environment.useMockData) {
-          return of(75.5); // Return a mock grade
+        return of(0); // Default value on error
+      })
+    );
+  }
+
+  getTeacherEvaluationForStudent(groupEvaluationId: number, studentId: number): Observable<EnhancedStudentEvaluationDto> {
+    const url = `${this.apiUrl}/teacher/evaluations/evaluate-student-with-rubric/${groupEvaluationId}/${studentId}`;
+    return this.http.get<EnhancedStudentEvaluationDto>(url).pipe(
+      map(response => {
+        // Make sure the response has the expected structure
+        if (!response.categoryScores) {
+          response.categoryScores = [];
         }
+        // Ensure evaluatorDetails is always an array
+        response.categoryScores.forEach(cs => {
+          if (!cs.evaluatorDetails) {
+            cs.evaluatorDetails = [];
+          }
+        });
+        return response;
+      }),
+      catchError(error => {
+        console.error('Error fetching teacher evaluation for student:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  getEvaluationStatistics(groupEvaluationId: number, studentId: number): Observable<any> {
+    const url = `${this.apiUrl}/teacher/evaluations/evaluation-statistics/${groupEvaluationId}/${studentId}`;
+    return this.http.get<any>(url).pipe(
+      catchError(error => {
+        console.error('Error fetching evaluation statistics:', error);
         return throwError(() => error);
       })
     );

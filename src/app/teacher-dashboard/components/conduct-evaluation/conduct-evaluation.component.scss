@@ -311,6 +311,44 @@
   to { transform: rotate(360deg); }
 }
 
+// Evaluation statistics card
+.evaluation-statistics-card {
+  margin-bottom: 1.5rem;
+  
+  .progress-stats {
+    display: flex;
+    justify-content: space-between;
+    
+    .stat-item {
+      text-align: center;
+      padding: 0.5rem;
+      border-radius: 4px;
+      background-color: #f8f9fa;
+      min-width: 30%;
+      
+      .stat-label {
+        display: block;
+        font-size: 0.8rem;
+        color: #6c757d;
+      }
+      
+      .stat-value {
+        display: block;
+        font-size: 1.2rem;
+        font-weight: bold;
+      }
+    }
+  }
+  
+  .evaluator-list {
+    h5 {
+      border-bottom: 1px solid #dee2e6;
+      padding-bottom: 0.5rem;
+      margin-bottom: 1rem;
+    }
+  }
+}
+
 // Responsive adjustments
 @media (max-width: 768px) {
   .evaluation-container {
