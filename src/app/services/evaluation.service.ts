@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, of, throwError, Subject } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { environment } from '../../env/env';
+import { AuthService } from './auth.service';
 
 // Basic DTOs for evaluation
 export interface StudentDto {
@@ -96,8 +97,22 @@ export class EvaluationService {
   private studentEvaluationUrl = `${this.apiUrl}/student/evaluations`;
   private teacherEvaluationUrl = `${this.apiUrl}/teacher/evaluations`;
   private adminEvaluationUrl = `${this.apiUrl}/admin/evaluations`;
+
+  private evaluationUpdated = new Subject<{
+    groupEvaluationId: number;
+    studentId: number;
+    teacherId: number;
+    isComplete: boolean;
+    evaluationId: number;
+  }>();
+
+  private studentsCache: Map<number, StudentDto[]> = new Map();
+
+  get onEvaluationUpdated(): Observable<any> {
+    return this.evaluationUpdated.asObservable();
+  }
   
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private authService: AuthService) { }
   
   // Get evaluation type to determine if it uses a rubric
   getEventEvaluationType(groupEvaluationId: number): Observable<EventEvaluationTypeDto> {
@@ -141,40 +156,26 @@ export class EvaluationService {
   }
   
   // Get students for a group evaluation
-  getStudentsForGroupEvaluation(groupEvaluationId: number): Observable<StudentDto[]> {
-    return this.http.get<StudentDto[]>(
-      `${this.teacherEvaluationUrl}/group-evaluations/${groupEvaluationId}/students`
-    ).pipe(
-      catchError(error => {
-        console.error('Error fetching students:', error);
-        if (environment.useMockData) {
-          return of([
-            {
-              id: 1,
-              fullName: 'John Smith',
-              email: 'john.smith@example.com',
-              department: 'Computer Science',
-              enrollmentNumber: 'CS1001',
-              isEvaluated: false
-            }
-          ]);
-        }
-        return throwError(() => error);
-      })
-    );
+  getStudentsForGroupEvaluation(groupEvaluationId: number, forceRefresh: boolean = false): Observable<StudentDto[]> {
+    if (!forceRefresh && this.studentsCache.has(groupEvaluationId)) {
+      return of(this.studentsCache.get(groupEvaluationId)!);
+    }
+    
+    return this.http.get<StudentDto[]>(`${this.apiUrl}/teacher/evaluations/group-evaluations/${groupEvaluationId}/students`)
+      .pipe(
+        tap(students => {
+          this.studentsCache.set(groupEvaluationId, students);
+        })
+      );
   }
   
   // Get evaluation for a specific student in a group
   getStudentEvaluation(groupId: number, studentId: number): Observable<StudentEvaluationDto> {
-    // This endpoint doesn't exist in your controller
-    // You would need to add it in TeacherEvaluationController
-    // For now, use group-evaluations endpoint
     return this.http.get<GroupEvaluationDto>(`${this.teacherEvaluationUrl}/group-evaluations/${groupId}`)
       .pipe(
         map(groupEval => {
           const studentEval = groupEval.studentEvaluations?.find(e => e.studentId === studentId);
           if (studentEval) return studentEval;
-          // Return empty evaluation if not found
           return {
             id: 0,
             studentId: studentId,
@@ -195,39 +196,44 @@ export class EvaluationService {
   
   // Submit simple evaluation - Fix DTO to match backend
   submitEvaluation(evaluationDto: EvaluateStudentDto): Observable<StudentEvaluationDto> {
-    return this.http.post<StudentEvaluationDto>(
-      `${this.teacherEvaluationUrl}/evaluate-student`, 
-      evaluationDto
-    ).pipe(
-      catchError(error => {
-        console.error('Error submitting evaluation:', error);
-        if (environment.useMockData) {
-          return of({ 
-            id: 1, 
-            studentId: evaluationDto.studentId, 
-            obtainedMarks: evaluationDto.obtainedMarks || 0, 
-            feedback: evaluationDto.feedback || '' 
-          });
-        }
-        return throwError(() => error);
-      })
+    const url = `${this.apiUrl}/teacher/evaluations/evaluate-student`;
+    return this.http.post<StudentEvaluationDto>(url, evaluationDto).pipe(
+      tap(result => {
+        this.evaluationUpdated.next({
+          groupEvaluationId: evaluationDto.groupEvaluationId,
+          studentId: evaluationDto.studentId,
+          teacherId: this.authService.getUserId() || 0,
+          isComplete: result.isComplete || false,
+          evaluationId: result.id
+        });
+      }),
+      catchError(this.handleError)
     );
   }
   
   // Submit rubric-based evaluation - Fix endpoint name and DTO
   submitRubricEvaluation(evaluationDto: EvaluateStudentDto): Observable<EnhancedStudentEvaluationDto> {
-    console.log('Submitting rubric evaluation with data:', evaluationDto);
-    
-    return this.http.post<EnhancedStudentEvaluationDto>(
-      `${this.apiUrl}/teacher/evaluations/evaluate-student-with-rubric`, 
-      evaluationDto
-    ).pipe(
-      tap(response => console.log('Evaluation submission successful:', response)),
-      catchError(error => {
-        console.error('Error submitting rubric evaluation:', error);
-        return throwError(() => error);
-      })
+    const url = `${this.apiUrl}/teacher/evaluations/evaluate-student-with-rubric`;
+    return this.http.post<EnhancedStudentEvaluationDto>(url, evaluationDto).pipe(
+      tap(result => {
+        // Emit an event with updated evaluation data
+        this.evaluationUpdated.next({
+          groupEvaluationId: evaluationDto.groupEvaluationId,
+          studentId: evaluationDto.studentId,
+          teacherId: this.authService.getUserId() || 0,
+          isComplete: result.isComplete || false,
+          evaluationId: result.id
+        });
+        
+        // Clear any cached data for this evaluation
+        this.clearStudentsCache(evaluationDto.groupEvaluationId);
+      }),
+      catchError(this.handleError)
     );
+  }
+
+  clearStudentsCache(groupEvaluationId: number) {
+    this.studentsCache.delete(groupEvaluationId);
   }
   
   // Get student's evaluations for their progress page
@@ -291,11 +297,9 @@ export class EvaluationService {
     const url = `${this.apiUrl}/teacher/evaluations/evaluate-student-with-rubric/${groupEvaluationId}/${studentId}`;
     return this.http.get<EnhancedStudentEvaluationDto>(url).pipe(
       map(response => {
-        // Make sure the response has the expected structure
         if (!response.categoryScores) {
           response.categoryScores = [];
         }
-        // Ensure evaluatorDetails is always an array
         response.categoryScores.forEach(cs => {
           if (!cs.evaluatorDetails) {
             cs.evaluatorDetails = [];
@@ -372,5 +376,10 @@ export class EvaluationService {
       labels: ['Mid-term', 'Progress Report', 'Final Defense', 'Documentation', 'Code Quality'],
       averageScores: [78.5, 82.3, 76.9, 85.2, 79.8]
     };
+  }
+
+  private handleError(error: any): Observable<never> {
+    console.error('An error occurred:', error);
+    return throwError(() => error);
   }
 }

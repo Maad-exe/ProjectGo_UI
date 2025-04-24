@@ -313,16 +313,19 @@ export class ConductEvaluationComponent implements OnInit {
       // For rubric-based evaluation, collect category scores
       evaluationDto.categoryScores = this.prepareCategoryScores();
       
-      console.log("Submitting rubric evaluation:", evaluationDto);
-      
       this.evaluationService.submitRubricEvaluation(evaluationDto).subscribe({
         next: (result) => {
           console.log("Rubric evaluation submitted successfully:", result);
+          
+          // Update the component state to reflect the evaluation is now complete for this teacher
+          this.hasTeacherEvaluated = true;
+          
           this.notificationService.showSuccess('Evaluation submitted successfully');
           this.submitting = false;
           this.navigateBack();
         },
         error: (error) => {
+          // Error handling remains the same
           console.error('Error submitting evaluation:', error);
           
           // The database change should have fixed the duplicate key error,
@@ -349,7 +352,22 @@ export class ConductEvaluationComponent implements OnInit {
         }
       });
     } else {
-      // Simple evaluation logic remains unchanged
+      // Simple evaluation - add the same event emitter pattern here too
+      evaluationDto.obtainedMarks = this.evaluationForm.value.obtainedMarks;
+      
+      this.evaluationService.submitEvaluation(evaluationDto).subscribe({
+        next: (result) => {
+          // The evaluationUpdated event will be emitted by the service
+          this.notificationService.showSuccess('Evaluation submitted successfully');
+          this.submitting = false;
+          this.navigateBack();
+        },
+        error: (error) => {
+          console.error('Error submitting evaluation:', error);
+          this.notificationService.showError('Failed to submit evaluation');
+          this.submitting = false;
+        }
+      });
     }
   }
   

@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../services/auth.service';
 import { NotificationService } from '../services/notifications.service';
@@ -10,8 +10,9 @@ import { GroupChatComponent } from '../group-chat/group-chat.component';
 import { ChatService } from '../services/chat.service';
 import { Subscription } from 'rxjs';
 import { PanelService } from '../services/panel.service';
-import { EvaluationService } from '../services/evaluation.service';
+import { EvaluationService, StudentDto } from '../services/evaluation.service';
 import { EventService } from '../services/event.service';
+import { filter } from 'rxjs/operators';
 
 interface TeacherInfo {
   fullName: string;
@@ -45,7 +46,6 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
   selectedGroupForChat: GroupDetails | null = null;
   showGroupChat: boolean = false;
 
-  // Add new properties
   private subscriptions: Subscription[] = [];
   unreadMessagesByGroup: { [groupId: number]: number } = {};
   assignedPanels: any[] = [];
@@ -59,21 +59,40 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     private router: Router,
     private supervisionService: SupervisionService,
     private notificationService: NotificationService,
-    private chatService: ChatService,  // Add ChatService
+    private chatService: ChatService,
     private panelService: PanelService,
     private evaluationService: EvaluationService,
     private eventService: EventService,
-    private groupService: GroupService // Add this line
+    private groupService: GroupService
   ) {}
 
   ngOnInit() {
     this.loadTeacherInfo();
     this.loadSupervisionRequests();
     this.loadTeacherGroups();
-    this.loadTeacherPanels(); // Add this new method call
+    this.loadTeacherPanels();
     
-    // Set up chat subscriptions
     this.setupChatSubscriptions();
+
+    this.subscriptions.push(
+      this.evaluationService.onEvaluationUpdated.subscribe(update => {
+        this.handleEvaluationUpdate(update);
+      })
+    );
+
+    // Add subscription to router events to detect returns from evaluation page
+    this.subscriptions.push(
+      this.router.events.pipe(
+        filter(event => event instanceof NavigationEnd),
+        filter((event: NavigationEnd) => event.url === '/teacher-dashboard' || event.url.startsWith('/teacher-dashboard?'))
+      ).subscribe(() => {
+        // If returning to dashboard from evaluation, refresh student lists
+        if (this.currentView === 'evaluations' && this.upcomingEvaluations.length > 0) {
+          console.log('Refreshing student evaluations after navigation');
+          this.refreshAllStudentEvaluations();
+        }
+      })
+    );
   }
 
   loadTeacherInfo() {
@@ -115,7 +134,6 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     });
   }
   
-  // Enhance the loadTeacherGroups method to improve reliability
   loadTeacherGroups() {
     this.isLoading = true;
     this.supervisionService.getTeacherGroups().subscribe({
@@ -132,7 +150,6 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     });
   }
   
-  // Enhance the respondToRequest method to better handle the response
   respondToRequest(requestId: number, groupId: number, isApproved: boolean) {
     this.processingRequestIds.add(requestId);
     
@@ -150,22 +167,15 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
         const action = isApproved ? 'approved' : 'rejected';
         this.notificationService.showSuccess(`Successfully ${action} the supervision request`);
         
-        // Remove the processed request from the list
         this.supervisionRequests = this.supervisionRequests.filter(r => r.id !== requestId);
         this.processingRequestIds.delete(requestId);
 
-        // If approved, update the teacher's groups
         if (isApproved) {
           this.loadTeacherGroups();
-          
-          // Force a refresh of all groups data
-          this.groupService.refreshGroups(); // Make sure this method exists in GroupService
-          
-          // Show a special notification about group cleanup
+          this.groupService.refreshGroups();
           this.notificationService.showInfo('All other groups for these students have been automatically cleaned up');
         }
 
-        // Optional: Reload the requests to ensure UI is in sync
         this.loadSupervisionRequests();
       },
       error: (error) => {
@@ -200,12 +210,8 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
-  // Update loadTeacherPanels method
   loadTeacherPanels() {
     this.isLoading = true;
-  
-    // Get the teacher ID if needed, but make the call without it since the API doesn't require it
-    // The server will identify the teacher from the auth token
     const teacherId = this.authService.getUserId();
     
     this.panelService.getTeacherPanels().subscribe({
@@ -213,7 +219,6 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
         this.assignedPanels = panels;
         console.log('Teacher panels loaded:', panels);
         
-        // Load evaluations for each panel
         if (this.assignedPanels.length > 0) {
           this.loadPanelEvaluations();
         } else {
@@ -228,17 +233,14 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Change this in loadPanelEvaluations method
   loadPanelEvaluations() {
     this.isLoading = true;
   
-    // Use the panel-assignments endpoint from your TeacherEvaluationController
     this.panelService.getTeacherPanelAssignments().subscribe({
       next: (evaluations) => {
         this.panelEvaluations = evaluations;
         console.log('Panel evaluations loaded:', this.panelEvaluations);
         
-        // Sort evaluations by status and date
         this.upcomingEvaluations = this.panelEvaluations.filter(e => !e.isCompleted)
           .sort((a, b) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime());
         
@@ -246,7 +248,6 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
         
         this.pendingEvaluations = this.upcomingEvaluations.length;
         
-        // Load students for each upcoming evaluation
         this.upcomingEvaluations.forEach(evaluation => {
           this.loadStudentsForEvaluation(evaluation.id);
         });
@@ -267,6 +268,9 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     this.evaluationService.getGroupEvaluationId(evaluation.eventId, evaluation.groupId).subscribe({
       next: (groupEvaluationId) => {
         console.log(`Found group evaluation ID: ${groupEvaluationId}`);
+        // Store the last evaluation we navigated to so we can refresh it when returning
+        localStorage.setItem('last_evaluation_id', groupEvaluationId.toString());
+        
         this.router.navigate([
           '/teacher-dashboard/evaluate',
           evaluation.eventId,
@@ -282,18 +286,14 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  // Add the viewEvaluationDetails method
   viewEvaluationDetails(evaluation: any) {
-    // You could navigate to a details page or open a modal
     this.router.navigate([
       '/teacher-dashboard/evaluation-details',
       evaluation.id
     ]);
   }
 
-  // Add this method to your TeacherDashboardComponent class
   private setupChatSubscriptions() {
-    // Subscribe to unread messages updates
     const unreadSubscription = this.chatService.getUnreadMessagesByGroup().subscribe(
       counts => {
         this.unreadMessagesByGroup = counts;
@@ -302,36 +302,63 @@ export class TeacherDashboardComponent implements OnInit, OnDestroy {
     this.subscriptions.push(unreadSubscription);
   }
 
-  // Add these methods to your TeacherDashboardComponent class
-
-  loadStudentsForEvaluation(evaluationId: number) {
-    this.panelService.getStudentsForEvaluation(evaluationId).subscribe({
+  loadStudentsForEvaluation(evaluationId: number, forceRefresh: boolean = true) {
+    this.panelService.getStudentsForEvaluation(evaluationId, forceRefresh).subscribe({
       next: (students) => {
-        // Find the evaluation and update its students
         const evaluation = this.upcomingEvaluations.find(e => e.id === evaluationId);
         if (evaluation) {
-          // Make sure to properly mark students as evaluated based on their evaluation status
-          evaluation.students = students.map(student => ({
-            ...student,
-            // Set isCompleted properly based on the data from the API
-            isEvaluated: student.isEvaluated // Make sure your API returns this field
-          }));
+          evaluation.students = students;
+          this.upcomingEvaluations = [...this.upcomingEvaluations]; // Force Angular change detection
           
-          // Force change detection
-          this.upcomingEvaluations = [...this.upcomingEvaluations];
+          this.updatePendingEvaluationsCount();
         }
       },
       error: (error) => {
         console.error('Error loading students for evaluation:', error);
         this.notificationService.showError('Failed to load students for this evaluation');
         
-        // Update the UI to show the error state for this evaluation
         const evaluation = this.upcomingEvaluations.find(e => e.id === evaluationId);
         if (evaluation) {
           evaluation.loadError = true;
           this.upcomingEvaluations = [...this.upcomingEvaluations];
         }
       }
+    });
+  }
+
+  private handleEvaluationUpdate(update: any): void {
+    // Find and update the specific student
+    const evaluation = this.upcomingEvaluations.find(e => e.id === update.groupEvaluationId);
+    if (evaluation && evaluation.students) {
+      const student = evaluation.students.find((s: StudentDto) => s.id === update.studentId);
+      if (student) {
+        student.isEvaluated = true;
+        
+        // Explicitly refresh the student list from server to ensure consistency
+        this.loadStudentsForEvaluation(update.groupEvaluationId);
+        
+        // Update counters
+        this.updatePendingEvaluationsCount();
+      }
+    }
+  }
+
+  private updatePendingEvaluationsCount(): void {
+    let pendingCount = 0;
+    
+    this.upcomingEvaluations.forEach(evaluation => {
+      if (evaluation.students && evaluation.students.length > 0) {
+        const pendingStudents = evaluation.students.filter((s: StudentDto) => !s.isEvaluated);
+        pendingCount += pendingStudents.length;
+      }
+    });
+    
+    this.pendingEvaluations = pendingCount;
+  }
+
+  refreshAllStudentEvaluations() {
+    this.upcomingEvaluations.forEach(evaluation => {
+      this.loadStudentsForEvaluation(evaluation.id);
     });
   }
 }

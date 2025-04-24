@@ -4,7 +4,9 @@ import { Observable, of, throwError } from 'rxjs';
 import { map, catchError, tap } from 'rxjs/operators';
 import { environment } from '../../env/env';
 import { Panel, CreatePanelDto, UpdatePanelDto, AssignPanelDto, GroupEvaluation } from '../models/panel.model';
-
+import { EvaluationService, StudentDto } from '../services/evaluation.service';
+import { NotificationService } from '../services/notifications.service';
+import { AuthService } from '../services/auth.service';
 // Define an interface for the API response that might contain a data property
 interface ApiResponse<T> {
   data?: T;
@@ -18,7 +20,7 @@ export class PanelService {
   private baseUrl = `${environment.apiBaseUrl}/admin/panels`;
   private evaluationUrl = `${environment.apiBaseUrl}/admin/evaluations`;
   
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private evaluationService: EvaluationService) {}
   
   // Panel CRUD operations
   createPanel(panel: CreatePanelDto): Observable<Panel> {
@@ -102,14 +104,8 @@ export class PanelService {
     );
   }
 
-  getStudentsForEvaluation(evaluationId: number): Observable<any[]> {
-    return this.http.get<any[]>(`${environment.apiBaseUrl}/teacher/evaluations/group-evaluations/${evaluationId}/students`).pipe(
-      catchError(error => {
-        console.error('Error fetching students for evaluation:', error);
-        // Don't use mock data anymore
-        return throwError(() => new Error('Failed to load students for this evaluation'));
-      })
-    );
+  getStudentsForEvaluation(evaluationId: number, forceRefresh: boolean = false): Observable<StudentDto[]> {
+    return this.evaluationService.getStudentsForGroupEvaluation(evaluationId, forceRefresh);
   }
 
   getMockPanels(): Panel[] {
