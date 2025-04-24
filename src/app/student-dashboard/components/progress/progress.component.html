@@ -56,17 +56,27 @@
           <div class="event-meta">
             <span class="event-type">{{ evaluation.eventType || 'Standard' }}</span>
             <span class="event-date">{{ evaluation.eventDate | date }}</span>
-            <span class="event-weight">Weight: {{ evaluation.eventWeight }}%</span>
+            <span class="event-weight">Weight: {{ evaluation.eventWeight || 0 }}%</span>
           </div>
         </div>
         
-        <div class="evaluation-details" *ngIf="evaluation.isComplete">
+        <!-- Evaluation details section - show if we have any details to show -->
+        <div class="evaluation-details" *ngIf="hasEvaluationDetails(evaluation)">
           <div class="score-value" [ngClass]="getGradeColor(evaluation.obtainedMarks)">
             {{ evaluation.obtainedMarks }}
             <span class="score-max">/ {{ evaluation.totalMarks }}</span>
           </div>
           
-          <!-- Simple evaluation display remains the same -->
+          <!-- Score percentage visualization -->
+          <div class="score-progress">
+            <div class="progress-bar">
+              <div class="progress-fill" 
+                   [ngClass]="getGradeColor(evaluation.obtainedMarks)" 
+                   [style.width]="getProgressBarWidth(calculatePercentage(evaluation.obtainedMarks, evaluation.totalMarks))">
+              </div>
+            </div>
+            <div class="progress-label">{{ calculatePercentage(evaluation.obtainedMarks, evaluation.totalMarks) | number:'1.0-0' }}%</div>
+          </div>
           
           <!-- For rubric-based evaluations, show category details -->
           <div class="rubric-details" *ngIf="evaluation.categoryScores && evaluation.categoryScores.length > 0">
@@ -86,38 +96,95 @@
                     <td>{{ category.categoryName }}</td>
                     <td>{{ category.categoryWeight }}%</td>
                     <td>
-                      <div class="score-pill" [ngClass]="getGradeColor(category.score)">
+                      <div class="score-pill" [ngClass]="getGradeColor(calculatePercentage(category.score, category.maxScore))">
                         {{ category.score }}/{{ category.maxScore }}
                       </div>
                     </td>
-                    <td>{{ category.feedback }}</td>
+                    <td>{{ category.feedback || 'No comments provided' }}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
           </div>
           
-          <!-- Show evaluators if available -->
-          <div class="evaluators" *ngIf="evaluation.evaluators && evaluation.evaluators.length > 0">
-            <h5>Evaluated by:</h5>
-            <ul class="evaluator-list">
-              <li *ngFor="let evaluator of evaluation.evaluators">
-                {{ evaluator.name }}
-              </li>
-            </ul>
+          <!-- Panel evaluation status -->
+          <div class="panel-status" *ngIf="evaluation.evaluators && evaluation.evaluators.length > 0">
+            <h5>Panel Evaluation Status</h5>
+            <div class="panel-completion">
+              <div class="progress-bar">
+                <div class="progress-fill" 
+                     [style.width]="getProgressBarWidth(getPanelCompletionPercentage(evaluation))">
+                </div>
+              </div>
+              <div class="progress-label">{{ getPanelCompletionPercentage(evaluation) | number:'1.0-0' }}% Complete</div>
+            </div>
+            
+            <div class="evaluators">
+              <h6>Evaluators:</h6>
+              <ul class="evaluator-list">
+                <li *ngFor="let evaluator of evaluation.evaluators" 
+                    [class.completed]="evaluator?.hasEvaluated">
+                  <span class="evaluator-name">{{ evaluator?.name || 'Unknown Evaluator' }}</span>
+                  <span class="evaluator-status" [ngClass]="evaluator?.hasEvaluated ? 'completed' : 'pending'">
+                    {{ evaluator?.hasEvaluated ? 'Completed' : 'Pending' }}
+                  </span>
+                  <span class="evaluator-score" *ngIf="evaluator?.hasEvaluated">
+                    Score: {{ evaluator?.score || 'N/A' }}
+                  </span>
+                </li>
+                <!-- Show a message if no evaluators are present -->
+                <li *ngIf="!evaluation.evaluators || evaluation.evaluators.length === 0">
+                  No evaluator information available
+                </li>
+              </ul>
+            </div>
+          </div>
+          
+          <!-- Evaluation feedback -->
+          <div class="evaluation-feedback" *ngIf="evaluation.feedback">
+            <h5>Feedback:</h5>
+            <div class="feedback-content">
+              <i class="fas fa-quote-left"></i>
+              <p>{{ evaluation.feedback }}</p>
+            </div>
           </div>
         </div>
         
-        <div class="pending-message" *ngIf="!evaluation.isComplete">
+        <!-- Pending evaluation message - only show if NO details available -->
+        <div class="pending-message" *ngIf="!hasEvaluationDetails(evaluation)">
           <i class="fas fa-hourglass-half"></i>
-          Evaluation not yet completed
-        </div>
-        
-        <div class="evaluation-feedback" *ngIf="evaluation.isComplete && evaluation.feedback">
-          <h5>Feedback:</h5>
-          <div class="feedback-content">
-            <i class="fas fa-quote-left"></i>
-            <p>{{ evaluation.feedback }}</p>
+          <p>Evaluation in progress</p>
+          
+          <!-- Show details about panel progress if available -->
+          <div class="panel-progress" *ngIf="evaluation.evaluators && evaluation.evaluators.length > 0">
+            <div class="panel-completion">
+              <div class="progress-bar">
+                <div class="progress-fill" 
+                     [style.width]="getProgressBarWidth(getPanelCompletionPercentage(evaluation))">
+                </div>
+              </div>
+              <div class="progress-label">{{ getPanelCompletionPercentage(evaluation) | number:'1.0-0' }}% Complete</div>
+            </div>
+            
+            <div class="evaluators-status">
+              <h6>Pending evaluations from:</h6>
+              <ul>
+                <ng-container *ngIf="evaluation.evaluators && evaluation.evaluators.length > 0">
+                  <li *ngFor="let evaluator of evaluation.evaluators">
+                    <ng-container *ngIf="!evaluator?.hasEvaluated">
+                      {{ evaluator?.name || 'Unknown Evaluator' }}
+                    </ng-container>
+                  </li>
+                  <!-- Show a message if all evaluators have completed -->
+                  <li *ngIf="areAllEvaluationsCompleted(evaluation)">
+                    All evaluators have completed their assessments
+                  </li>
+                </ng-container>
+                <li *ngIf="!evaluation.evaluators || evaluation.evaluators.length === 0">
+                  No evaluator information available
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>

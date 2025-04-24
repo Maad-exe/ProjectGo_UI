@@ -5,6 +5,12 @@ import { EvaluationService } from '../../../services/evaluation.service';
 import { NotificationService } from '../../../services/notifications.service';
 import { EnhancedStudentEvaluationDto, CategoryScoreDetailDto, EvaluatorDto } from '../../../models/evaluation.model';
 
+// Extend the interface to include the properties we need
+interface ExtendedStudentEvaluationDto extends EnhancedStudentEvaluationDto {
+  weightedScore?: number;
+  isComplete?: boolean;
+}
+
 @Component({
   selector: 'app-progress',
   standalone: true,
@@ -14,9 +20,9 @@ import { EnhancedStudentEvaluationDto, CategoryScoreDetailDto, EvaluatorDto } fr
 })
 export class ProgressComponent implements OnInit {
   isLoading: boolean = false;
-  evaluations: EnhancedStudentEvaluationDto[] = [];
-  upcomingEvaluations: EnhancedStudentEvaluationDto[] = [];
-  completedEvaluations: EnhancedStudentEvaluationDto[] = [];
+  evaluations: ExtendedStudentEvaluationDto[] = [];
+  upcomingEvaluations: ExtendedStudentEvaluationDto[] = [];
+  completedEvaluations: ExtendedStudentEvaluationDto[] = [];
   error: string | null = null;
   finalGrade: number = 0;
   
@@ -34,16 +40,76 @@ export class ProgressComponent implements OnInit {
     this.isLoading = true;
     this.error = null;
     
+    console.log('Loading student evaluations...');
+    
     this.evaluationService.getEnhancedStudentEvaluations().subscribe({
       next: (data) => {
-        // Cast the data to match the comprehensive interface from models
-        this.evaluations = data as unknown as EnhancedStudentEvaluationDto[];
+        console.log('Evaluations received:', data);
         
-        // Separate completed from pending evaluations
+        this.evaluations = data as unknown as ExtendedStudentEvaluationDto[];
+        
+        this.evaluations = this.evaluations.map(evaluation => {
+          const weightedScore = evaluation.weightedScore || 
+            (evaluation.obtainedMarks / (evaluation.totalMarks || 100)) * 100;
+          
+          const hasScoreData = 
+            (evaluation.obtainedMarks !== undefined && evaluation.obtainedMarks !== null) || 
+            (weightedScore !== undefined && weightedScore > 0);
+          
+          const hasCategoryScores = !!evaluation.categoryScores && evaluation.categoryScores.length > 0 && 
+            evaluation.categoryScores.some(cs => cs.score > 0);
+          
+          const isComplete: boolean = hasScoreData || !!hasCategoryScores || false;
+          
+          const evaluators = evaluation.evaluators || [];
+          
+          let processedEvaluators = [...evaluators];
+          if (processedEvaluators.length === 0 && !!evaluation.categoryScores && evaluation.categoryScores.length > 0) {
+            const extractedEvaluators = new Map();
+            evaluation.categoryScores.forEach(category => {
+              if (category.evaluatorDetails?.length > 0) {
+                category.evaluatorDetails.forEach(evalDetail => {
+                  if (!extractedEvaluators.has(evalDetail.evaluatorId)) {
+                    extractedEvaluators.set(evalDetail.evaluatorId, {
+                      id: evalDetail.evaluatorId,
+                      name: evalDetail.evaluatorName || `Evaluator ${evalDetail.evaluatorId}`,
+                      hasEvaluated: true,
+                      score: evalDetail.score
+                    });
+                  }
+                });
+              }
+            });
+            processedEvaluators = Array.from(extractedEvaluators.values());
+          }
+          
+          const processedCategoryScores = evaluation.categoryScores?.map(category => ({
+            ...category,
+            categoryName: category.categoryName || 'Unnamed Category',
+            categoryWeight: category.categoryWeight || 0,
+            score: category.score || 0,
+            maxScore: category.maxScore || 100,
+            feedback: category.feedback || '',
+            evaluatorDetails: category.evaluatorDetails || []
+          })) || [];
+
+          return {
+            ...evaluation,
+            isComplete: isComplete,
+            obtainedMarks: evaluation.obtainedMarks || 0,
+            totalMarks: evaluation.totalMarks || 100,
+            weightedScore: weightedScore,
+            evaluators: processedEvaluators,
+            categoryScores: processedCategoryScores,
+            eventWeight: evaluation.eventWeight || 0
+          };
+        });
+        
+        console.log('Processed evaluations:', this.evaluations);
+        
         this.completedEvaluations = this.evaluations.filter(e => e.isComplete);
         this.upcomingEvaluations = this.evaluations.filter(e => !e.isComplete);
         
-        // Get final grade from backend instead of calculating in frontend
         this.loadFinalGrade();
         
         this.isLoading = false;
@@ -60,6 +126,7 @@ export class ProgressComponent implements OnInit {
   loadFinalGrade(): void {
     this.evaluationService.getFinalGrade().subscribe({
       next: (grade: number) => {
+        console.log('Final grade received:', grade);
         this.finalGrade = grade;
       },
       error: (err: any) => {
@@ -80,8 +147,35 @@ export class ProgressComponent implements OnInit {
   }
   
   getProgressBarWidth(percentage: number): string {
-    if (!percentage && percentage !== 0) return '0%';
-    const validPercentage = Math.max(0, Math.min(100, percentage));
-    return `${validPercentage}%`;
+    return `${Math.min(Math.max(percentage, 0), 100)}%`;
+  }
+  
+  calculatePercentage(score: number, total: number): number {
+    if (!total) return 0;
+    return (score / total) * 100;
+  }
+  
+  hasEvaluationDetails(evaluation: ExtendedStudentEvaluationDto): boolean {
+    const hasMarks: boolean = !!evaluation.obtainedMarks && evaluation.obtainedMarks > 0;
+    const hasCategories: boolean = !!evaluation.categoryScores && evaluation.categoryScores.length > 0;
+    const hasFeedback: boolean = !!evaluation.feedback && evaluation.feedback.trim() !== '';
+    
+    return hasMarks || hasCategories || hasFeedback;
+  }
+  
+  getEvaluatorStatus(evaluator: EvaluatorDto): string {
+    return evaluator?.hasEvaluated ? 'Completed' : 'Pending';
+  }
+  
+  getPanelCompletionPercentage(evaluation: ExtendedStudentEvaluationDto): number {
+    if (!evaluation.evaluators || evaluation.evaluators.length === 0) return 0;
+    
+    const completedCount = evaluation.evaluators.filter(e => e?.hasEvaluated).length;
+    return (completedCount / evaluation.evaluators.length) * 100;
+  }
+  
+  areAllEvaluationsCompleted(evaluation: ExtendedStudentEvaluationDto): boolean {
+    if (!evaluation.evaluators || evaluation.evaluators.length === 0) return false;
+    return evaluation.evaluators.every(e => e && e.hasEvaluated === true);
   }
 }
