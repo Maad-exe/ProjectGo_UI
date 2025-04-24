@@ -66,13 +66,27 @@ export class ProgressComponent implements OnInit {
           let processedEvaluators = [...evaluators];
           if (processedEvaluators.length === 0 && !!evaluation.categoryScores && evaluation.categoryScores.length > 0) {
             const extractedEvaluators = new Map();
+            
+            // Debug: log what we're working with
+            console.log('Category scores to extract evaluators from:', evaluation.categoryScores);
+            
             evaluation.categoryScores.forEach(category => {
               if (category.evaluatorDetails?.length > 0) {
                 category.evaluatorDetails.forEach(evalDetail => {
+                  // Debug: log each evaluator detail
+                  console.log('Processing evaluator detail:', evalDetail);
+                  
                   if (!extractedEvaluators.has(evalDetail.evaluatorId)) {
+                    // Use the full name from the evaluatorName property if it exists
+                    // Otherwise use the abbreviation that appears in the feedback
+                    const evaluatorName = evalDetail.evaluatorName || 
+                                         (category.feedback && category.feedback.includes('from') ? 
+                                          category.feedback.split('from')[1]?.trim() : 
+                                          `Evaluator ${evalDetail.evaluatorId}`);
+                    
                     extractedEvaluators.set(evalDetail.evaluatorId, {
                       id: evalDetail.evaluatorId,
-                      name: evalDetail.evaluatorName || `Evaluator ${evalDetail.evaluatorId}`,
+                      name: evaluatorName,
                       hasEvaluated: true,
                       score: evalDetail.score
                     });
@@ -81,17 +95,41 @@ export class ProgressComponent implements OnInit {
               }
             });
             processedEvaluators = Array.from(extractedEvaluators.values());
+            
+            // Debug: log the processed evaluators
+            console.log('Processed evaluators:', processedEvaluators);
           }
           
-          const processedCategoryScores = evaluation.categoryScores?.map(category => ({
-            ...category,
-            categoryName: category.categoryName || 'Unnamed Category',
-            categoryWeight: category.categoryWeight || 0,
-            score: category.score || 0,
-            maxScore: category.maxScore || 100,
-            feedback: category.feedback || '',
-            evaluatorDetails: category.evaluatorDetails || []
-          })) || [];
+          const processedCategoryScores = evaluation.categoryScores?.map(category => {
+            // Extract evaluator names from feedback field if present
+            let feedback = category.feedback || '';
+            
+            // Modified to make the feedback more readable by extracting evaluator info
+            if (feedback.includes('FROM') || feedback.includes('from')) {
+              // Try to clean up the feedback format
+              const parts = feedback.split(/FROM|from/);
+              if (parts.length > 1) {
+                const scoreWithEvaluator = parts.map(part => part.trim()).filter(p => p);
+                feedback = scoreWithEvaluator.join(' | ');
+              }
+            }
+            
+            return {
+              ...category,
+              categoryName: category.categoryName || 'Unnamed Category',
+              categoryWeight: category.categoryWeight || 0,
+              score: category.score || 0,
+              maxScore: category.maxScore || 100,
+              feedback: feedback,
+              evaluatorDetails: category.evaluatorDetails?.map(detail => ({
+                ...detail,
+                evaluatorName: detail.evaluatorName || 
+                              (category.feedback && category.feedback.includes(detail.evaluatorId.toString()) ? 
+                               category.feedback.split(detail.evaluatorId.toString())[1]?.trim() : 
+                               '')
+              })) || []
+            };
+          }) || [];
 
           return {
             ...evaluation,
