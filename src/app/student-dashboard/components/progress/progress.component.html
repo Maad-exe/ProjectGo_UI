@@ -35,7 +35,7 @@
       <div class="grade-section">
         <div class="grade-circle" [ngClass]="getGradeColor(finalGrade)">
           <div class="grade-inner">
-            <div class="grade-value">{{ finalGrade | number:'1.1-1' }}</div>
+            <div class="grade-value" [ngClass]="getGradeColor(finalGrade)">{{ finalGrade | number:'1.1-1' }}</div>
             <div class="grade-label">Overall Grade</div>
           </div>
         </div>
@@ -68,6 +68,84 @@
       </div>
     </div>
 
+   
+    <!-- Charts section -->
+    <div class="charts-section">
+      <h3 class="list-title">Performance Analytics</h3>
+      
+      <div class="charts-grid">
+        <!-- Progress chart to track improvement over time -->
+        <div class="chart-card">
+          <h4 class="chart-title">Performance Over Time</h4>
+          <div class="chart-container" style="position: relative; height: 250px; width: 100%;">
+            <canvas #progressChart></canvas>
+          </div>
+        </div>
+        <!-- Radar chart for category performance -->
+        <div class="chart-card">
+          <h4 class="chart-title">Performance by Category</h4>
+          <div class="chart-container" style="position: relative; height: 250px; width: 100%;">
+            <canvas #radarChart></canvas>
+          </div>
+        </div>
+        
+        
+        
+        <!-- Distribution chart for evaluation types -->
+        <div class="chart-card">
+          <h4 class="chart-title">Evaluation Types</h4>
+          <div class="chart-container" style="position: relative; height: 250px; width: 100%;">
+            <canvas #typeDistributionChart></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+     <!-- Performance highlights -->
+     <div class="highlights-section">
+      <h3 class="list-title">Performance Highlights</h3>
+      
+      <div class="highlights-cards">
+        <!-- Category average -->
+        <div class="highlight-card">
+          <div class="highlight-icon">
+            <i class="fas fa-bullseye"></i>
+          </div>
+          <div class="highlight-content">
+            <h4>Category Average Score</h4>
+            <div class="highlight-value">{{ getCategoryAverageScore() | number:'1.1-1' }}%</div>
+            <p>Average score across all evaluation categories</p>
+          </div>
+        </div>
+        
+        <!-- Top category -->
+        <div class="highlight-card">
+          <div class="highlight-icon">
+            <i class="fas fa-trophy"></i>
+          </div>
+          <div class="highlight-content">
+            <h4>Top Performing Category</h4>
+            <div class="highlight-value">{{ getTopPerformingCategory().name }}</div>
+            <p>Score: {{ getTopPerformingCategory().score | number:'1.1-1' }}%</p>
+          </div>
+        </div>
+        
+        <!-- Completed evaluations -->
+        <div class="highlight-card">
+          <div class="highlight-icon">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div class="highlight-content">
+            <h4>Completed Evaluations</h4>
+            <div class="highlight-value">{{ completedEvaluations.length }} of {{ evaluations.length }}</div>
+            <p>{{ (completedEvaluations.length / evaluations.length) * 100 | number:'1.0-0' }}% Complete</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
     <!-- Evaluations list -->
     <div class="evaluations-list">
       <h3 class="list-title">Evaluation Details</h3>
@@ -76,8 +154,8 @@
         <div class="event-info">
           <div class="event-header">
             <h4>{{ evaluation.eventName }}</h4>
-            <div class="event-status-badge" [ngClass]="evaluation.isComplete ? 'complete' : 'pending'">
-              {{ evaluation.isComplete ? 'Completed' : 'In Progress' }}
+            <div class="event-status-badge" [ngClass]="areAllEvaluationsCompleted(evaluation) ? 'complete' : 'pending'">
+              {{ areAllEvaluationsCompleted(evaluation) ? 'Completed' : 'In Progress' }}
             </div>
           </div>
           <div class="event-meta">
@@ -118,8 +196,52 @@
             </div>
           </div>
           
-          <!-- For rubric-based evaluations, show category details -->
-          <div class="rubric-details" *ngIf="evaluation.categoryScores && evaluation.categoryScores.length > 0">
+         
+          
+          <!-- Panel evaluation status -->
+          <div class="panel-status" *ngIf="evaluation.evaluators && evaluation.evaluators.length > 0">
+            <h5 class="details-section-title">
+              <i class="fas fa-users"></i>
+              Panel Evaluation Status
+            </h5>
+            
+            <div class="status-overview">
+              <div class="status-chart">
+                <svg viewBox="0 0 36 36" class="circular-chart">
+                  <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
+                  <path class="circle" [attr.stroke-dasharray]="getPanelCompletionPercentage(evaluation) + ', 100'" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
+                  <text x="18" y="18" class="percentage">{{ getPanelCompletionPercentage(evaluation) | number:'1.0-0' }}%</text>
+                </svg>
+                <div class="status-label">Evaluation Progress</div>
+              </div>
+              
+              <div class="evaluators">
+                <h6>Evaluators:</h6>
+                <div class="evaluator-cards">
+                  <div class="evaluator-card" *ngFor="let evaluator of evaluation.evaluators" 
+                      [ngClass]="evaluator.hasEvaluated ? 'completed' : 'pending'">
+                    <div class="evaluator-icon">
+                      <i [ngClass]="evaluator.hasEvaluated ? 'fas fa-check-circle' : 'far fa-clock'"></i>
+                    </div>
+                    <div class="evaluator-details">
+                      <div class="evaluator-name">{{ evaluator.name || 'Unknown Evaluator' }}</div>
+                      <div class="evaluator-meta">
+                        <span class="status-indicator" [ngClass]="evaluator.hasEvaluated ? 'completed' : 'pending'">
+                          {{ evaluator.hasEvaluated ? 'Completed' : 'Pending' }}
+                        </span>
+                        <span class="score" *ngIf="evaluator.hasEvaluated && evaluator.score">
+                          <i class="fas fa-star"></i> {{ evaluator.score }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+           <!-- For rubric-based evaluations, show category details -->
+           <div class="rubric-details" *ngIf="evaluation.categoryScores && evaluation.categoryScores.length > 0">
             <h5 class="details-section-title">
               <i class="fas fa-th-list"></i>
               Category Performance
@@ -147,48 +269,6 @@
                   </tr>
                 </tbody>
               </table>
-            </div>
-          </div>
-          
-          <!-- Panel evaluation status -->
-          <div class="panel-status" *ngIf="evaluation.evaluators && evaluation.evaluators.length > 0">
-            <h5 class="details-section-title">
-              <i class="fas fa-users"></i>
-              Panel Evaluation Status
-            </h5>
-            
-            <div class="status-overview">
-              <div class="status-chart">
-                <svg viewBox="0 0 36 36" class="circular-chart">
-                  <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
-                  <path class="circle" [attr.stroke-dasharray]="getPanelCompletionPercentage(evaluation) + ', 100'" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
-                  <text x="18" y="20.35" class="percentage">{{ getPanelCompletionPercentage(evaluation) | number:'1.0-0' }}%</text>
-                </svg>
-                <div class="status-label">Evaluation Progress</div>
-              </div>
-              
-              <div class="evaluators">
-                <h6>Evaluators:</h6>
-                <div class="evaluator-cards">
-                  <div class="evaluator-card" *ngFor="let evaluator of evaluation.evaluators" 
-                      [ngClass]="evaluator.hasEvaluated ? 'completed' : 'pending'">
-                    <div class="evaluator-icon">
-                      <i [ngClass]="evaluator.hasEvaluated ? 'fas fa-check-circle' : 'far fa-clock'"></i>
-                    </div>
-                    <div class="evaluator-details">
-                      <div class="evaluator-name">{{ evaluator.name || 'Unknown Evaluator' }}</div>
-                      <div class="evaluator-meta">
-                        <span class="status-indicator" [ngClass]="evaluator.hasEvaluated ? 'completed' : 'pending'">
-                          {{ evaluator.hasEvaluated ? 'Completed' : 'Pending' }}
-                        </span>
-                        <span class="score" *ngIf="evaluator.hasEvaluated && evaluator.score">
-                          <i class="fas fa-star"></i> {{ evaluator.score }}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
           

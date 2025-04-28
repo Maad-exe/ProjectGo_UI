@@ -131,15 +131,14 @@
   }
   
   .grade-circle {
+    position: relative;
     width: 120px;
     height: 120px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-right: 2rem;
-    position: relative;
-    z-index: 2;
+    margin: 0 auto 1rem auto;
     
     &.excellent { background-color: rgba(46, 204, 113, 0.15); }
     &.good { background-color: rgba(52, 152, 219, 0.15); }
@@ -156,11 +155,15 @@
       align-items: center;
       justify-content: center;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+      padding: 0.5rem;
+      text-align: center;
     }
     
     .grade-value {
-      font-size: 2rem;
+      font-size: 1.8rem; 
       font-weight: 700;
+      line-height: 1.2;
+      margin: 0;
       color: var(--text-primary);
       
       &.excellent { color: #2ecc71; }
@@ -170,28 +173,30 @@
     }
     
     .grade-label {
-      font-size: 0.8rem;
+      font-size: 0.7rem;
       color: var(--text-secondary);
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      line-height: 1;
+      margin: 0;
     }
   }
   
   .grade-pulse {
     position: absolute;
     top: 50%;
-    left: 60px;
-    transform: translateX(-50%) translateY(-50%);
+    left: 50%;
+    transform: translate(-50%, -50%);
     width: 120px;
     height: 120px;
     border-radius: 50%;
     animation: pulse 2s infinite;
-    z-index: 1;
+    z-index: -1;
     
-    &.excellent { background-color: rgba(46, 204, 113, 0.2); }
-    &.good { background-color: rgba(52, 152, 219, 0.2); }
-    &.average { background-color: rgba(243, 156, 18, 0.2); }
-    &.needs-improvement { background-color: rgba(231, 76, 60, 0.2); }
+    &.excellent { background-color: rgba(46, 204, 113, 0.5); }
+    &.good { background-color: rgba(52, 152, 219, 0.5); }
+    &.average { background-color: rgba(243, 156, 18, 0.5); }
+    &.needs-improvement { background-color: rgba(231, 76, 60, 0.5); }
   }
   
   .summary-details {
@@ -245,16 +250,16 @@
 // Animation for the pulse effect
 @keyframes pulse {
   0% {
-    transform: translateX(-50%) translateY(-50%) scale(0.8);
-    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 0.6;
   }
   70% {
-    transform: translateX(-50%) translateY(-50%) scale(1.2);
-    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.1);
+    opacity: 0.2;
   }
   100% {
-    transform: translateX(-50%) translateY(-50%) scale(0.8);
-    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 0.6;
   }
 }
 
@@ -395,17 +400,18 @@
       flex-grow: 1;
       
       .progress-bar {
+        width: 100%;
         height: 12px;
         background-color: var(--light-grey);
         border-radius: 6px;
         overflow: hidden;
-        position: relative;
+        margin-bottom: 0.75rem;
         
         .progress-fill {
           height: 100%;
+          display: block;
           border-radius: 6px;
-          position: relative;
-          transition: width 0.6s ease-in-out;
+          transition: width 0.5s ease-in-out;
           
           &.excellent { background-color: #2ecc71; }
           &.good { background-color: #3498db; }
@@ -478,69 +484,105 @@
   
   // Panel status with circular progress
   .panel-status {
+    padding: 1.5rem;
+    margin-top: 1rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    
+    .details-section-title {
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      
+      i {
+        margin-right: 0.5rem;
+        color: var(--primary-color);
+      }
+    }
+    
     .status-overview {
       display: flex;
-      gap: 2rem;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
       
+      // First row - progress circle centered
       .status-chart {
-        flex-shrink: 0;
-        text-align: center;
+        margin: 0 auto 2rem;
+        width: 120px;
+        height: 150px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
         
-        .circular-chart {
-          width: 100px;
-          height: 100px;
+        svg {
+          width: 100%;
+          height: 120px;
+          transform: rotate(-90deg);
           
-          .circle-bg {
+          .circle-bg, .circle {
+            cx: 18;
+            cy: 18;
+            r: 15.9155;
             fill: none;
-            stroke: var(--light-grey);
-            stroke-width: 2.8;
           }
           
-          .circle {
-            fill: none;
-            stroke-width: 2.8;
-            stroke-linecap: round;
-            stroke: var(--primary-color);
-            animation: progress 1s ease-out forwards;
-          }
-          
-          .percentage {
-            fill: var(--text-primary);
-            font-size: 0.5em;
+          text.percentage {
+            transform: rotate(90deg);
+            font-size: 8px;
+            transform-origin: center;
+            x: 18;
+            y: 18.35;
+            dominant-baseline: middle;
             text-anchor: middle;
-            font-weight: 600;
+            font-weight: bold;
           }
         }
         
         .status-label {
-          font-size: 0.85rem;
+          font-size: 0.9rem;
           color: var(--text-secondary);
+          text-align: center;
           margin-top: 0.5rem;
+          display: block;
+          width: 100%;
+          font-weight: 500;
         }
       }
     }
     
+    // Second row - evaluators
     .evaluators {
-      flex-grow: 1;
+      width: 100%;
+      margin-top: 1rem;
       
       h6 {
         margin-bottom: 1rem;
         color: var(--text-primary);
         font-weight: 600;
+        text-align: center;
       }
       
       .evaluator-cards {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.75rem;
+        gap: 1rem;
+        justify-content: center;
         
         .evaluator-card {
           display: flex;
           align-items: center;
-          padding: 0.7rem;
-          border-radius: 8px;
+          padding: 1rem;
+          border-radius: 10px;
           background-color: var(--light-grey);
-          width: calc(50% - 0.375rem);
+          width: calc(53.333% - 0.667rem);
+          max-width: 300px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+          transition: transform 0.2s ease;
+          
+          &:hover {
+            transform: translateY(-3px);
+          }
           
           &.completed {
             background-color: rgba(46, 204, 113, 0.1);
@@ -571,14 +613,14 @@
           }
           
           .evaluator-icon {
-            width: 36px;
-            height: 36px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-right: 0.75rem;
-            font-size: 1rem;
+            margin-right: 1rem;
+            font-size: 1.1rem;
           }
           
           .evaluator-details {
@@ -587,8 +629,8 @@
             
             .evaluator-name {
               font-weight: 600;
-              font-size: 0.9rem;
-              margin-bottom: 0.25rem;
+              font-size: 0.95rem;
+              margin-bottom: 0.5rem;
               white-space: nowrap;
               overflow: hidden;
               text-overflow: ellipsis;
@@ -604,23 +646,36 @@
                 font-weight: 600;
                 text-transform: uppercase;
                 border-radius: 4px;
-                padding: 0.15rem 0.5rem;
+                padding: 0.2rem 0.6rem;
               }
               
               .score {
                 display: flex;
                 align-items: center;
                 font-weight: 600;
-                font-size: 0.8rem;
+                font-size: 0.85rem;
                 
                 i {
                   color: #f1c40f;
-                  margin-right: 0.25rem;
+                  margin-right: 0.35rem;
                 }
               }
             }
           }
         }
+      }
+    }
+    
+    // Responsive adjustment
+    @media (max-width: 1200px) {
+      .evaluators .evaluator-cards .evaluator-card {
+        width: calc(50% - 0.5rem);
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .evaluators .evaluator-cards .evaluator-card {
+        width: 100%;
       }
     }
   }
@@ -866,10 +921,179 @@
   }
 }
 
-// Animation for progress circles
+// Fix the circular chart and visualization styles
+.circular-chart {
+  display: block;
+  width: 100px;
+  height: 100px;
+  max-width: 100%;
+  
+  .circle-bg {
+    fill: none;
+    stroke: var(--light-grey);
+    stroke-width: 3.8;
+  }
+  
+  .circle {
+    fill: none;
+    stroke-width: 3.8;
+    stroke-linecap: round;
+    stroke: var(--primary-color);
+  }
+  
+  .percentage {
+    fill: var(--text-primary);
+    font-size: 0.5em;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    font-weight: bold;
+  }
+}
+
+// Fix the status chart component to ensure it's visible
+.status-chart {
+  width: 100px;
+  height: 100px;
+  margin-right: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible; // This helps ensure the SVG doesn't get clipped
+  }
+}
+
+// Add specific animations for the progress circle
 @keyframes progress {
-  0% {
-    stroke-dasharray: '0, 100';
+  from {
+    stroke-dasharray: 0 100;
+  }
+}
+
+// Styling for highlights section
+.highlights-section {
+  margin-bottom: 2rem;
+}
+
+.highlights-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.highlight-card {
+  background-color: white;
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  box-shadow: var(--card-shadow);
+  display: flex;
+  align-items: flex-start;
+  transition: var(--transition);
+  
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  }
+  
+  .highlight-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    background-color: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-right: 1rem;
+    flex-shrink: 0;
+  }
+  
+  .highlight-content {
+    flex-grow: 1;
+    
+    h4 {
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    
+    .highlight-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+    
+    p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin: 0;
+    }
+  }
+}
+
+// Improved charts layout
+.charts-section {
+  margin-bottom: 2.5rem;
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+// Properly style chart containers to ensure they're visible
+.chart-container {
+  position: relative;
+  width: 100%;
+  height: 250px !important;
+  display: block !important;
+  visibility: visible !important;
+  
+  canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+  }
+}
+
+// Ensure charts render properly with proper z-index
+canvas {
+  position: relative;
+  z-index: 10;
+}
+
+// Improve chart card styling for better visibility
+.chart-card {
+  background-color: white;
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  box-shadow: var(--card-shadow);
+  transition: var(--transition);
+  height: 330px; // Fixed height to ensure consistency
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  }
+  
+  .chart-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+  
+  .chart-container {
+    height: 250px;
+    position: relative;
   }
 }
 
@@ -882,6 +1106,21 @@
     .grade-circle {
       margin-right: 0;
       margin-bottom: 1.5rem;
+      width: 110px;
+      height: 110px;
+      
+      .grade-inner {
+        width: 90px;
+        height: 90px;
+      }
+      
+      .grade-value {
+        font-size: 1.6rem;
+      }
+      
+      .grade-label {
+        font-size: 0.65rem;
+      }
     }
     
     .grade-pulse {
@@ -899,5 +1138,19 @@
   
   .evaluator-cards .evaluator-card {
     width: 100% !important;
+  }
+  
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .highlights-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1200px) {
+  .charts-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
