@@ -61,32 +61,30 @@ export class ProgressComponent implements OnInit {
           
           const isComplete: boolean = hasScoreData || !!hasCategoryScores || false;
           
-          const evaluators = evaluation.evaluators || [];
+          // Create a Map to ensure we have unique evaluators
+          const uniqueEvaluators = new Map<number, EvaluatorDto>();
           
-          let processedEvaluators = [...evaluators];
-          if (processedEvaluators.length === 0 && !!evaluation.categoryScores && evaluation.categoryScores.length > 0) {
-            const extractedEvaluators = new Map();
-            
-            // Debug: log what we're working with
-            console.log('Category scores to extract evaluators from:', evaluation.categoryScores);
-            
+          // First add any evaluators directly from the backend
+          (evaluation.evaluators || []).forEach(evaluator => {
+            if (evaluator && evaluator.id) {
+              uniqueEvaluators.set(evaluator.id, {
+                ...evaluator,
+                // Ensure hasEvaluated is a boolean and score is correctly set
+                hasEvaluated: !!evaluator.hasEvaluated,
+                score: evaluator.score || 0
+              });
+            }
+          });
+          
+          // For rubric-based evaluations, we might need to extract additional evaluator data
+          if (evaluation.categoryScores && evaluation.categoryScores.length > 0) {
             evaluation.categoryScores.forEach(category => {
               if (category.evaluatorDetails?.length > 0) {
                 category.evaluatorDetails.forEach(evalDetail => {
-                  // Debug: log each evaluator detail
-                  console.log('Processing evaluator detail:', evalDetail);
-                  
-                  if (!extractedEvaluators.has(evalDetail.evaluatorId)) {
-                    // Use the full name from the evaluatorName property if it exists
-                    // Otherwise use the abbreviation that appears in the feedback
-                    const evaluatorName = evalDetail.evaluatorName || 
-                                         (category.feedback && category.feedback.includes('from') ? 
-                                          category.feedback.split('from')[1]?.trim() : 
-                                          `Evaluator ${evalDetail.evaluatorId}`);
-                    
-                    extractedEvaluators.set(evalDetail.evaluatorId, {
+                  if (evalDetail.evaluatorId && !uniqueEvaluators.has(evalDetail.evaluatorId)) {
+                    uniqueEvaluators.set(evalDetail.evaluatorId, {
                       id: evalDetail.evaluatorId,
-                      name: evaluatorName,
+                      name: evalDetail.evaluatorName || `Evaluator ${evalDetail.evaluatorId}`,
                       hasEvaluated: true,
                       score: evalDetail.score
                     });
@@ -94,19 +92,35 @@ export class ProgressComponent implements OnInit {
                 });
               }
             });
-            processedEvaluators = Array.from(extractedEvaluators.values());
-            
-            // Debug: log the processed evaluators
-            console.log('Processed evaluators:', processedEvaluators);
           }
           
+          // Extract the unique evaluators into an array
+          const processedEvaluators = Array.from(uniqueEvaluators.values());
+          
+          // Process feedback to remove duplicate teacher names
+          let processedFeedback = evaluation.feedback;
+          if (processedFeedback) {
+            // Split by "Feedback from" sections
+            const feedbackSections = processedFeedback.split(/Feedback from\s+/i).filter(Boolean);
+            
+            if (feedbackSections.length > 1) {
+              // Handle multi-evaluator feedback
+              processedFeedback = feedbackSections.map((section, index) => {
+                if (index === 0 && !section.includes(':')) {
+                  return section.trim();  // This is not a section header
+                }
+                
+                // For proper sections, keep the "Feedback from" prefix
+                return index === 0 ? section.trim() : `Feedback from ${section.trim()}`;
+              }).join('\n\n');
+            }
+          }
+          
+          // Process category scores as before
           const processedCategoryScores = evaluation.categoryScores?.map(category => {
-            // Extract evaluator names from feedback field if present
             let feedback = category.feedback || '';
             
-            // Modified to make the feedback more readable by extracting evaluator info
             if (feedback.includes('FROM') || feedback.includes('from')) {
-              // Try to clean up the feedback format
               const parts = feedback.split(/FROM|from/);
               if (parts.length > 1) {
                 const scoreWithEvaluator = parts.map(part => part.trim()).filter(p => p);
@@ -139,7 +153,8 @@ export class ProgressComponent implements OnInit {
             weightedScore: weightedScore,
             evaluators: processedEvaluators,
             categoryScores: processedCategoryScores,
-            eventWeight: evaluation.eventWeight || 0
+            eventWeight: evaluation.eventWeight || 0,
+            feedback: processedFeedback
           };
         });
         
@@ -215,5 +230,116 @@ export class ProgressComponent implements OnInit {
   areAllEvaluationsCompleted(evaluation: ExtendedStudentEvaluationDto): boolean {
     if (!evaluation.evaluators || evaluation.evaluators.length === 0) return false;
     return evaluation.evaluators.every(e => e && e.hasEvaluated === true);
+  }
+
+  // Updated parseFeedback method 
+  parseFeedback(feedbackString: string): {teacher: string, feedback: string}[] {
+    if (!feedbackString) return [];
+    
+    // Split by "Feedback from" but keep the prefix
+    const sections = feedbackString.split(/(?=Feedback from)/i).filter(Boolean);
+    const results: {teacher: string, feedback: string}[] = [];
+
+    // Keep track of matched evaluators to handle potential duplicates
+    const processedTeachers = new Set<string>();
+    
+    for (const section of sections) {
+      // Try to match "Feedback from X:" pattern
+      const match = section.match(/Feedback from\s+([^:]+):(.*)/is);
+      
+      if (match) {
+        const teacherName = match[1].trim();
+        const feedbackText = match[2].trim();
+        
+        // Skip duplicates (sometimes feedback gets compiled with duplicates)
+        if (!processedTeachers.has(teacherName.toLowerCase())) {
+          processedTeachers.add(teacherName.toLowerCase());
+          results.push({
+            teacher: teacherName,
+            feedback: feedbackText
+          });
+        }
+      } else {
+        // Try to extract teacher name from the feedback content
+        const fromMatch = section.match(/[-\s]+(FROM|from|From)\s+([A-Za-z\s\.]+)/);
+        
+        if (fromMatch && fromMatch[2]) {
+          const extractedName = fromMatch[2].trim();
+          const cleanedFeedback = section.replace(/[-\s]+(FROM|from|From)\s+[A-Za-z\s\.]+/, '').trim();
+          
+          if (!processedTeachers.has(extractedName.toLowerCase())) {
+            processedTeachers.add(extractedName.toLowerCase());
+            results.push({
+              teacher: extractedName,
+              feedback: cleanedFeedback
+            });
+          }
+        } else {
+          // If no clear teacher name can be found, check if we can find a name in the evaluators list
+          // based on any part of the feedback
+          if (this.evaluations && this.evaluations.length > 0) {
+            let foundTeacher = false;
+            
+            for (const evaluation of this.evaluations) {
+              if (evaluation.evaluators && evaluation.evaluators.length > 0) {
+                for (const evaluator of evaluation.evaluators) {
+                  if (evaluator && evaluator.name && 
+                      section.toLowerCase().includes(evaluator.name.toLowerCase())) {
+                    if (!processedTeachers.has(evaluator.name.toLowerCase())) {
+                      processedTeachers.add(evaluator.name.toLowerCase());
+                      results.push({
+                        teacher: evaluator.name,
+                        feedback: section
+                      });
+                      foundTeacher = true;
+                      break;
+                    }
+                  }
+                }
+                if (foundTeacher) break;
+              }
+            }
+            
+            // If we still couldn't identify the teacher, use the general label
+            if (!foundTeacher) {
+              results.push({
+                teacher: 'Feedback',
+                feedback: section.trim()
+              });
+            }
+          } else {
+            // Fallback if no evaluations data is available
+            results.push({
+              teacher: 'Feedback',
+              feedback: section.trim()
+            });
+          }
+        }
+      }
+    }
+    
+    return results;
+  }
+
+  // Helper method to find matching evaluator based on feedback text
+  findMatchingEvaluator(feedback: string, evaluators: EvaluatorDto[]): EvaluatorDto | null {
+    if (!evaluators || !feedback) return null;
+    
+    // Try to find by score mention in feedback
+    const scoreMatch = feedback.match(/(\d+)\s+FROM/i);
+    if (scoreMatch && scoreMatch[1]) {
+      const score = parseInt(scoreMatch[1]);
+      const matchingEvaluator = evaluators.find(e => e.score === score);
+      if (matchingEvaluator) return matchingEvaluator;
+    }
+    
+    // Try to find by name mention in feedback
+    for (const evaluator of evaluators) {
+      if (evaluator.name && feedback.toLowerCase().includes(evaluator.name.toLowerCase())) {
+        return evaluator;
+      }
+    }
+    
+    return null;
   }
 }

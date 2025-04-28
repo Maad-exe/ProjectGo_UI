@@ -122,16 +122,18 @@
             <div class="evaluators">
               <h6>Evaluators:</h6>
               <ul class="evaluator-list">
-                <li *ngFor="let evaluator of evaluation.evaluators" 
-                    [class.completed]="evaluator?.hasEvaluated">
-                  <span class="evaluator-name">{{ evaluator?.name || 'Unknown Evaluator' }}</span>
-                  <span class="evaluator-status" [ngClass]="evaluator?.hasEvaluated ? 'completed' : 'pending'">
-                    {{ evaluator?.hasEvaluated ? 'Completed' : 'Pending' }}
-                  </span>
-                  <span class="evaluator-score" *ngIf="evaluator?.hasEvaluated">
-                    Score: {{ evaluator?.score || 'N/A' }}
-                  </span>
-                </li>
+                <ng-container *ngFor="let evaluator of evaluation.evaluators">
+                  <li *ngIf="evaluator && evaluator.name" 
+                      [class.completed]="evaluator.hasEvaluated">
+                    <span class="evaluator-name">{{ evaluator.name }}</span>
+                    <span class="evaluator-status" [ngClass]="evaluator.hasEvaluated ? 'completed' : 'pending'">
+                      {{ evaluator.hasEvaluated ? 'Completed' : 'Pending' }}
+                    </span>
+                    <span class="evaluator-score" *ngIf="evaluator.hasEvaluated && evaluator.score">
+                      Score: {{ evaluator.score }}
+                    </span>
+                  </li>
+                </ng-container>
                 <!-- Show a message if no evaluators are present -->
                 <li *ngIf="!evaluation.evaluators || evaluation.evaluators.length === 0">
                   No evaluator information available
@@ -143,9 +145,32 @@
           <!-- Evaluation feedback -->
           <div class="evaluation-feedback" *ngIf="evaluation.feedback">
             <h5>Feedback:</h5>
-            <div class="feedback-content">
-              <i class="fas fa-quote-left"></i>
-              <p>{{ evaluation.feedback }}</p>
+            <div class="feedback-cards">
+              <div class="feedback-card" *ngFor="let item of parseFeedback(evaluation.feedback)">
+                <div class="feedback-header">
+                  <div class="evaluator-avatar">
+                    <i class="fas fa-user-tie"></i>
+                  </div>
+                  <div class="evaluator-info">
+                    <!-- Try to find matching evaluator from the list -->
+                    <h6>
+                      <ng-container *ngIf="item.teacher === 'Feedback' && evaluation.evaluators">
+                        {{ findMatchingEvaluator(item.feedback, evaluation.evaluators)?.name || 'Feedback' }}
+                      </ng-container>
+                      <ng-container *ngIf="item.teacher !== 'Feedback'">
+                        {{ item.teacher }}
+                      </ng-container>
+                    </h6>
+                    <!-- Show evaluator score if available -->
+                    <span class="evaluator-score" *ngIf="findMatchingEvaluator(item.feedback, evaluation.evaluators)?.score">
+                      Score: {{ findMatchingEvaluator(item.feedback, evaluation.evaluators)?.score }}
+                    </span>
+                  </div>
+                </div>
+                <div class="feedback-content">
+                  <p>{{ item.feedback }}</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
