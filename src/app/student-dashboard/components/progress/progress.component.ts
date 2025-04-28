@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../services/auth.service';
 import { EvaluationService } from '../../../services/evaluation.service';
@@ -9,6 +9,19 @@ import { EnhancedStudentEvaluationDto, CategoryScoreDetailDto, EvaluatorDto } fr
 interface ExtendedStudentEvaluationDto extends EnhancedStudentEvaluationDto {
   weightedScore?: number;
   isComplete?: boolean;
+}
+
+// Interface for feedback item structure
+interface FeedbackItem {
+  category?: string;
+  text: string;
+}
+
+// Interface for parsed feedback structure
+interface ParsedFeedback {
+  teacher: string;
+  feedback: string;
+  date?: Date;
 }
 
 @Component({
@@ -26,14 +39,57 @@ export class ProgressComponent implements OnInit {
   error: string | null = null;
   finalGrade: number = 0;
   
+  // Add the missing properties
+  expandedCards: boolean[] = [];
+  
   constructor(
     private authService: AuthService,
     private evaluationService: EvaluationService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private ngZone: NgZone
   ) {}
 
   ngOnInit(): void {
     this.loadEvaluations();
+    // Initialize all cards as collapsed initially
+    this.expandedCards = new Array(10).fill(false);
+  }
+
+  // Add the missing methods
+  toggleCardExpansion(index: number): void {
+    this.expandedCards[index] = !this.expandedCards[index];
+  }
+
+  getInitials(name: string | undefined): string {
+    if (!name || name === 'Feedback') return 'FB';
+    
+    return name.split(' ')
+      .map(part => part.charAt(0))
+      .join('')
+      .substring(0, 2)
+      .toUpperCase();
+  }
+
+  // Fix the findMatchingEvaluator method to handle undefined evaluators array
+  findMatchingEvaluator(feedback: string, evaluators?: EvaluatorDto[]): EvaluatorDto | null {
+    if (!evaluators || !feedback) return null;
+    
+    // Try to find by score mention in feedback
+    const scoreMatch = feedback.match(/(\d+)\s+FROM/i);
+    if (scoreMatch && scoreMatch[1]) {
+      const score = parseInt(scoreMatch[1]);
+      const matchingEvaluator = evaluators.find(e => e.score === score);
+      if (matchingEvaluator) return matchingEvaluator;
+    }
+    
+    // Try to find by name mention in feedback
+    for (const evaluator of evaluators) {
+      if (evaluator.name && feedback.toLowerCase().includes(evaluator.name.toLowerCase())) {
+        return evaluator;
+      }
+    }
+    
+    return null;
   }
 
   loadEvaluations(): void {
@@ -76,7 +132,7 @@ export class ProgressComponent implements OnInit {
             }
           });
           
-          // For rubric-based evaluations, we might need to extract additional evaluator data
+          // For rubric-based evaluations, extract additional evaluator data
           if (evaluation.categoryScores && evaluation.categoryScores.length > 0) {
             evaluation.categoryScores.forEach(category => {
               if (category.evaluatorDetails?.length > 0) {
@@ -116,7 +172,7 @@ export class ProgressComponent implements OnInit {
             }
           }
           
-          // Process category scores as before
+          // Process category scores
           const processedCategoryScores = evaluation.categoryScores?.map(category => {
             let feedback = category.feedback || '';
             
@@ -159,6 +215,11 @@ export class ProgressComponent implements OnInit {
         });
         
         console.log('Processed evaluations:', this.evaluations);
+        
+        // Ensure the expandedCards array is long enough for all evaluations
+        if (this.evaluations.length > this.expandedCards.length) {
+          this.expandedCards = [...this.expandedCards, ...new Array(this.evaluations.length - this.expandedCards.length).fill(false)];
+        }
         
         this.completedEvaluations = this.evaluations.filter(e => e.isComplete);
         this.upcomingEvaluations = this.evaluations.filter(e => !e.isComplete);
@@ -233,12 +294,12 @@ export class ProgressComponent implements OnInit {
   }
 
   // Updated parseFeedback method 
-  parseFeedback(feedbackString: string): {teacher: string, feedback: string}[] {
+  parseFeedback(feedbackString: string): ParsedFeedback[] {
     if (!feedbackString) return [];
     
     // Split by "Feedback from" but keep the prefix
     const sections = feedbackString.split(/(?=Feedback from)/i).filter(Boolean);
-    const results: {teacher: string, feedback: string}[] = [];
+    const results: ParsedFeedback[] = [];
 
     // Keep track of matched evaluators to handle potential duplicates
     const processedTeachers = new Set<string>();
@@ -276,7 +337,6 @@ export class ProgressComponent implements OnInit {
           }
         } else {
           // If no clear teacher name can be found, check if we can find a name in the evaluators list
-          // based on any part of the feedback
           if (this.evaluations && this.evaluations.length > 0) {
             let foundTeacher = false;
             
@@ -319,27 +379,5 @@ export class ProgressComponent implements OnInit {
     }
     
     return results;
-  }
-
-  // Helper method to find matching evaluator based on feedback text
-  findMatchingEvaluator(feedback: string, evaluators: EvaluatorDto[]): EvaluatorDto | null {
-    if (!evaluators || !feedback) return null;
-    
-    // Try to find by score mention in feedback
-    const scoreMatch = feedback.match(/(\d+)\s+FROM/i);
-    if (scoreMatch && scoreMatch[1]) {
-      const score = parseInt(scoreMatch[1]);
-      const matchingEvaluator = evaluators.find(e => e.score === score);
-      if (matchingEvaluator) return matchingEvaluator;
-    }
-    
-    // Try to find by name mention in feedback
-    for (const evaluator of evaluators) {
-      if (evaluator.name && feedback.toLowerCase().includes(evaluator.name.toLowerCase())) {
-        return evaluator;
-      }
-    }
-    
-    return null;
   }
 }

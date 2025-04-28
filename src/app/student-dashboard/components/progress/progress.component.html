@@ -1,21 +1,29 @@
 <div class="progress-container">
   <div class="section-header">
-    <h2>
-      <i class="fas fa-chart-line"></i>
-      My Evaluation Progress
-    </h2>
-    <p class="section-description">Track your performance across all evaluation events</p>
+    <div class="header-content">
+      <div class="header-icon">
+        <i class="fas fa-chart-line"></i>
+      </div>
+      <div class="header-text">
+        <h2>My Evaluation Progress</h2>
+        <p class="section-description">Track your performance across all evaluation events</p>
+      </div>
+    </div>
   </div>
 
   <!-- Loading state -->
   <div class="loading-state" *ngIf="isLoading">
-    <i class="fas fa-spinner fa-spin"></i>
+    <div class="spinner-container">
+      <i class="fas fa-spinner fa-spin"></i>
+    </div>
     <p>Loading your evaluations...</p>
   </div>
 
   <!-- Empty state -->
   <div class="empty-state" *ngIf="!isLoading && evaluations.length === 0">
-    <i class="fas fa-clipboard-list"></i>
+    <div class="empty-icon">
+      <i class="fas fa-clipboard-list"></i>
+    </div>
     <h3>No Evaluations Yet</h3>
     <p>You haven't been evaluated in any events yet. Check back later!</p>
   </div>
@@ -24,9 +32,15 @@
   <div class="progress-content" *ngIf="!isLoading && evaluations.length > 0">
     <!-- Summary card -->
     <div class="summary-card">
-      <div class="grade-circle" [ngClass]="getGradeColor(finalGrade)">
-        <div class="grade-value">{{ finalGrade | number:'1.1-1' }}</div>
-        <div class="grade-label">Overall Grade</div>
+      <div class="grade-section">
+        <div class="grade-circle" [ngClass]="getGradeColor(finalGrade)">
+          <div class="grade-inner">
+            <div class="grade-value">{{ finalGrade | number:'1.1-1' }}</div>
+            <div class="grade-label">Overall Grade</div>
+          </div>
+        </div>
+        
+        <div class="grade-pulse" [ngClass]="getGradeColor(finalGrade)"></div>
       </div>
       
       <div class="summary-details">
@@ -34,6 +48,14 @@
         <p>Based on {{ evaluations.length }} evaluation events</p>
         
         <div class="status-indicator" [ngClass]="getGradeColor(finalGrade)">
+          <div class="status-icon">
+            <i [ngClass]="{
+              'fas fa-trophy': getGradeColor(finalGrade) === 'excellent',
+              'fas fa-thumbs-up': getGradeColor(finalGrade) === 'good',
+              'fas fa-check': getGradeColor(finalGrade) === 'average',
+              'fas fa-exclamation-triangle': getGradeColor(finalGrade) === 'needs-improvement'
+            }"></i>
+          </div>
           <span class="status-label">
             <ng-container [ngSwitch]="getGradeColor(finalGrade)">
               <ng-container *ngSwitchCase="'excellent'">Excellent</ng-container>
@@ -48,39 +70,60 @@
 
     <!-- Evaluations list -->
     <div class="evaluations-list">
-      <h3>Evaluation Details</h3>
+      <h3 class="list-title">Evaluation Details</h3>
       
-      <div class="evaluation-card" *ngFor="let evaluation of evaluations">
+      <div class="evaluation-card" *ngFor="let evaluation of evaluations; let i = index" [ngClass]="{'expanded': expandedCards[i]}" (click)="toggleCardExpansion(i)">
         <div class="event-info">
-          <h4>{{ evaluation.eventName }}</h4>
+          <div class="event-header">
+            <h4>{{ evaluation.eventName }}</h4>
+            <div class="event-status-badge" [ngClass]="evaluation.isComplete ? 'complete' : 'pending'">
+              {{ evaluation.isComplete ? 'Completed' : 'In Progress' }}
+            </div>
+          </div>
           <div class="event-meta">
-            <span class="event-type">{{ evaluation.eventType || 'Standard' }}</span>
-            <span class="event-date">{{ evaluation.eventDate | date }}</span>
-            <span class="event-weight">Weight: {{ evaluation.eventWeight || 0 }}%</span>
+            <div class="meta-item">
+              <i class="fas fa-tag"></i>
+              <span>{{ evaluation.eventType || 'Standard' }}</span>
+            </div>
+            <div class="meta-item">
+              <i class="fas fa-calendar-day"></i>
+              <span>{{ evaluation.eventDate | date }}</span>
+            </div>
+            <div class="meta-item">
+              <i class="fas fa-balance-scale"></i>
+              <span>Weight: {{ evaluation.eventWeight || 0 }}%</span>
+            </div>
           </div>
         </div>
         
         <!-- Evaluation details section - show if we have any details to show -->
         <div class="evaluation-details" *ngIf="hasEvaluationDetails(evaluation)">
-          <div class="score-value" [ngClass]="getGradeColor(evaluation.obtainedMarks)">
-            {{ evaluation.obtainedMarks }}
-            <span class="score-max">/ {{ evaluation.totalMarks }}</span>
-          </div>
-          
-          <!-- Score percentage visualization -->
-          <div class="score-progress">
-            <div class="progress-bar">
-              <div class="progress-fill" 
-                   [ngClass]="getGradeColor(evaluation.obtainedMarks)" 
-                   [style.width]="getProgressBarWidth(calculatePercentage(evaluation.obtainedMarks, evaluation.totalMarks))">
+          <div class="score-overview">
+            <div class="score-value-container">
+              <div class="score-value" [ngClass]="getGradeColor(evaluation.obtainedMarks)">
+                {{ evaluation.obtainedMarks }}
+                <span class="score-max">/ {{ evaluation.totalMarks }}</span>
               </div>
             </div>
-            <div class="progress-label">{{ calculatePercentage(evaluation.obtainedMarks, evaluation.totalMarks) | number:'1.0-0' }}%</div>
+          
+            <!-- Score percentage visualization -->
+            <div class="score-progress">
+              <div class="progress-bar">
+                <div class="progress-fill" 
+                     [ngClass]="getGradeColor(evaluation.obtainedMarks)" 
+                     [style.width]="getProgressBarWidth(calculatePercentage(evaluation.obtainedMarks, evaluation.totalMarks))">
+                  <span class="progress-label">{{ calculatePercentage(evaluation.obtainedMarks, evaluation.totalMarks) | number:'1.0-0' }}%</span>
+                </div>
+              </div>
+            </div>
           </div>
           
           <!-- For rubric-based evaluations, show category details -->
           <div class="rubric-details" *ngIf="evaluation.categoryScores && evaluation.categoryScores.length > 0">
-            <h5>Evaluation Details by Category</h5>
+            <h5 class="details-section-title">
+              <i class="fas fa-th-list"></i>
+              Category Performance
+            </h5>
             <div class="table-responsive">
               <table class="table table-sm">
                 <thead>
@@ -109,66 +152,87 @@
           
           <!-- Panel evaluation status -->
           <div class="panel-status" *ngIf="evaluation.evaluators && evaluation.evaluators.length > 0">
-            <h5>Panel Evaluation Status</h5>
-            <div class="panel-completion">
-              <div class="progress-bar">
-                <div class="progress-fill" 
-                     [style.width]="getProgressBarWidth(getPanelCompletionPercentage(evaluation))">
+            <h5 class="details-section-title">
+              <i class="fas fa-users"></i>
+              Panel Evaluation Status
+            </h5>
+            
+            <div class="status-overview">
+              <div class="status-chart">
+                <svg viewBox="0 0 36 36" class="circular-chart">
+                  <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
+                  <path class="circle" [attr.stroke-dasharray]="getPanelCompletionPercentage(evaluation) + ', 100'" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"></path>
+                  <text x="18" y="20.35" class="percentage">{{ getPanelCompletionPercentage(evaluation) | number:'1.0-0' }}%</text>
+                </svg>
+                <div class="status-label">Evaluation Progress</div>
+              </div>
+              
+              <div class="evaluators">
+                <h6>Evaluators:</h6>
+                <div class="evaluator-cards">
+                  <div class="evaluator-card" *ngFor="let evaluator of evaluation.evaluators" 
+                      [ngClass]="evaluator.hasEvaluated ? 'completed' : 'pending'">
+                    <div class="evaluator-icon">
+                      <i [ngClass]="evaluator.hasEvaluated ? 'fas fa-check-circle' : 'far fa-clock'"></i>
+                    </div>
+                    <div class="evaluator-details">
+                      <div class="evaluator-name">{{ evaluator.name || 'Unknown Evaluator' }}</div>
+                      <div class="evaluator-meta">
+                        <span class="status-indicator" [ngClass]="evaluator.hasEvaluated ? 'completed' : 'pending'">
+                          {{ evaluator.hasEvaluated ? 'Completed' : 'Pending' }}
+                        </span>
+                        <span class="score" *ngIf="evaluator.hasEvaluated && evaluator.score">
+                          <i class="fas fa-star"></i> {{ evaluator.score }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div class="progress-label">{{ getPanelCompletionPercentage(evaluation) | number:'1.0-0' }}% Complete</div>
-            </div>
-            
-            <div class="evaluators">
-              <h6>Evaluators:</h6>
-              <ul class="evaluator-list">
-                <ng-container *ngFor="let evaluator of evaluation.evaluators">
-                  <li *ngIf="evaluator && evaluator.name" 
-                      [class.completed]="evaluator.hasEvaluated">
-                    <span class="evaluator-name">{{ evaluator.name }}</span>
-                    <span class="evaluator-status" [ngClass]="evaluator.hasEvaluated ? 'completed' : 'pending'">
-                      {{ evaluator.hasEvaluated ? 'Completed' : 'Pending' }}
-                    </span>
-                    <span class="evaluator-score" *ngIf="evaluator.hasEvaluated && evaluator.score">
-                      Score: {{ evaluator.score }}
-                    </span>
-                  </li>
-                </ng-container>
-                <!-- Show a message if no evaluators are present -->
-                <li *ngIf="!evaluation.evaluators || evaluation.evaluators.length === 0">
-                  No evaluator information available
-                </li>
-              </ul>
             </div>
           </div>
           
           <!-- Evaluation feedback -->
           <div class="evaluation-feedback" *ngIf="evaluation.feedback">
-            <h5>Feedback:</h5>
+            <h5 class="details-section-title">
+              <i class="fas fa-comment-dots"></i>
+              Feedback
+            </h5>
             <div class="feedback-cards">
               <div class="feedback-card" *ngFor="let item of parseFeedback(evaluation.feedback)">
                 <div class="feedback-header">
-                  <div class="evaluator-avatar">
-                    <i class="fas fa-user-tie"></i>
-                  </div>
                   <div class="evaluator-info">
-                    <!-- Try to find matching evaluator from the list -->
-                    <h6>
-                      <ng-container *ngIf="item.teacher === 'Feedback' && evaluation.evaluators">
-                        {{ findMatchingEvaluator(item.feedback, evaluation.evaluators)?.name || 'Feedback' }}
-                      </ng-container>
-                      <ng-container *ngIf="item.teacher !== 'Feedback'">
-                        {{ item.teacher }}
-                      </ng-container>
-                    </h6>
-                    <!-- Show evaluator score if available -->
-                    <span class="evaluator-score" *ngIf="findMatchingEvaluator(item.feedback, evaluation.evaluators)?.score">
-                      Score: {{ findMatchingEvaluator(item.feedback, evaluation.evaluators)?.score }}
-                    </span>
+                    <!-- Teacher avatar with initials -->
+                    <div class="evaluator-avatar">
+                      {{ getInitials(item.teacher === 'Feedback' && findMatchingEvaluator(item.feedback, evaluation.evaluators)?.name 
+                        ? findMatchingEvaluator(item.feedback, evaluation.evaluators)?.name 
+                        : item.teacher) }}
+                    </div>
+                    
+                    <div class="evaluator-details">
+                      <h6 class="evaluator-name">
+                        <ng-container *ngIf="item.teacher === 'Feedback' && evaluation.evaluators">
+                          {{ findMatchingEvaluator(item.feedback, evaluation.evaluators)?.name || 'Feedback' }}
+                        </ng-container>
+                        <ng-container *ngIf="item.teacher !== 'Feedback'">
+                          {{ item.teacher }}
+                        </ng-container>
+                      </h6>
+                      
+                      <div class="evaluator-meta" *ngIf="findMatchingEvaluator(item.feedback, evaluation.evaluators)?.score">
+                        <div class="score-tag">
+                          <i class="fas fa-star"></i>
+                          <span>{{ findMatchingEvaluator(item.feedback, evaluation.evaluators)?.score }}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
+                
                 <div class="feedback-content">
-                  <p>{{ item.feedback }}</p>
+                  <div class="feedback-text">
+                    {{ item.feedback }}
+                  </div>
                 </div>
               </div>
             </div>
@@ -177,40 +241,55 @@
         
         <!-- Pending evaluation message - only show if NO details available -->
         <div class="pending-message" *ngIf="!hasEvaluationDetails(evaluation)">
-          <i class="fas fa-hourglass-half"></i>
-          <p>Evaluation in progress</p>
-          
-          <!-- Show details about panel progress if available -->
-          <div class="panel-progress" *ngIf="evaluation.evaluators && evaluation.evaluators.length > 0">
-            <div class="panel-completion">
-              <div class="progress-bar">
-                <div class="progress-fill" 
-                     [style.width]="getProgressBarWidth(getPanelCompletionPercentage(evaluation))">
+          <div class="pending-icon">
+            <i class="fas fa-hourglass-half"></i>
+          </div>
+          <div class="pending-content">
+            <h5>Evaluation in progress</h5>
+            
+            <!-- Show details about panel progress if available -->
+            <div class="panel-progress" *ngIf="evaluation.evaluators && evaluation.evaluators.length > 0">
+              <div class="progress-indicator">
+                <div class="progress-bar">
+                  <div class="progress-fill" 
+                      [style.width]="getProgressBarWidth(getPanelCompletionPercentage(evaluation))">
+                  </div>
+                </div>
+                <div class="progress-label">{{ getPanelCompletionPercentage(evaluation) | number:'1.0-0' }}% Complete</div>
+              </div>
+              
+              <div class="pending-evaluators">
+                <h6>Pending evaluations from:</h6>
+                <div class="evaluator-list">
+                  <div class="evaluator-tag" *ngFor="let evaluator of evaluation.evaluators">
+                    <ng-container *ngIf="!evaluator?.hasEvaluated">
+                      <i class="fas fa-user-clock"></i>
+                      <span>{{ evaluator?.name || 'Unknown Evaluator' }}</span>
+                    </ng-container>
+                  </div>
+                  
+                  <!-- Show a message if all evaluators have completed -->
+                  <div class="all-completed" *ngIf="areAllEvaluationsCompleted(evaluation)">
+                    <i class="fas fa-check-circle"></i>
+                    <span>All evaluators have completed their assessments</span>
+                  </div>
+                  
+                  <!-- Show message if no evaluator info -->
+                  <div class="no-evaluators" *ngIf="!evaluation.evaluators || evaluation.evaluators.length === 0">
+                    <i class="fas fa-info-circle"></i>
+                    <span>No evaluator information available</span>
+                  </div>
                 </div>
               </div>
-              <div class="progress-label">{{ getPanelCompletionPercentage(evaluation) | number:'1.0-0' }}% Complete</div>
-            </div>
-            
-            <div class="evaluators-status">
-              <h6>Pending evaluations from:</h6>
-              <ul>
-                <ng-container *ngIf="evaluation.evaluators && evaluation.evaluators.length > 0">
-                  <li *ngFor="let evaluator of evaluation.evaluators">
-                    <ng-container *ngIf="!evaluator?.hasEvaluated">
-                      {{ evaluator?.name || 'Unknown Evaluator' }}
-                    </ng-container>
-                  </li>
-                  <!-- Show a message if all evaluators have completed -->
-                  <li *ngIf="areAllEvaluationsCompleted(evaluation)">
-                    All evaluators have completed their assessments
-                  </li>
-                </ng-container>
-                <li *ngIf="!evaluation.evaluators || evaluation.evaluators.length === 0">
-                  No evaluator information available
-                </li>
-              </ul>
             </div>
           </div>
+        </div>
+        
+        <!-- Card toggle button -->
+        <div class="card-toggle">
+          <button class="toggle-btn" [ngClass]="{'expanded': expandedCards[i]}">
+            <i class="fas" [ngClass]="expandedCards[i] ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+          </button>
         </div>
       </div>
     </div>
