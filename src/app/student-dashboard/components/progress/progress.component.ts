@@ -574,78 +574,139 @@ export class ProgressComponent implements OnInit, AfterViewInit {
       console.error('Type distribution chart reference is undefined');
       return;
     }
-    if (this.evaluations.length === 0) {
-      console.warn('No evaluations for type distribution chart');
+    if (this.completedEvaluations.length === 0) {
+      console.warn('No completed evaluations for distribution chart');
       return;
     }
     
-    // Count occurrences of each event type
-    const eventTypes = new Map<string, number>();
-    this.evaluations.forEach(evaluation => {
-      const type = evaluation.eventType || 'Standard';
-      eventTypes.set(type, (eventTypes.get(type) || 0) + 1);
+    // Prepare data by event type, only for completed evaluations
+    const eventData = new Map<string, { totalScore: number, maxPossible: number, count: number }>();
+    
+    this.completedEvaluations.forEach(evaluation => {
+      const eventName = evaluation.eventName || 'Unnamed Event';
+      
+      if (!eventData.has(eventName)) {
+        eventData.set(eventName, {
+          totalScore: 0,
+          maxPossible: 0,
+          count: 0
+        });
+      }
+      
+      const data = eventData.get(eventName);
+      if (data) {
+        data.totalScore += evaluation.obtainedMarks;
+        data.maxPossible += evaluation.totalMarks;
+        data.count += 1;
+      }
     });
     
-    // Prepare data for chart
-    const labels = Array.from(eventTypes.keys());
-    const data = Array.from(eventTypes.values());
+    // Prepare chart data
+    const labels = Array.from(eventData.keys());
+    const percentageScores = labels.map(label => {
+      const data = eventData.get(label);
+      return data ? Math.round((data.totalScore / data.maxPossible) * 100) : 0;
+    });
     
-    // Custom colors for the chart
+    // More vivid colors for visual appeal
     const backgroundColors = [
-      'rgba(33, 150, 243, 0.8)',
-      'rgba(76, 175, 80, 0.8)',
-      'rgba(255, 152, 0, 0.8)',
-      'rgba(244, 67, 54, 0.8)',
-      'rgba(156, 39, 176, 0.8)',
-      'rgba(0, 188, 212, 0.8)'
+      'rgba(54, 162, 235, 0.85)', // blue
+      'rgba(255, 99, 132, 0.85)',  // pink
+      'rgba(255, 206, 86, 0.85)',  // yellow
+      'rgba(75, 192, 192, 0.85)',  // teal
+      'rgba(153, 102, 255, 0.85)', // purple
+      'rgba(255, 159, 64, 0.85)'   // orange
     ];
     
-    // Create doughnut chart
+    // Create a gradient effect for the chart
+    const gradientColors = labels.map((_, index) => {
+      if (!this.typeDistributionChartRef) return backgroundColors[index % backgroundColors.length];
+      
+      const ctx = this.typeDistributionChartRef.nativeElement.getContext('2d');
+      if (!ctx) return backgroundColors[index % backgroundColors.length];
+      
+      const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+      gradient.addColorStop(0, backgroundColors[index % backgroundColors.length]);
+      gradient.addColorStop(1, backgroundColors[index % backgroundColors.length].replace('0.85', '0.5'));
+      return gradient;
+    });
+    
+    // Destroy existing chart if it exists
     if (this.typeDistributionChart) {
       this.typeDistributionChart.destroy();
     }
     
+    // Create a bar chart instead of doughnut for better representation of scores
     this.typeDistributionChart = new Chart(this.typeDistributionChartRef.nativeElement, {
-      type: 'doughnut',
+      type: 'bar',
       data: {
         labels: labels,
         datasets: [{
-          label: 'Evaluation Types',
-          data: data,
-          backgroundColor: backgroundColors.slice(0, labels.length),
-          borderWidth: 1
+          label: 'Performance (%)',
+          data: percentageScores,
+          backgroundColor: gradientColors,
+          borderColor: backgroundColors.map(color => color.replace('0.85', '1')),
+          borderWidth: 1,
+          borderRadius: 6,
+          barPercentage: 0.6,
+          categoryPercentage: 0.8
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100,
+            ticks: {
+              callback: function(value) {
+                return value + '%';
+              }
+            },
+            title: {
+              display: true,
+              text: 'Score (%)',
+              font: {
+                size: 13
+              }
+            }
+          },
+          x: {
+            title: {
+              display: true,
+              text: 'Evaluation Events',
+              font: {
+                size: 13
+              }
+            }
+          }
+        },
         plugins: {
+          legend: {
+            display: false
+          },
           title: {
             display: true,
-            text: 'Distribution by Evaluation Type',
+            text: 'Performance by Evaluation Type',
             font: {
               size: 16
             }
           },
-          legend: {
-            position: 'right'
-          },
           tooltip: {
             callbacks: {
               label: function(context) {
-                const label = context.label || '';
-                const value = context.formattedValue;
-                const data = context.chart.data.datasets[0].data;
+                const eventName = context.label || '';
+                const data = eventData.get(eventName);
+                const percentage = context.raw as number;
                 
-                // Fix the reduce function with proper typing
-                const total = data.reduce((sum: number, val: any) => {
-                  // Handle non-number values
-                  return sum + (typeof val === 'number' ? val : 0);
-                }, 0);
-                
-                // Handle potentially null values
-                const percentage = total ? Math.round((context.parsed / total) * 100) : 0;
-                return `${label}: ${value} (${percentage}%)`;
+                if (data) {
+                  return [
+                    `Score: ${percentage}%`,
+                    `Marks: ${data.totalScore}/${data.maxPossible}`
+                  ];
+                }
+                return `Score: ${percentage}%`;
               }
             }
           }
@@ -706,7 +767,22 @@ export class ProgressComponent implements OnInit, AfterViewInit {
     
     return completedCount >= requiredCount;
   }
-
+  
+  getInProgressEvaluationsCount(): number {
+    return this.evaluations.filter(e => {
+      // Check the isComplete flag
+      if (e.isComplete === false) return true;
+      
+      // Check if all evaluators have evaluated (as a fallback)
+      if (e.evaluators && e.evaluators.length > 0) {
+        const requiredCount = e.requiredEvaluatorsCount ?? e.evaluators.length;
+        const completedCount = e.evaluators.filter(ev => ev?.hasEvaluated).length;
+        if (completedCount < requiredCount) return true;
+      }
+      
+      return false;
+    }).length;
+  }
   getCategoryAverageScore(): number {
     if (this.completedEvaluations.length === 0) return 0;
     
@@ -724,6 +800,8 @@ export class ProgressComponent implements OnInit, AfterViewInit {
     
     return totalCategories > 0 ? totalCategoryScore / totalCategories : 0;
   }
+  
+
 
   getTopPerformingCategory(): {name: string, score: number} {
     if (this.completedEvaluations.length === 0) {

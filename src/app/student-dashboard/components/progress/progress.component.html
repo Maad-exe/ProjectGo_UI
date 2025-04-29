@@ -45,7 +45,7 @@
       
       <div class="summary-details">
         <h3>Your Overall Performance</h3>
-        <p>Based on {{ evaluations.length }} evaluation events</p>
+        <p class="overall-stat-subtitle">Based on {{ completedEvaluations.length - getInProgressEvaluationsCount() }} evaluation {{ completedEvaluations.length === 1 ? 'event' : 'events' }}</p>
         
         <div class="status-indicator" [ngClass]="getGradeColor(finalGrade)">
           <div class="status-icon">
@@ -138,8 +138,8 @@
           </div>
           <div class="highlight-content">
             <h4>Completed Evaluations</h4>
-            <div class="highlight-value">{{ completedEvaluations.length }} of {{ evaluations.length }}</div>
-            <p>{{ (completedEvaluations.length / evaluations.length) * 100 | number:'1.0-0' }}% Complete</p>
+            <div class="highlight-value">{{ completedEvaluations.length - getInProgressEvaluationsCount()}} of {{ completedEvaluations.length  }}</div>
+            <p>{{ (completedEvaluations.length / (completedEvaluations.length + getInProgressEvaluationsCount())) * 100 | number:'1.0-0' }}% Complete</p>
           </div>
         </div>
       </div>
